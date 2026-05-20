@@ -12,4 +12,5 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/admin', [AuthController::class, 'admin'])->name('admin');
     Route::get('/private/superadmin', [AuthController::class, 'superadmin'])->name('private.superadmin');
+    Route::post('/private/superadmin/create', [AuthController::class, 'createEmployee'])->name('private.superadmin.create');
 });

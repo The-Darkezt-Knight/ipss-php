@@ -20,6 +20,7 @@ class Employee extends Authenticatable
         'city_municipality',
         'province',
         'region',
+        'baranggay',
         'sex',
         'password',
         'is_active',
@@ -29,4 +30,9 @@ class Employee extends Authenticatable
     protected $hidden = [
         'password'
     ];
+
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
 }

@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\hash;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeSeeder extends Seeder
 {
@@ -25,7 +25,8 @@ class EmployeeSeeder extends Seeder
             'region' => 'Western Visayas',
             'sex' => 'Male',
             'password' => Hash::make('pido.231654289'),
-            'is_active' => true
+            'is_active' => true,
+            'role' => 'SUPERADMIN'
         ]);
     }
 }

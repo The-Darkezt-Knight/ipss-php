@@ -290,7 +290,8 @@
 
     <!-- Form -->
     <div class="p-lg modal-scroll overflow-y-auto max-h-[calc(100vh-200px)]">
-      <form id="create-user-form" novalidate>
+      <form id="create-user-form" action="{{url('/private/superadmin/create')}}" method="POST">
+        @csrf
 
         <!-- Section 1: Personal Information -->
         <fieldset class="mb-xl">
@@ -549,4 +550,29 @@
   </div>
 </footer>
 </body>
-</html>
+</html><script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toast = document.getElementById('toast');
+
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.style.backgroundColor = isError ? '#ba1a1a' : '#1a1c1e';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        @if(session('success'))
+            showToast("{{ session('success') }}");
+        @endif
+
+        @if(session('error'))
+            showToast("{{ session('error') }}", true);
+        @endif
+
+        @if($errors->any())
+            showToast("{{ $errors->first() }}", true);
+        @endif
+    });
+</script>
