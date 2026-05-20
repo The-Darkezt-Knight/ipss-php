@@ -4,6 +4,9 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>User Management | City Governance Portal</title>
+
+@vite(['/resources/css/app.css', '/resources/js/superadmin.js'])
+
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -289,9 +292,8 @@
 
     <!-- Form -->
     <div class="p-lg modal-scroll overflow-y-auto max-h-[calc(100vh-200px)]">
-      <form id="create-user-form" novalidate>
-
-        <!-- Section 1: Personal Information -->
+      <form id="create-user-form" novalidate action="{{route('employee/create')}}" method="post">
+       @csrf
         <fieldset class="mb-xl">
           <legend class="w-full">
             <div class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant">
@@ -301,13 +303,12 @@
           </legend>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
-            <!-- First Name -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="first-name">
                 First Name <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="first-name" name="firstName" type="text" required autocomplete="given-name"
+                id="first-name" name="first_name" type="text" required autocomplete="given-name"
                 placeholder="e.g. Maria Clara"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="first-name-err"
@@ -315,25 +316,23 @@
               <span id="first-name-err" class="error-msg" role="alert">First name is required.</span>
             </div>
 
-            <!-- Middle Name -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="middle-name">
                 Middle Name <span class="text-outline font-normal">(optional)</span>
               </label>
               <input
-                id="middle-name" name="middleName" type="text" autocomplete="additional-name"
+                id="middle-name" name="middle_name" type="text" autocomplete="additional-name"
                 placeholder="e.g. Dela Cruz"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
               />
             </div>
 
-            <!-- Last Name -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="last-name">
                 Last Name <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="last-name" name="lastName" type="text" required autocomplete="family-name"
+                id="last-name" name="last_name" type="text" required autocomplete="family-name"
                 placeholder="e.g. Santos"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="last-name-err"
@@ -341,20 +340,18 @@
               <span id="last-name-err" class="error-msg" role="alert">Last name is required.</span>
             </div>
 
-            <!-- Birthdate -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="birthdate">
                 Birthdate <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="birthdate" name="birthdate" type="date" required autocomplete="bday"
+                id="birthdate" name="birth_date" type="date" required autocomplete="bday"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="birthdate-err"
               />
               <span id="birthdate-err" class="error-msg" role="alert">Birthdate is required.</span>
             </div>
 
-            <!-- Sex -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="sex">
                 Sex <span class="text-error" aria-hidden="true">*</span>
@@ -373,7 +370,6 @@
           </div>
         </fieldset>
 
-        <!-- Section 2: Locality Details -->
         <fieldset class="mb-xl">
           <legend class="w-full">
             <div class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant">
@@ -383,7 +379,6 @@
           </legend>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
-            <!-- Barangay -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="barangay">
                 Barangay <span class="text-error" aria-hidden="true">*</span>
@@ -397,13 +392,12 @@
               <span id="barangay-err" class="error-msg" role="alert">Barangay is required.</span>
             </div>
 
-            <!-- City / Municipality -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="city">
                 City / Municipality <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="city" name="city" type="text" required
+                id="city" name="city_municipality" type="text" required
                 placeholder="e.g. Cebu City"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="city-err"
@@ -411,7 +405,6 @@
               <span id="city-err" class="error-msg" role="alert">City/Municipality is required.</span>
             </div>
 
-            <!-- Province -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="province">
                 Province <span class="text-error" aria-hidden="true">*</span>
@@ -427,7 +420,6 @@
           </div>
         </fieldset>
 
-        <!-- Section 3: Administrative Identity -->
         <fieldset class="mb-xs">
           <legend class="w-full">
             <div class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant">
@@ -437,13 +429,12 @@
           </legend>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
-            <!-- Government Email -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="gov-email">
                 Government Email <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="gov-email" name="govEmail" type="email" required autocomplete="email"
+                id="gov-email" name="gov_email" type="email" required autocomplete="email"
                 placeholder="name@governance.ph"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="gov-email-err"
@@ -451,13 +442,12 @@
               <span id="gov-email-err" class="error-msg" role="alert">A valid government email is required.</span>
             </div>
 
-            <!-- Government ID -->
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="gov-id">
                 Government ID <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="gov-id" name="govId" type="text" required
+                id="gov-id" name="gov_id" type="text" required
                 placeholder="YYYY-XXXX-ZZZ"
                 pattern="GOV-\d{4}-\d{4}"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
@@ -467,7 +457,6 @@
               <span id="gov-id-err" class="error-msg" role="alert">ID must follow format GOV-YYYY-XXXX.</span>
             </div>
 
-            <!-- Role -->
             <div class="flex flex-col gap-xs md:col-span-2">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="role">
                 Role <span class="text-error" aria-hidden="true">*</span>
@@ -499,7 +488,6 @@
           </div>
         </fieldset>
 
-        <!-- Required note -->
         <p class="text-[12px] text-outline mt-md">
           Fields marked <span class="text-error font-bold">*</span> are required.
         </p>
