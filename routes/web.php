@@ -3,10 +3,10 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [AuthController::Class, 'index'])->name('index');
+Route::get('/', [AuthController::class, 'index'])->name('index');
 
 Route::middleware('guest')->group(function () {
-    Route::post('/login', [AuthController::class, 'handleLogin']);
+    Route::post('/login', [AuthController::class, 'handleLogin'])->name('login');
 });
 
 Route::middleware('auth')->group(function () {

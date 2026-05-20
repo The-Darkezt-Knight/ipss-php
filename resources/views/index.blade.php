@@ -228,7 +228,8 @@
             </p>
           </div>
 
-          <form action="{{url('/login')}}" method="post" class="space-y-lg">
+          <form action="{{ route('login') }}" method="post" class="space-y-lg">
+            @csrf
             <!-- Email Field -->
             <div>
               <label
