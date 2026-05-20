@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', ()=> {
     const userModal = document.getElementById('user-modal');
 
     openModalBtn.addEventListener('click', ()=> {
-        userModal.classList.add('flex');
+        userModal.classList.toggle('flex');
     })
+
 })

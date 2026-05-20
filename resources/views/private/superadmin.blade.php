@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="/resources/js/superadmin.js"></script>
 <style>
   body { font-family: 'Public Sans', sans-serif; }
   .material-symbols-outlined {
@@ -266,7 +265,7 @@
 <!-- ═══════════════════════════════ MODAL ═══════════════════════════════ -->
 <div
   id="user-modal"
-  class="hidden fixed inset-0 z-[60] bg-on-surface/40 backdrop-blur-sm flex items-start justify-center p-md pt-8 overflow-y-auto"
+  class="hidden fixed inset-0 z-[60] bg-on-surface/40 backdrop-blur-sm items-start justify-center p-md pt-8 overflow-y-auto"
   role="dialog"
   aria-modal="true"
   aria-labelledby="modal-title"
