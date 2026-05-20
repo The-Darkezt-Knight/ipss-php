@@ -8,9 +8,6 @@ use  Illuminate\Support\Facades\Auth;
 class AuthController
 {
     //returns the index page
-    public function index() {
-        return view('index');
-    }
 
     //validates the input, handles login request, and redirects the employee based on their role
     public function handleLogin(Request $request) {
@@ -31,19 +28,18 @@ class AuthController
             if($employee->role === 'SUPERADMIN') {
                 return redirect()->route('private.superadmin');
             }
-            /*
-            if($employee->role === 'DIRECTOR') {
-                return redirect()->route('');
-            }
-
-            if($employee->role === 'SURVEYOR') {
-                return redirect()->route('');
-            }
-            */
         }
 
         return back()->withErrors([
             'govt_email' => 'Government email doesn\'t match with our system'
         ])->onlyInput('govt_email');
+    }
+
+    public function index() {
+        return view('index');
+    }
+
+    public function superadmin() {
+        return view('private.superadmin');
     }
 }
