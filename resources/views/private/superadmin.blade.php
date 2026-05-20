@@ -157,7 +157,7 @@
 <header class="bg-surface border-b border-outline-variant/15 z-50 sticky top-0">
   <div class="flex justify-between items-center w-full px-gutter max-w-[1280px] mx-auto h-16">
     <div class="flex items-center gap-lg">
-      <span class="font-bold text-[22px] leading-tight text-primary tracking-tight">City Governance Portal</span>
+      <span class="font-bold text-[22px] leading-tight text-primary tracking-tight">Integrated Profiling and Support System</span>
       <nav class="hidden md:flex items-center gap-md ml-xl" aria-label="Main navigation">
         <a class="text-[12px] font-semibold tracking-wide text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
         <a class="text-[12px] font-semibold tracking-wide text-primary border-b-2 border-primary pb-[1px]" href="#" aria-current="page">User Management</a>
