@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('last-name').value = employee.last_name || '';
                 document.getElementById('birthdate').value = employee.birth_date || '';
                 document.getElementById('sex').value = employee.sex || '';
+                document.getElementById('barangay').value = employee.barangay || '';
                 document.getElementById('region').value = employee.region || '';
                 document.getElementById('city').value = employee.city_municipality || '';
                 document.getElementById('province').value = employee.province || '';

@@ -420,15 +420,15 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
-                Region <span class="text-error" aria-hidden="true">*</span>
+                Barangay <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="region" name="region" type="text" required
+                id="barangay" name="barangay" type="text" required
                 placeholder="e.g. Region VII"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="region-err"
               />
-              <span id="region-err" class="error-msg" role="alert">Region is required.</span>
+              <span id="region-err" class="error-msg" role="alert">Barangay is required.</span>
             </div>
 
             <div class="flex flex-col gap-xs">
@@ -455,6 +455,19 @@
                 aria-required="true" aria-describedby="province-err"
               />
               <span id="province-err" class="error-msg" role="alert">Province is required.</span>
+            </div>
+
+            <div class="flex flex-col gap-xs">
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
+                Region <span class="text-error" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="region" name="region" type="text" required
+                placeholder="e.g. Region VII"
+                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
+                aria-required="true" aria-describedby="region-err"
+              />
+              <span id="region-err" class="error-msg" role="alert">Region is required.</span>
             </div>
           </div>
         </fieldset>
