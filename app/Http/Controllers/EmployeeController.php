@@ -31,7 +31,7 @@ class EmployeeController extends Controller
         $password = strtolower($validated['last_name'] .'.'. $validated['govt_id']);
         $is_active = true;
         $hashed_password = Hash::make($password);
-        $age = Carbon::parse($validated['birth_date'])->age;
+        $age = (int) Carbon::parse($validated['birth_date'])->age;
 
 
         $employee = Employee::create([
@@ -90,5 +90,11 @@ class EmployeeController extends Controller
     public function destroy(Employee $employee) {
         $employee->delete();
         return redirect()->back()->with('success', 'User deleted successfully!');
+    }
+
+    public function toggleStatus(Employee $employee) {
+        $employee->update(['is_active' => !$employee->is_active]);
+        $statusText = $employee->is_active ? 'activated' : 'deactivated';
+        return redirect()->back()->with('success', "User successfully {$statusText}.");
     }
 }

@@ -253,15 +253,19 @@
               </span>
             </td>
             <td class="px-lg py-md">
-              @if($employee->is_active)
-              <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#146c2e]">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#146c2e]"></span> Active
-              </span>
-              @else
-              <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-outline">
-                <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Inactive
-              </span>
-              @endif
+               <form action="{{ route('employee.toggle-status', $employee->id) }}" method="POST" class="inline-block">
+                @csrf
+                @method('PATCH')
+                @if($employee->is_active)
+                <button type="submit" class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#146c2e] hover:bg-[#146c2e]/10 px-2 py-1 rounded transition-colors" title="Click to deactivate">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#146c2e]"></span> Active
+                </button>
+                @else
+                <button type="submit" class="inline-flex items-center gap-1 text-[12px] font-semibold text-outline hover:bg-outline/10 px-2 py-1 rounded transition-colors" title="Click to activate">
+                  <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Inactive
+                </button>
+                @endif
+              </form>
             </td>
             <td class="px-lg py-md text-right">
               <div class="flex items-center justify-end gap-sm">
@@ -470,20 +474,6 @@
               <span id="region-err" class="error-msg" role="alert">Region is required.</span>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
-            <div class="flex flex-col gap-xs">
-              <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
-                Region <span class="text-error" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="region" name="region" type="text" required
-                placeholder="e.g. Region VII"
-                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
-                aria-required="true" aria-describedby="region-err"
-              />
-              <span id="region-err" class="error-msg" role="alert">Region is required.</span>
-            </div>
         </fieldset>
 
         <fieldset class="mb-xs">
