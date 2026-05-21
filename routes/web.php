@@ -16,4 +16,5 @@ Route::middleware('auth')->group(function () {
     Route::post('/employee/create', [EmployeeController::class, 'store'])->name('employee/create');
     Route::put('/employee/{employee}', [EmployeeController::class, 'update'])->name('employee.update');
     Route::delete('/employee/{employee}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
+    Route::patch('/employee/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
 }); 

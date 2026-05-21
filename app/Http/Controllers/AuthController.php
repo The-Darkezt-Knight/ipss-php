@@ -23,10 +23,10 @@ class AuthController extends Controller
 
             $employee = Auth::user();
 
-            if($employee->role === 'ROLE_ADMIN') {
+            if($employee->role === 'ADMIN') {
                 return redirect()->route('admin');
             }
-            if($employee->role === 'ROLE_SUPERADMIN') {
+            if($employee->role === 'SUPERADMIN') {
                 return redirect()->route('private.superadmin');
             }
         }

@@ -6,11 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
     public function store(Request $request) {
+
 
         $validated = $request->validate([
             'govt_id' => 'required|unique:employee',
@@ -19,35 +19,30 @@ class EmployeeController extends Controller
             'middle_name' => 'nullable',
             'last_name' => 'required',
             'birth_date' => 'required',
-            'barangay' => 'required',
             'city_municipality' => 'required',
             'province' => 'required',
             'region' => 'required',
             'sex' => 'required',
             'role'=>'required'
         ]);
-        
-        
-        $password = strtolower($validated['last_name'] .'.'. $validated['govt_id']);
+
+        $password = $request->last_name . $request->govt_id;
         $is_active = true;
         $hashed_password = Hash::make($password);
-        $age = Carbon::parse($validated['birth_date'])->age;
 
 
         $employee = Employee::create([
-            'govt_id' =>                $validated['govt_id'],
-            'govt_email' =>             $validated['govt_email'],
-            'first_name' =>             $validated['first_name'],
-            'middle_name' =>            $validated['middle_name'],
-            'last_name' =>              $validated['last_name'],
-            'birth_date' =>             $validated['birth_date'],
-            'barangay' =>               $validated['barangay'],
-            'city_municipality' =>      $validated['city_municipality'],
-            'province' =>               $validated['province'],
-            'region' =>                 $validated['region'],
-            'sex' =>                    $validated['sex'],
-            'age' =>                    $age,
-            'role'=>                    $validated['role'],
+            'govt_id' =>                $request->govt_id,
+            'govt_email' =>             $request->govt_email,
+            'first_name' =>             $request->first_name,
+            'middle_name' =>            $request->middle_name,
+            'last_name' =>              $request->last_name,
+            'birth_date' =>             $request->birth_date,
+            'city_municipality' =>      $request->city_municipality,
+            'province' =>               $request->province,
+            'region' =>                 $request->region,
+            'sex' =>                    $request->sex,
+            'role'=>                    $request->role,
             'password' =>               $hashed_password,
             'is_active' =>              $is_active
         ]);
@@ -90,5 +85,11 @@ class EmployeeController extends Controller
     public function destroy(Employee $employee) {
         $employee->delete();
         return redirect()->back()->with('success', 'User deleted successfully!');
+    }
+
+    public function toggleStatus(Employee $employee) {
+        $employee->update(['is_active' => !$employee->is_active]);
+        $statusText = $employee->is_active ? 'activated' : 'deactivated';
+        return redirect()->back()->with('success', "User successfully {$statusText}.");
     }
 }
