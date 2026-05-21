@@ -41,6 +41,7 @@ class AuthController extends Controller
     }
 
     public function superadmin() {
-        return view('private.superadmin');
+        $employees = \App\Models\Employee::all();
+        return view('private.superadmin', compact('employees'));
     }
 }
