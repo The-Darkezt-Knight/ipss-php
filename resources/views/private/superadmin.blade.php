@@ -253,7 +253,7 @@
               </span>
             </td>
             <td class="px-lg py-md">
-              <form action="{{ route('employee.toggle-status', $employee->id) }}" method="POST" class="inline-block">
+               <form action="{{ route('employee.toggle-status', $employee->id) }}" method="POST" class="inline-block">
                 @csrf
                 @method('PATCH')
                 @if($employee->is_active)

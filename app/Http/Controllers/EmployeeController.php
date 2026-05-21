@@ -29,6 +29,7 @@ class EmployeeController extends Controller
         $password = $request->last_name . $request->govt_id;
         $is_active = true;
         $hashed_password = Hash::make($password);
+        $age = (int) Carbon::parse($validated['birth_date'])->age;
 
 
         $employee = Employee::create([
