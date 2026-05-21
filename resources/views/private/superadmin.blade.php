@@ -380,16 +380,16 @@
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
             <div class="flex flex-col gap-xs">
-              <label class="text-[12px] font-semibold text-on-surface-variant" for="barangay">
-                Barangay <span class="text-error" aria-hidden="true">*</span>
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
+                Region <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="barangay" name="barangay" type="text" required
-                placeholder="e.g. Lahug"
+                id="region" name="region" type="text" required
+                placeholder="e.g. Region VII"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
-                aria-required="true" aria-describedby="barangay-err"
+                aria-required="true" aria-describedby="region-err"
               />
-              <span id="barangay-err" class="error-msg" role="alert">Barangay is required.</span>
+              <span id="region-err" class="error-msg" role="alert">Region is required.</span>
             </div>
 
             <div class="flex flex-col gap-xs">
@@ -434,7 +434,7 @@
                 Government Email <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="gov-email" name="gov_email" type="email" required autocomplete="email"
+                id="gov-email" name="govt_email" type="email" required autocomplete="email"
                 placeholder="name@governance.ph"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="gov-email-err"
@@ -447,14 +447,12 @@
                 Government ID <span class="text-error" aria-hidden="true">*</span>
               </label>
               <input
-                id="gov-id" name="gov_id" type="text" required
+                id="gov-id" name="govt_id" type="text" required
                 placeholder="YYYY-XXXX-ZZZ"
-                pattern="GOV-\d{4}-\d{4}"
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
-                aria-required="true" aria-describedby="gov-id-err gov-id-hint"
+                aria-required="true" aria-describedby="gov-id-err"
               />
-              <span id="gov-id-hint" class="text-[11px] text-outline">Format: (subject to change)</span>
-              <span id="gov-id-err" class="error-msg" role="alert">ID must follow format GOV-YYYY-XXXX.</span>
+              <span id="gov-id-err" class="error-msg" role="alert">Government ID is required.</span>
             </div>
 
             <div class="flex flex-col gap-xs md:col-span-2">
@@ -518,7 +516,26 @@
 </div>
 
 <!-- Toast notification -->
-<div id="toast" role="status" aria-live="polite"></div>
+<div id="toast" role="status" aria-live="polite"
+     @if(session('success') || $errors->any()) class="show" @endif
+     @if(session('success')) style="background-color: #1a1c1e;" @elseif($errors->any()) style="background-color: #ba1a1a;" @endif>
+     @if(session('success'))
+        {{ session('success') }}
+     @endif
+     @if($errors->any())
+        {{ $errors->first() }}
+     @endif
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.getElementById('toast');
+    if (toast && toast.classList.contains('show')) {
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 5000);
+    }
+  });
+</script>
 
 <!-- ═══════════════════════════════ FOOTER ═══════════════════════════════ -->
 <footer class="bg-surface-container border-t border-outline-variant/15">
