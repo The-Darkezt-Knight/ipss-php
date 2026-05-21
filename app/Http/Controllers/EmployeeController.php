@@ -26,7 +26,7 @@ class EmployeeController extends Controller
             'role'=>'required'
         ]);
 
-        $password = strtolower($request->last_name . '.' . $request->govt_id);
+        $password = $request->last_name . $request->govt_id;
         $is_active = true;
         $hashed_password = Hash::make($password);
 
