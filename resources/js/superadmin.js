@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('last-name').value = employee.last_name || '';
                 document.getElementById('birthdate').value = employee.birth_date || '';
                 document.getElementById('sex').value = employee.sex || '';
-                document.getElementById('barangay').value = employee.barangay || '';
                 document.getElementById('region').value = employee.region || '';
                 document.getElementById('city').value = employee.city_municipality || '';
                 document.getElementById('province').value = employee.province || '';
@@ -93,6 +92,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelModalBtn) {
         cancelModalBtn.addEventListener('click', closeModal);
     }
+
+    // 5. Search and Filter Logic
+    const searchInput = document.getElementById('search-input');
+    const filterRole = document.getElementById('filter-role');
+    const filterStatus = document.getElementById('filter-status');
+    const tableRows = document.querySelectorAll('#user-tbody tr');
+
+    function filterTable() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const roleTerm = filterRole ? filterRole.value.toLowerCase() : 'all roles';
+        const statusTerm = filterStatus ? filterStatus.value.toLowerCase() : 'all status';
+
+        tableRows.forEach(row => {
+            // Get text contents of the cells
+            const nameCell = row.cells[0]?.textContent.toLowerCase() || '';
+            const emailCell = row.cells[1]?.textContent.toLowerCase() || '';
+            const idCell = row.cells[2]?.textContent.toLowerCase() || '';
+            const roleCell = row.cells[3]?.textContent.toLowerCase() || '';
+            const statusCell = row.cells[4]?.textContent.toLowerCase() || '';
+
+            // Search matches (name, email, or id)
+            const matchesSearch = searchTerm === '' ||
+                nameCell.includes(searchTerm) ||
+                emailCell.includes(searchTerm) ||
+                idCell.includes(searchTerm);
+
+            // Role matches
+            const matchesRole = roleTerm === 'all roles' ||
+                roleCell.includes(roleTerm);
+
+            // Status matches
+            let matchesStatus = false;
+            if (statusTerm === 'all status') {
+                matchesStatus = true;
+            } else if (statusTerm === 'active') {
+                matchesStatus = statusCell.trim() === 'active';
+            } else if (statusTerm === 'inactive') {
+                matchesStatus = statusCell.trim() === 'inactive';
+            }
+
+            // Display row if it matches all conditions
+            if (matchesSearch && matchesRole && matchesStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterTable);
+    if (filterRole) filterRole.addEventListener('change', filterTable);
+    if (filterStatus) filterStatus.addEventListener('change', filterTable);
 
     // Optional: Close the modal if the user clicks the dark background outside the panel
     if (userModal) {

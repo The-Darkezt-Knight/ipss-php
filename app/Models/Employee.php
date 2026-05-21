@@ -17,7 +17,6 @@ class Employee extends Authenticatable
         'last_name',
         'age',
         'birth_date',
-        'barangay',
         'city_municipality',
         'province',
         'region',
