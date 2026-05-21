@@ -240,7 +240,46 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-outline-variant/15" id="user-tbody">
-            <!--Lists of user goes here-->
+          @foreach($employees as $employee)
+          <tr class="hover:bg-surface-variant/30">
+            <td class="px-lg py-md">
+              <div class="text-[14px] font-semibold text-on-surface">{{ $employee->first_name }} {{ $employee->last_name }}</div>
+            </td>
+            <td class="px-lg py-md text-[14px] text-on-surface-variant">{{ $employee->govt_email }}</td>
+            <td class="px-lg py-md text-[14px] text-on-surface-variant font-mono text-[13px]">{{ $employee->govt_id }}</td>
+            <td class="px-lg py-md">
+              <span class="px-sm py-[2px] bg-secondary-container text-on-secondary-container rounded text-[11px] font-bold tracking-wide">
+                {{ str_replace('ROLE_', '', $employee->role) }}
+              </span>
+            </td>
+            <td class="px-lg py-md">
+              @if($employee->is_active)
+              <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#146c2e]">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#146c2e]"></span> Active
+              </span>
+              @else
+              <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-outline">
+                <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Inactive
+              </span>
+              @endif
+            </td>
+            <td class="px-lg py-md text-right">
+              <div class="flex items-center justify-end gap-sm">
+                <button type="button" class="edit-btn p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded transition-colors"
+                  data-employee="{{ json_encode($employee) }}" aria-label="Edit user">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                <form action="{{ route('employee.destroy', $employee->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="p-1.5 text-error hover:bg-error-container/50 rounded transition-colors" aria-label="Delete user">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          @endforeach
         </tbody>
       </table>
     </div>
@@ -416,6 +455,19 @@
                 aria-required="true" aria-describedby="province-err"
               />
               <span id="province-err" class="error-msg" role="alert">Province is required.</span>
+            </div>
+
+            <div class="flex flex-col gap-xs">
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
+                Region <span class="text-error" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="region" name="region" type="text" required
+                placeholder="e.g. Region VII"
+                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
+                aria-required="true" aria-describedby="region-err"
+              />
+              <span id="region-err" class="error-msg" role="alert">Region is required.</span>
             </div>
           </div>
 

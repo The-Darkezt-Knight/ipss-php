@@ -14,4 +14,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin', [AuthController::class, 'admin'])->name('admin');
     Route::get('/private/superadmin', [AuthController::class, 'superadmin'])->name('private.superadmin');
     Route::post('/employee/create', [EmployeeController::class, 'store'])->name('employee/create');
+    Route::put('/employee/{employee}', [EmployeeController::class, 'update'])->name('employee.update');
+    Route::delete('/employee/{employee}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
 }); 
