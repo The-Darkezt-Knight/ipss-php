@@ -141,6 +141,11 @@
       background: #c3c6d1;
       border-radius: 10px;
     }
+
+    .error-border {
+      border-color: #ba1a1a !important;
+      border-width: 2px !important;
+    }
   </style>
 </head>
 
@@ -688,6 +693,51 @@
     </div>
   </footer>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('survey-form');
+      
+      form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea');
+        
+        fields.forEach(field => {
+          if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('error-border');
+          } else {
+            field.classList.remove('error-border');
+          }
+        });
+
+        if (!isValid) {
+          e.preventDefault(); // Prevent form submission
+          
+          // Scroll to and focus the first invalid field
+          const firstInvalid = form.querySelector('.error-border');
+          if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus();
+          }
+        }
+      });
+
+      // Remove error styling when user types or changes the field
+      const allFields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea');
+      allFields.forEach(field => {
+        field.addEventListener('input', function() {
+          if (this.value.trim()) {
+            this.classList.remove('error-border');
+          }
+        });
+        field.addEventListener('change', function() {
+          if (this.value.trim()) {
+            this.classList.remove('error-border');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 
 </html>
