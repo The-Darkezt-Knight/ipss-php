@@ -11,23 +11,24 @@ class AuthController extends Controller
 
     //validates the input, handles login request, and redirects the employee based on their role
     public function handleLogin(Request $request) {
-        
         $credentials = $request->validate([
             'govt_email'=>'required|email',
             'password' => 'required'
         ]);
-
 
         if(Auth::attempt(['govt_email' => $credentials['govt_email'], 'password' => $credentials['password']])) {
             $request -> session() -> regenerate();
 
             $employee = Auth::user();
 
-            if($employee->role === 'ADMIN') {
+            if($employee->role === 'ROLE_ADMIN') {
                 return redirect()->route('admin');
             }
-            if($employee->role === 'SUPERADMIN') {
+            if($employee->role === 'ROLE_SUPERADMIN') {
                 return redirect()->route('private.superadmin');
+            }
+            if($employee->role === 'ROLE_SURVEYOR') {
+                return redirect()->route('private.surveyor');
             }
         }
 
@@ -43,5 +44,13 @@ class AuthController extends Controller
     public function superadmin() {
         $employees = \App\Models\Employee::all();
         return view('private.superadmin', compact('employees'));
+    }
+
+    public function surveyor() {
+        return view('private.surveyor');
+    }
+
+    public function form() {
+        return view('private.form');
     }
 }

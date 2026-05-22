@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -19,6 +20,7 @@ class EmployeeController extends Controller
             'middle_name' => 'nullable',
             'last_name' => 'required',
             'birth_date' => 'required',
+            'barangay' => 'required',
             'city_municipality' => 'required',
             'province' => 'required',
             'region' => 'required',
@@ -33,19 +35,21 @@ class EmployeeController extends Controller
 
 
         $employee = Employee::create([
-            'govt_id' =>                $request->govt_id,
-            'govt_email' =>             $request->govt_email,
-            'first_name' =>             $request->first_name,
-            'middle_name' =>            $request->middle_name,
-            'last_name' =>              $request->last_name,
-            'birth_date' =>             $request->birth_date,
-            'city_municipality' =>      $request->city_municipality,
-            'province' =>               $request->province,
-            'region' =>                 $request->region,
-            'sex' =>                    $request->sex,
-            'role'=>                    $request->role,
+            'govt_id' =>                $validated['govt_id'],
+            'govt_email' =>             $validated['govt_email'],
+            'first_name' =>             $validated['first_name'],
+            'middle_name' =>            $validated['middle_name'],
+            'last_name' =>              $validated['last_name'],
+            'birth_date' =>             $validated['birth_date'],
+            'barangay' =>               $validated['barangay'],
+            'city_municipality' =>      $validated['city_municipality'],
+            'province' =>               $validated['province'],
+            'region' =>                 $validated['region'],
+            'sex' =>                    $validated['sex'],
+            'role'=>                    $validated['role'],
             'password' =>               $hashed_password,
-            'is_active' =>              $is_active
+            'is_active' =>              $is_active,
+            'age' =>                    $age
         ]);
 
         return redirect()->back()->with('success', 'User created successfully!');
@@ -59,6 +63,7 @@ class EmployeeController extends Controller
             'middle_name' => 'nullable',
             'last_name' => 'required',
             'birth_date' => 'required',
+            'barangay' => 'required',
             'city_municipality' => 'required',
             'province' => 'required',
             'region' => 'required',
@@ -73,6 +78,7 @@ class EmployeeController extends Controller
             'middle_name' =>            $request->middle_name,
             'last_name' =>              $request->last_name,
             'birth_date' =>             $request->birth_date,
+            'barangay' =>               $request->barangay,
             'city_municipality' =>      $request->city_municipality,
             'province' =>               $request->province,
             'region' =>                 $request->region,
