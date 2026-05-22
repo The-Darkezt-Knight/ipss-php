@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/employee/{employee}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
     Route::patch('/employee/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
 
-    Route::post('private/surveyor', [AuthController::class, 'surveyor'])->name('private.surveyor');
+    Route::get('private/surveyor', [AuthController::class, 'surveyor'])->name('private.surveyor');
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
 });
