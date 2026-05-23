@@ -107,6 +107,10 @@ class ClientController
             'longitude'                        => $validated['longitude'] ?? null,
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Client data synced successfully']);
+        }
+
         return redirect() -> back() -> with('success', 'Client data successfully sent to the central database');
     }
 }

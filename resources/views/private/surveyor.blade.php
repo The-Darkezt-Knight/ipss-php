@@ -7,7 +7,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Sync Status Dashboard | CivicSurvey Portal</title>
 
-    @vite(['resources/css/app.css', 'resources/js/surveyor/form.js'])
+    @vite(['resources/css/app.css', 'resources/js/surveyor/form.js', 'resources/js/surveyor/location-prefetch.js'])
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap"
@@ -525,6 +525,21 @@
         </div>
 
     </footer>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('[App] Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('[App] Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 
 </body>
 

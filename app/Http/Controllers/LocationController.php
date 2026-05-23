@@ -48,4 +48,18 @@ class LocationController
                 ->get(['code', 'name'])
         );
     }
+
+    /**
+     * Returns all location data (regions, provinces, cities, barangays) in a single
+     * response so it can be pre-cached in IndexedDB for offline dropdown support.
+     */
+    public function getAllLocations()
+    {
+        return response()->json([
+            'regions'    => DB::table('region')->orderBy('name')->get(['code', 'name']),
+            'provinces'  => DB::table('province')->orderBy('name')->get(['code', 'name', 'region_code']),
+            'cities'     => DB::table('city_municipality')->orderBy('name')->get(['code', 'name', 'province_code']),
+            'barangays'  => DB::table('barangay')->orderBy('name')->get(['code', 'name', 'city_municipality_code']),
+        ]);
+    }
 }

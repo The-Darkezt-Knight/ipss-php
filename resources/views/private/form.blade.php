@@ -6,8 +6,9 @@
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Surveyor Intake Form | CivicSurvey Portal</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 
-  @vite(['resources/js/surveyor/form.js'])
+  @vite(['resources/js/surveyor/form.js', 'resources/js/surveyor/offline-db.js'])
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap"
@@ -148,6 +149,22 @@
       border-color: #ba1a1a !important;
       border-width: 2px !important;
     }
+
+    /* Offline-first status animations */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .animate-pulse-dot {
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 
@@ -157,10 +174,21 @@
     class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-md h-16 bg-surface border-b border-outline-variant">
     <div class="text-headline-sm font-headline-sm font-bold text-primary">MSME Survey portal  </div>
     <div class="flex items-center gap-md">
-      <button class="p-sm hover:bg-surface-container-high transition-colors rounded-full"><span
-          class="material-symbols-outlined" data-icon="sync">sync</span></button>
-      <button class="p-sm hover:bg-surface-container-high transition-colors rounded-full"><span
-          class="material-symbols-outlined" data-icon="cloud_done">cloud_done</span></button>
+      <!-- Connection Status Pill -->
+      <div id="connection-status-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-200 bg-green-50 transition-all duration-500">
+        <span id="status-dot" class="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse-dot"></span>
+        <span id="status-label" class="text-xs font-semibold text-gray-700">Online</span>
+      </div>
+
+      <!-- Manual Sync Button -->
+      <button id="manual-sync-btn" class="relative p-sm hover:bg-surface-container-high transition-colors rounded-full" title="Sync pending surveys">
+        <span id="sync-indicator-icon" class="material-symbols-outlined" data-icon="sync">sync</span>
+        <!-- Pending Count Badge -->
+        <div id="pending-count-badge" class="hidden absolute -top-1 -right-1 h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1">
+          <span id="pending-count" class="text-[10px] font-bold text-white leading-none">0</span>
+        </div>
+      </button>
+
       <div class="h-8 w-8 rounded-full bg-primary-fixed-dim flex items-center justify-center">
         <span class="material-symbols-outlined text-primary" data-icon="account_circle">account_circle</span>
       </div>
@@ -781,6 +809,24 @@
       <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Help Desk</a>
     </div>
   </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm"></div>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('[App] Service Worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('[App] Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 
 </html>
