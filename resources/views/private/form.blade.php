@@ -6,7 +6,9 @@
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Surveyor Intake Form | CivicSurvey Portal</title>
-  <script src="/js/surveyor/form.js"></script>
+
+  @vite(['resources/js/surveyor/form.js'])
+
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap"
     rel="stylesheet" />
@@ -153,7 +155,7 @@
   <!-- TopAppBar -->
   <header
     class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-md h-16 bg-surface border-b border-outline-variant">
-    <div class="text-headline-sm font-headline-sm font-bold text-primary">CivicSurvey Portal</div>
+    <div class="text-headline-sm font-headline-sm font-bold text-primary">MSME Survey portal  </div>
     <div class="flex items-center gap-md">
       <button class="p-sm hover:bg-surface-container-high transition-colors rounded-full"><span
           class="material-symbols-outlined" data-icon="sync">sync</span></button>
@@ -240,9 +242,7 @@
 
               <select id="statusOfClient" name="statusOfClient"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="Potential">Potential</option>
-                <option value="Registered">Registered</option>
-                <option value="Inactive">Inactive</option>
+                <option value="Level 0 - Would be or Potential Entrepreneurs" selected>Level 0 - Would be or Potential Entrepreneurs</option>
               </select>
 
             </div>
@@ -252,9 +252,8 @@
 
               <select id="specifyLevel" name="specifyLevel"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="MSME Level 1">MSME Level 1</option>
-                <option value="MSME Level 2">MSME Level 2</option>
-                <option value="MSME Level 3">MSME Level 3</option>
+                <option value="Potential">Potential</option>
+                <option value="Other Clients Assisted">Other Clients Assisted</option>
               </select>
             </div>
 
@@ -264,10 +263,32 @@
 
               <select id="categoryOfClient" name="categoryOfClient"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="Agriculture">Agriculture</option>
-                <option value="Retail">Retail</option>
-                <option value="Service">Service</option>
-                <option value="Manufacturing">Manufacturing</option>
+                <option value="4Ps Beneficiary">4Ps Beneficiary</option>
+                <option value="Agrarian Reform Beneficiary">Agrarian Reform Beneficiary</option>
+                <option value="Alien/Foreigner">Alien/Foreigner</option>
+                <option value="Balik Probinsya Bagong Pag-asa (BP2)">Balik Probinsya Bagong Pag-asa (BP2)</option>
+                <option value="Drug Surrenderee">Drug Surrenderee</option>
+                <option value="Ex-convict">Ex-convict</option>
+                <option value="Farmer">Farmer</option>
+                <option value="Former Rebel">Former Rebel</option>
+                <option value="Government Employee">Government Employee</option>
+                <option value="Housewife/Husband">Housewife/Husband</option>
+                <option value="KIA/WIA/KIPO/WIPO">KIA/WIA/KIPO/WIPO</option>
+                <option value="Military/Police">Military/Police</option>
+                <option value="OFW">OFW</option>
+                <option value="Out-of-School-Youth">Out-of-School-Youth</option>
+                <option value="Person Deprived of Liberty">Person Deprived of Liberty</option>
+                <option value="Persons of Concern (Stateless Person, Internally-Displaced Person, Refugee)">Persons of Concern (Stateless Person, Internally-Displaced Person, Refugee)</option>
+                <option value="Private Employee">Private Employee</option>
+                <option value="Professional">Professional</option>
+                <option value="PWD">PWD</option>
+                <option value="Retiree">Retiree</option>
+                <option value="Self-Employed">Self-Employed</option>
+                <option value="Senior Citizen">Senior Citizen</option>
+                <option value="Student">Student</option>
+                <option value="Unemployed">Unemployed</option>
+                <option value="Urban Poor">Urban Poor</option>
+                <option value="Youth">Youth</option>
               </select>
 
             </div>
@@ -277,31 +298,50 @@
               <label class="text-label-md font-label-md text-on-surface-variant">Social Classification</label>
               <select id="socialClassification" name="socialClassification"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="Urban Poor">Urban Poor</option>
-                <option value="Middle Income">Middle Income</option>
-                <option value="High Income">High Income</option>
+                <option value="Abled">Abled</option>
+                <option value="Person with Disabilities">Person with Disabilities</option>
               </select>
 
             </div>
 
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Disability Type</label>
-              <input id="diffAbledType" name="diffAbledType"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md"
-                placeholder="Specify if applicable" type="text" />
+              <select id="diffAbledType" name="diffAbledType"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="">-- Select if applicable --</option>
+                <option value="Autism">Autism</option>
+                <option value="Breast Cancer">Breast Cancer</option>
+                <option value="Cervical Cancer Survivor">Cervical Cancer Survivor</option>
+                <option value="Chronic Illness">Chronic Illness</option>
+                <option value="Deaf/Hard of Hearing">Deaf/Hard of Hearing</option>
+                <option value="Heart Disease">Heart Disease</option>
+                <option value="Learning Disability">Learning Disability</option>
+                <option value="Mastectomy">Mastectomy</option>
+                <option value="Nephrectomy">Nephrectomy</option>
+                <option value="Orthopedic">Orthopedic</option>
+                <option value="Physical">Physical</option>
+                <option value="Psychological">Psychological</option>
+                <option value="Speech and Language Impairment">Speech and Language Impairment</option>
+                <option value="Visual Impairment/One Eye">Visual Impairment/One Eye</option>
+              </select>
             </div>
 
-            <div class="flex items-center gap-xl h-full pt-6">
-              <label class="flex items-center gap-sm cursor-pointer">
-                <input id="isSenior" name="isSenior" value="true" class="w-5 h-5 rounded border-outline text-primary"
-                  type="checkbox" />
-                <span class="text-body-md">Senior Citizen</span>
-              </label>
-              <label class="flex items-center gap-sm cursor-pointer">
-                <input id="isIndigeneous" name="isIndigeneous" value="true"
-                  class="w-5 h-5 rounded border-outline text-primary" type="checkbox" />
-                <span class="text-body-md">Indigenous Person</span>
-              </label>
+            <div class="flex flex-col gap-xs">
+              <label class="text-label-md font-label-md text-on-surface-variant">Client is Senior</label>
+              <select id="isSenior" name="isSenior"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-xs">
+              <label class="text-label-md font-label-md text-on-surface-variant">Client is Indigenous</label>
+              <select id="isIndigeneous" name="isIndigeneous"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
             </div>
 
           </div>
@@ -319,47 +359,58 @@
               <label class="text-label-md font-label-md text-on-surface-variant">Level of Digitalization</label>
               <select id="levelOfDigitalization" name="levelOfDigitalization"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="Non-Digital">Non-Digital</option>
-                <option value="Early Stage">Early Stage</option>
-                <option value="Digitally Transformed">Digitally Transformed</option>
+                <option value="Level 0 - No use of digital tools">Level 0 - No use of digital tools</option>
+                <option value="Level 1 (Basic) - MSMEs that use basic digital tools for business">Level 1 (Basic) - MSMEs that use basic digital tools for business</option>
+                <option value="Level 2 (Intermediate) - MSMEs that have an online presence">Level 2 (Intermediate) - MSMEs that have an online presence</option>
+                <option value="Level 3 (Advanced) - Use of advanced digital tools">Level 3 (Advanced) - Use of advanced digital tools</option>
               </select>
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Digital Tools Used</label>
-              <input id="digitalTools" name="digitalTools"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md"
-                placeholder="e.g. POS, Facebook Ads" type="text" />
+              <select id="digitalTools" name="digitalTools"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="">-- Select Tool --</option>
+                <option value="Bank Account">Bank Account</option>
+                <option value="Big data, automation tools i.e. chatbots">Big data, automation tools i.e. chatbots</option>
+                <option value="Business process management software">Business process management software</option>
+                <option value="Business Website">Business Website</option>
+                <option value="Chat apps i.e. Messenger, Viber">Chat apps i.e. Messenger, Viber</option>
+                <option value="Creative Tools (e.g. Photoshop, Canva, Illustrator)">Creative Tools (e.g. Photoshop, Canva, Illustrator)</option>
+                <option value="Customer Relationship Management (CRM)">Customer Relationship Management (CRM)</option>
+                <option value="Cybersecurity Risk Tools">Cybersecurity Risk Tools</option>
+                <option value="E-commerce i.e. Shopee, Lazada">E-commerce i.e. Shopee, Lazada</option>
+                <option value="Email">Email</option>
+                <option value="ERP">ERP</option>
+                <option value="Fintech i.e. GCash, PayMaya">Fintech i.e. GCash, PayMaya</option>
+                <option value="Internet connection for business">Internet connection for business</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Microsoft Office i.e. Excel, Word">Microsoft Office i.e. Excel, Word</option>
+                <option value="Online Banking">Online Banking</option>
+                <option value="Platforms">Platforms</option>
+                <option value="Printer">Printer</option>
+                <option value="Smartphone">Smartphone</option>
+                <option value="Smartphones, tablets, desktop computers">Smartphones, tablets, desktop computers</option>
+                <option value="Tablet">Tablet</option>
+              </select>
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">MSME Classification</label>
-              <div class="flex gap-sm">
-                <label
-                  class="flex-1 flex items-center justify-center gap-sm py-sm border border-outline rounded-lg bg-secondary-container text-on-secondary-container font-bold text-label-md cursor-pointer">
-                  <input class="w-4 h-4" type="radio" name="msmeClassification" value="MICRO" checked />
-                  <span>Micro</span>
-                </label>
-                <label
-                  class="flex-1 flex items-center justify-center gap-sm py-sm border border-outline rounded-lg hover:bg-surface-container text-label-md cursor-pointer">
-                  <input class="w-4 h-4" type="radio" name="msmeClassification" value="SMALL" />
-                  <span>Small</span>
-                </label>
-                <label
-                  class="flex-1 flex items-center justify-center gap-sm py-sm border border-outline rounded-lg hover:bg-surface-container text-label-md cursor-pointer">
-                  <input class="w-4 h-4" type="radio" name="msmeClassification" value="MEDIUM" />
-                  <span>Medium</span>
-                </label>
-                <label
-                  class="flex-1 flex items-center justify-center gap-sm py-sm border border-outline rounded-lg hover:bg-surface-container text-label-md cursor-pointer">
-                  <input class="w-4 h-4" type="radio" name="msmeClassification" value="LARGE" />
-                  <span>Large</span>
-                </label>
-              </div>
+              <select id="msmeClassification" name="msmeClassification"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="Large - More than Php 100,000,000">Large - More than Php 100,000,000</option>
+                <option value="Medium - Php 15,000,001 to Php 100,000,000">Medium - Php 15,000,001 to Php 100,000,000</option>
+                <option value="Micro - Up to Php 3,000,000">Micro - Up to Php 3,000,000</option>
+                <option value="Not Applicable - Would-be/Potential Entrepreneur">Not Applicable - Would-be/Potential Entrepreneur</option>
+                <option value="Small - Php 3,000,001 to Php 15,000,000">Small - Php 3,000,001 to Php 15,000,000</option>
+              </select>
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Client Designation</label>
-              <input id="clientDesignation" name="clientDesignation"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md"
-                placeholder="Owner / Manager" type="text" />
+              <select id="clientDesignation" name="clientDesignation"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="Owner">Owner</option>
+                <option value="Representative">Representative</option>
+              </select>
             </div>
           </div>
         </section>
@@ -389,35 +440,50 @@
             </div>
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Suffix</label>
-              <input id="suffix" name="suffix"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="Jr., III"
-                type="text" />
+              <select id="suffix" name="suffix"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="--N/A--">--N/A--</option>
+                <option value="SR">SR</option>
+                <option value="JR">JR</option>
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+                <option value="V">V</option>
+                <option value="VI">VI</option>
+                <option value="VII">VII</option>
+                <option value="VIII">VIII</option>
+                <option value="IX">IX</option>
+                <option value="X">X</option>
+                <option value="XI">XI</option>
+                <option value="XII">XII</option>
+                <option value="XIII">XIII</option>
+                <option value="XIV">XIV</option>
+                <option value="XV">XV</option>
+                <option value="XVI">XVI</option>
+                <option value="XVII">XVII</option>
+                <option value="XVIII">XVIII</option>
+                <option value="XIX">XIX</option>
+                <option value="XX">XX</option>
+              </select>
             </div>
             <div class="md:col-span-2 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Civil Status</label>
               <select id="civilStatus" name="civilStatus"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="SINGLE">Single</option>
-                <option value="MARRIED">Married</option>
-                <option value="SEPARATED">Separated</option>
-                <option value="DIVORCED">Divorced</option>
-                <option value="WIDOW">Widow</option>
+                <option value="Legally Separated">Legally Separated</option>
+                <option value="Married">Married</option>
+                <option value="Single">Single</option>
+                <option value="Widowed">Widowed</option>
               </select>
             </div>
             <div class="md:col-span-2 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Sex</label>
-              <div class="flex gap-md h-full items-center">
-                <label class="flex items-center gap-sm cursor-pointer">
-                  <input id="sex-male" class="w-5 h-5 text-primary border-outline" name="sex" type="radio"
-                    value="Male" />
-                  <span class="text-body-md">Male</span>
-                </label>
-                <label class="flex items-center gap-sm cursor-pointer">
-                  <input id="sex-female" class="w-5 h-5 text-primary border-outline" name="sex" type="radio"
-                    value="Female" />
-                  <span class="text-body-md">Female</span>
-                </label>
-              </div>
+              <select id="sex" name="sex"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
             </div>
             <div class="md:col-span-2 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Birthdate</label>
@@ -426,15 +492,28 @@
             </div>
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Birth Year</label>
-              <input id="birthYear" name="birthYear"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="YYYY"
-                type="number" />
+              <select id="birthYear" name="birthYear"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="">Select Year</option>
+                @for($i = date('Y'); $i >= date('Y') - 124; $i--)
+                  <option value="{{ $i }}">{{ $i }}</option>
+                @endfor
+              </select>
             </div>
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Citizenship</label>
-              <input id="citizenship" name="citizenship"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" type="text"
-                value="Filipino" />
+              <select id="citizenship" name="citizenship"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                <option value="Filipino">Filipino</option>
+                @php
+                  $countries = [
+                      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia", "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+                  ];
+                @endphp
+                @foreach(array_merge(['Filipino'], array_diff($countries, ['Philippines', 'Filipino'])) as $c)
+                  <option value="{{ $c }}">{{ $c }}</option>
+                @endforeach
+              </select>
             </div>
           </div>
         </section>
@@ -539,9 +618,19 @@
             <div class="grid grid-cols-2 gap-sm">
               <div class="flex flex-col gap-xs">
                 <label class="text-label-md font-label-md text-on-surface-variant">District</label>
-                <input id="district" name="district"
-                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="1st"
-                  type="text" />
+                <select id="district" name="district"
+                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
+                  <option value="">Select District</option>
+                  <option value="1st">1st</option>
+                  <option value="2nd">2nd</option>
+                  <option value="3rd">3rd</option>
+                  <option value="4th">4th</option>
+                  <option value="5th">5th</option>
+                  <option value="6th">6th</option>
+                  <option value="7th">7th</option>
+                  <option value="8th">8th</option>
+                  <option value="Lone District">Lone District</option>
+                </select>
               </div>
 
               <div class="flex flex-col gap-xs">
@@ -692,52 +781,6 @@
       <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Help Desk</a>
     </div>
   </footer>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const form = document.getElementById('survey-form');
-      
-      form.addEventListener('submit', function(e) {
-        let isValid = true;
-        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea');
-        
-        fields.forEach(field => {
-          if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('error-border');
-          } else {
-            field.classList.remove('error-border');
-          }
-        });
-
-        if (!isValid) {
-          e.preventDefault(); // Prevent form submission
-          
-          // Scroll to and focus the first invalid field
-          const firstInvalid = form.querySelector('.error-border');
-          if (firstInvalid) {
-            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            firstInvalid.focus();
-          }
-        }
-      });
-
-      // Remove error styling when user types or changes the field
-      const allFields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea');
-      allFields.forEach(field => {
-        field.addEventListener('input', function() {
-          if (this.value.trim()) {
-            this.classList.remove('error-border');
-          }
-        });
-        field.addEventListener('change', function() {
-          if (this.value.trim()) {
-            this.classList.remove('error-border');
-          }
-        });
-      });
-    });
-  </script>
 </body>
 
 </html>

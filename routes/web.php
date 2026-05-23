@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [AuthController::class, 'index'])->name('index');
@@ -23,3 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
 });
+
+// API Routes for cascading dropdowns
+Route::get('/api/regions', [LocationController::class, 'getRegions']);
+Route::get('/api/provinces', [LocationController::class, 'getProvinces']);
+Route::get('/api/cities', [LocationController::class, 'getCities']);
+Route::get('/api/barangays', [LocationController::class, 'getBarangays']);
