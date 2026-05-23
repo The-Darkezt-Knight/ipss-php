@@ -780,16 +780,13 @@
             </div>
           </div>
           <div class="flex gap-md w-full md:w-auto">
-            <button id="save-for-sync-btn"
-              class="flex-1 md:flex-none px-xl py-md border border-on-primary-container text-on-primary-container font-label-lg rounded-full hover:bg-white/10 transition-colors"
-              type="button">
-              Save for Sync
-            </button>
+
             <button
               class="flex-1 md:flex-none px-xxl py-md bg-primary-fixed-dim text-on-primary-fixed font-bold text-label-lg rounded-full hover:opacity-90 transition-opacity"
               type="submit">
               Submit Form
             </button>
+            
           </div>
         </div>
       </div>

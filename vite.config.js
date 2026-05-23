@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/surveyor/form.js',
                 'resources/js/surveyor/offline-db.js',
                 'resources/js/surveyor/location-prefetch.js',
+                'resources/js/surveyor/surveyor.js',
             ],
             refresh: true,
             fonts: [

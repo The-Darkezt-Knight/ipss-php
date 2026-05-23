@@ -6,8 +6,9 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Sync Status Dashboard | CivicSurvey Portal</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @vite(['resources/css/app.css', 'resources/js/surveyor/form.js', 'resources/js/surveyor/location-prefetch.js'])
+    @vite(['resources/css/app.css', 'resources/js/surveyor/surveyor.js'])
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;display=swap"
@@ -230,12 +231,13 @@
     <main class="md:ml-64 pt-16 min-h-screen bg-surface-bright">
         <div class="max-w-container-max mx-auto p-lg">
             <!-- Breadcrumbs -->
+
             <nav class="flex items-center gap-xs mb-lg text-on-surface-variant">
                 <span class="text-body-sm font-body-sm">Dashboard</span>
                 <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
                 <span class="text-body-sm font-body-sm font-bold text-primary">Sync Status</span>
             </nav>
-
+            
             <header class="mb-xl">
                 <h1 class="font-headline-lg text-headline-lg text-primary mb-xs">Sync Status Dashboard</h1>
                 <p class="text-body-md font-body-md text-on-surface-variant">Manage locally stored records and ensure
@@ -253,7 +255,7 @@
                         <span class="material-symbols-outlined text-primary"
                             data-icon="pending_actions">pending_actions</span>
                     </div>
-                    <div class="text-display-lg font-display-lg text-primary">12</div>
+                    <div id="pending-sync-count" class="text-display-lg font-display-lg text-primary">—</div>
                     <p class="text-body-sm font-body-sm text-on-surface-variant">Records waiting for secure upload</p>
                 </div>
 
@@ -264,10 +266,11 @@
                             Synced Time</span>
                         <span class="material-symbols-outlined text-secondary" data-icon="schedule">schedule</span>
                     </div>
-                    <div class="text-headline-lg font-headline-lg text-primary mt-sm">24m ago</div>
-                    <p class="text-body-sm font-body-sm text-on-surface-variant">Today, Oct 24 • 10:42 AM</p>
+                    <div id="last-synced-time" class="text-headline-lg font-headline-lg text-primary mt-sm">—</div>
+                    <p class="text-body-sm font-body-sm text-on-surface-variant">Most recent queued record</p>
                 </div>
 
+                <!--
                 <div
                     class="bg-surface-container-low p-lg border border-outline-variant/15 rounded-xl flex flex-col gap-sm">
                     <div class="flex justify-between items-start">
@@ -276,14 +279,16 @@
                         <span class="material-symbols-outlined text-green-600"
                             data-icon="check_circle">check_circle</span>
                     </div>
+                    
                     <div class="text-headline-lg font-headline-lg text-primary mt-sm">Optimal</div>
                     <div class="flex items-center gap-xs">
                         <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
                             <div class="h-full bg-green-600 w-[98%]"></div>
                         </div>
                         <span class="text-label-md font-label-md text-on-surface-variant">98%</span>
-                    </div>
+                    </div>  
                 </div>
+                -->
 
             </div>
 
@@ -324,14 +329,10 @@
                         <div class="p-lg border-b border-outline-variant/30 flex justify-between items-center">
                             <h2 class="font-headline-sm text-headline-sm text-primary">Pending Records</h2>
                             <div class="flex gap-sm">
-                                <button
-                                    class="p-sm text-on-surface-variant hover:bg-surface-container rounded-lg border border-outline-variant">
-                                    <span class="material-symbols-outlined text-[18px]"
-                                        data-icon="filter_list">filter_list</span>
-                                </button>
-                                <button
-                                    class="p-sm text-on-surface-variant hover:bg-surface-container rounded-lg border border-outline-variant">
-                                    <span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+                                <button id="sync-all-btn"
+                                    class="px-md py-sm text-on-primary bg-primary hover:opacity-90 rounded-lg font-bold flex items-center gap-xs transition-all">
+                                    <span class="material-symbols-outlined text-[18px]" data-icon="cloud_upload">cloud_upload</span>
+                                    Sync All
                                 </button>
                             </div>
                         </div>
@@ -353,72 +354,18 @@
                                             Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="text-body-sm font-body-sm">
-                                    <tr>
-                                        <td class="px-lg py-md font-bold text-primary">Riverside Community Clinic</td>
-                                        <td class="px-lg py-md">Oct 24, 09:12 AM</td>
-                                        <td class="px-lg py-md">Health Facility Audit</td>
-                                        <td class="px-lg py-md">
-                                            <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
-                                                <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
-                                            </span>
-                                        </td>
-                                        <td class="px-lg py-md text-right flex justify-end gap-sm">
-                                            <button class="text-primary hover:underline font-bold">Sync Now</button>
-                                            <button class="text-on-surface-variant hover:text-primary"><span
-                                                    class="material-symbols-outlined text-[20px]"
-                                                    data-icon="edit">edit</span></button>
+                                <tbody id="pending-surveys-tbody" class="text-body-sm font-body-sm">
+                                    <!-- Empty state row -->
+                                    <tr id="empty-state-row" class="hidden">
+                                        <td colspan="5" class="px-lg py-xxl text-center">
+                                            <div class="flex flex-col items-center gap-md text-on-surface-variant">
+                                                <span class="material-symbols-outlined text-[48px] text-outline" data-icon="cloud_done">cloud_done</span>
+                                                <p class="text-body-md font-bold">All caught up!</p>
+                                                <p class="text-body-sm">No pending surveys to sync. Submit a new survey to see it here.</p>
+                                            </div>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="px-lg py-md font-bold text-primary">Green Valley Waterworks</td>
-                                        <td class="px-lg py-md">Oct 24, 08:45 AM</td>
-                                        <td class="px-lg py-md">Infrastructure Inspection</td>
-                                        <td class="px-lg py-md">
-                                            <span class="flex items-center gap-xs text-error font-bold">
-                                                <span class="material-symbols-outlined text-[16px]"
-                                                    data-icon="error_outline">error_outline</span> Failed
-                                            </span>
-                                        </td>
-                                        <td class="px-lg py-md text-right flex justify-end gap-sm">
-                                            <button class="text-primary hover:underline font-bold">Retry</button>
-                                            <button class="text-on-surface-variant hover:text-primary"><span
-                                                    class="material-symbols-outlined text-[20px]"
-                                                    data-icon="edit">edit</span></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-lg py-md font-bold text-primary">Main St Housing Project</td>
-                                        <td class="px-lg py-md">Oct 23, 04:30 PM</td>
-                                        <td class="px-lg py-md">Demographic Census</td>
-                                        <td class="px-lg py-md">
-                                            <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
-                                                <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
-                                            </span>
-                                        </td>
-                                        <td class="px-lg py-md text-right flex justify-end gap-sm">
-                                            <button class="text-primary hover:underline font-bold">Sync Now</button>
-                                            <button class="text-on-surface-variant hover:text-primary"><span
-                                                    class="material-symbols-outlined text-[20px]"
-                                                    data-icon="edit">edit</span></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-lg py-md font-bold text-primary">Apex Industrial Park</td>
-                                        <td class="px-lg py-md">Oct 23, 02:15 PM</td>
-                                        <td class="px-lg py-md">Compliance Survey</td>
-                                        <td class="px-lg py-md">
-                                            <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
-                                                <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
-                                            </span>
-                                        </td>
-                                        <td class="px-lg py-md text-right flex justify-end gap-sm">
-                                            <button class="text-primary hover:underline font-bold">Sync Now</button>
-                                            <button class="text-on-surface-variant hover:text-primary"><span
-                                                    class="material-symbols-outlined text-[20px]"
-                                                    data-icon="edit">edit</span></button>
-                                        </td>
-                                    </tr>
+                                    <!-- Dynamic rows will be injected here by surveyor.js -->
                                 </tbody>
                             </table>
                         </div>
