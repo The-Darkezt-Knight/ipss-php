@@ -638,7 +638,7 @@
 
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Baranggay</label>
-              <select id="baranggayCode" name="baranggayCode"
+              <select id="barangayCode" name="barangayCode"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
                 <option value="">Select baranggay</option>
               </select>

@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const regionSelect = document.getElementById('regionCode');
     const provinceSelect = document.getElementById('provinceCode');
     const citySelect = document.getElementById('cityMunicipalityCode');
-    const barangaySelect = document.getElementById('baranggayCode');
+    const barangaySelect = document.getElementById('barangayCode');
 
     function resetSelect(select, defaultText) {
         select.innerHTML = `<option value="">${defaultText}</option>`;

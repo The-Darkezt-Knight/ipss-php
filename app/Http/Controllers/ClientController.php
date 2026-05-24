@@ -92,7 +92,7 @@ class ClientController
             "regionCode"                       => "nullable",
             "provinceCode"                     => "nullable",
             "cityMunicipalityCode"             => "nullable",
-            "baranggayCode"                    => "nullable",
+            "barangayCode"                     => "nullable",
             "district"                         => "nullable",
             "zipCode"                          => "nullable",
             "address"                          => "nullable",
