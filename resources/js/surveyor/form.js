@@ -106,6 +106,35 @@ document.addEventListener('DOMContentLoaded', function () {
     // Set initial status
     updateConnectionStatus();
 
+    // ─── Geolocation Helper ─────────────────────────────────────────────────
+    function getCurrentPosition(timeoutMs = 10000) {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                console.warn('[Geo] Geolocation API not available');
+                resolve(null);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    });
+                },
+                (error) => {
+                    console.warn('[Geo] Could not get position:', error.message);
+                    resolve(null);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: timeoutMs,
+                    maximumAge: 60000, // accept a cached position up to 1 min old
+                }
+            );
+        });
+    }
+
     // ─── Collect Form Data ──────────────────────────────────────────────────
     function collectFormData() {
         const formData = new FormData(form);
@@ -182,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Form Validation ────────────────────────────────────────────────────
     function validateForm() {
         let isValid = true;
-        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]), textarea');
+        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([data-auto-geo]), textarea');
 
         fields.forEach(field => {
             if (!field.value.trim()) {
@@ -207,6 +236,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Form Submission Handler ────────────────────────────────────────────
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
+
+        // Auto-capture geolocation BEFORE validation so fields are pre-filled
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+
+        try {
+            const coords = await getCurrentPosition();
+            if (coords) {
+                if (latInput) latInput.value = coords.latitude.toFixed(6);
+                if (lngInput) lngInput.value = coords.longitude.toFixed(6);
+            }
+        } catch (err) {
+            console.warn('[Geo] Geolocation failed, continuing without coordinates:', err);
+        }
 
         if (!validateForm()) return;
 

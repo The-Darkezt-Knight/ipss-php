@@ -680,16 +680,16 @@
             <div class="grid grid-cols-2 gap-sm">
               <div class="flex flex-col gap-xs">
                 <label class="text-label-md font-label-md text-on-surface-variant">Latitude</label>
-                <input id="latitude" name="latitude"
-                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="14.3125"
-                  type="text" />
+                <input id="latitude" name="latitude" data-auto-geo
+                  class="p-md border border-outline rounded-lg bg-surface-container text-body-md text-on-surface-variant cursor-not-allowed" placeholder="Auto-detected on submit"
+                  type="text" readonly />
               </div>
 
               <div class="flex flex-col gap-xs">
                 <label class="text-label-md font-label-md text-on-surface-variant">Longitude</label>
-                <input id="longitude" name="longitude"
-                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="121.0917"
-                  type="text" />
+                <input id="longitude" name="longitude" data-auto-geo
+                  class="p-md border border-outline rounded-lg bg-surface-container text-body-md text-on-surface-variant cursor-not-allowed" placeholder="Auto-detected on submit"
+                  type="text" readonly />
               </div>
 
             </div>
