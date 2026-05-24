@@ -63,4 +63,11 @@ class AuthController extends Controller
         $employee = Auth::user();
         return view('private.form', compact('employee'));
     }
+
+    public function logout(Request $request) {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('index');
+    }
 }

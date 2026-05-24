@@ -162,9 +162,13 @@
                 <span
                     class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-xs rounded-full transition-colors"
                     data-icon="cloud_done">cloud_done</span>
-                <span
-                    class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-xs rounded-full transition-colors"
-                    data-icon="account_circle">account_circle</span>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit"
+                        class="ml-md text-label-md font-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors px-sm py-xs">
+                        Log out
+                    </button>
+                </form>
             </div>
         </div>
     </header>
@@ -175,8 +179,7 @@
         class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40 flex flex-col p-md bg-surface-container-low dark:bg-tertiary-container border-r border-outline-variant dark:border-outline hidden md:flex">
         <div class="flex items-center gap-md mb-xl">
             <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
-                <img alt="Surveyor Profile" class="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdXvc8xlFWiqXcv9KabN2gSVINh_A6Wnw5Uee7XIHCTIKL6KdsqPmEHY8sN0rCgRjoZrkkmLagjr7rR4kYpxam6_XAUtoATxstzME-84HScwEh5eyPlfBcagRyWddAe-SEIiAKVPEPfqAD5z6pWzqLdtpqQyOjpyEqhh7w1yEYaAQ494XJNWEJ5cK5atOKWOGxAJVtI_vwi9_CgklkmW0H5a-TCB5Vjb6xXtd_WA1EsRE87BmWO6XqCtzPoA0KdNsu0ksnAnDJBARX" />
+                <!--<img alt="Surveyor Profile" class="w-full h-full object-cover" src=''/>-->
             </div>
             <div>
                 <p id='surveyor-name' class="text-label-lg font-label-lg text-primary">{{ $employee->first_name }} {{ $employee->last_name }}</p>

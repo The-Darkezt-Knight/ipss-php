@@ -165,7 +165,10 @@
       </nav>
     </div>
     <div class="flex items-center gap-md">
-      <button class="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors">Help Center</button>
+      <form method="POST" action="{{ route('logout') }}" class="inline">
+        @csrf
+        <button type="submit" class="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors">Log out</button>
+      </form>
       <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xs" aria-label="Signed in as SA" title="System Administrator">SA</div>
     </div>
   </div>

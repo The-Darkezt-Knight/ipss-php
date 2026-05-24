@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::get('private/surveyor', [AuthController::class, 'surveyor'])->name('private.surveyor');
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 // API Routes for cascading dropdowns
