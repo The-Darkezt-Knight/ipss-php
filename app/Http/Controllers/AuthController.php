@@ -30,10 +30,18 @@ class AuthController extends Controller
             if($employee->role === 'ROLE_SURVEYOR') {
                 return redirect()->route('private.surveyor');
             }
+
+            return response()->json([
+                'user' => [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'role' => $employee->role,
+                ]
+            ]);
         }
 
         return back()->withErrors([
-            'govt_email' => ''
+            'govt_email' => 'Invalid email or password'
         ])->onlyInput('govt_email');
     }
 
@@ -47,10 +55,12 @@ class AuthController extends Controller
     }
 
     public function surveyor() {
-        return view('private.surveyor');
+        $employee = Auth::user();
+        return view('private.surveyor', compact('employee'));
     }
 
     public function form() {
-        return view('private.form');
+        $employee = Auth::user();
+        return view('private.form', compact('employee'));
     }
 }

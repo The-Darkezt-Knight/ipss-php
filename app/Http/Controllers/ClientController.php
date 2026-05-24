@@ -51,6 +51,7 @@ class ClientController
             "socialMedia"                      => "nullable",
             "website"                          => "nullable",
             "eCommercePlatform"                => "nullable",
+            "surveyed_by"                      => "nullable"
         ]);
 
         $client = Client::create([
@@ -105,6 +106,9 @@ class ClientController
             'address'                          => $validated['address'] ?? null,
             'latitude'                         => $validated['latitude'] ?? null,
             'longitude'                        => $validated['longitude'] ?? null,
+
+            //surveyor
+            'surveyed_by'                      => $validated['surveyed_by'] ?? null,
         ]);
 
         if ($request->expectsJson()) {

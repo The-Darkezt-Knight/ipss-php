@@ -256,6 +256,7 @@
 
     <form method="post" action="{{ route('surveyor.merge') }}" id="survey-form" class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
       @csrf
+      <input type="hidden" name="surveyed_by" id="surveyed_by" value="{{ $employee->id }}" />
       <!-- SECTION 1: Client Classification -->
       <div class="lg:col-span-8 space-y-lg">
         <section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">

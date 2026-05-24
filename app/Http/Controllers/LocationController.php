@@ -21,7 +21,7 @@ class LocationController
         return response()->json(DB::table('province')->where('region_code', $regionCode)->orderBy('name')->get(['code', 'name']));
     }
 
-    public function getCities(Request $request)
+    public function getCitiesMunicipalities(Request $request)
     {
         $provinceCode = $request->query('province_code');
         if (!$provinceCode) {

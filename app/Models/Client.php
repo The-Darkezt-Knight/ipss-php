@@ -50,5 +50,6 @@ class Client extends Model
         "social_media",
         "website",
         "e_commerce_platform",
+        "surveyed_by"
     ];
 }

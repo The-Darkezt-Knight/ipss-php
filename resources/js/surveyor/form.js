@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (err) { /* fall through to network */ }
 
             try {
-                const res = await fetch(`/api/cities?province_code=${provinceCode}`);
+                const res = await fetch(`/api/cities-municipalities?province_code=${provinceCode}`);
                 const data = await res.json();
                 populateSelect(citySelect, data, 'Select city / municipality');
             } catch (err) {

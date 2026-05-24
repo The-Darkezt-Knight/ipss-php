@@ -179,8 +179,8 @@
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdXvc8xlFWiqXcv9KabN2gSVINh_A6Wnw5Uee7XIHCTIKL6KdsqPmEHY8sN0rCgRjoZrkkmLagjr7rR4kYpxam6_XAUtoATxstzME-84HScwEh5eyPlfBcagRyWddAe-SEIiAKVPEPfqAD5z6pWzqLdtpqQyOjpyEqhh7w1yEYaAQ494XJNWEJ5cK5atOKWOGxAJVtI_vwi9_CgklkmW0H5a-TCB5Vjb6xXtd_WA1EsRE87BmWO6XqCtzPoA0KdNsu0ksnAnDJBARX" />
             </div>
             <div>
-                <p class="text-label-lg font-label-lg text-primary">Official Surveyor</p>
-                <p class="text-body-sm font-body-sm text-on-surface-variant">ID: #88291-MSME</p>
+                <p id='surveyor-name' class="text-label-lg font-label-lg text-primary">{{ $employee->first_name }} {{ $employee->last_name }}</p>
+                <p id='surveyor-id' class="text-body-sm font-body-sm text-on-surface-variant">ID: #{{ $employee->govt_id }}</p>
             </div>
         </div>
 
@@ -216,7 +216,7 @@
 
         </nav>
 
-        <a href="{{route('private.form')}}">
+        <a href="{{route('private.form')}}" target="_blank">
             <button
                 id="add-new-survey-button"
                 class="mt-auto w-full py-md bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
