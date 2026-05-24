@@ -234,7 +234,14 @@ export async function getCachedCities(provinceCode) {
  */
 export async function getCachedBarangays(cityCode) {
     const all = await _getCachedLocationType('barangays');
-    return all.filter((b) => b.city_municipality_code === cityCode);
+    return all.filter((b) => {
+        if (b.city_municipality_code === cityCode) return true;
+        if (!b.city_municipality_code) {
+            // Match the first 6 characters (Prov/City/Muni code)
+            return b.code.substring(0, 6) === cityCode.substring(0, 6);
+        }
+        return false;
+    });
 }
 
 /**

@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::get('private/surveyor', [AuthController::class, 'surveyor'])->name('private.surveyor');
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
+    Route::get('surveyor/dashboard', [AuthController::class, 'surveyorDashboard'])->name('private.surveyor-dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
@@ -32,3 +33,4 @@ Route::get('/api/provinces', [LocationController::class, 'getProvinces']);
 Route::get('/api/cities-municipalities', [LocationController::class, 'getCitiesMunicipalities']);
 Route::get('/api/barangays', [LocationController::class, 'getBarangays']);
 Route::get('/api/locations/all', [LocationController::class, 'getAllLocations']);
+Route::get('/api/clients', [ClientController::class, 'getByBarangay']);

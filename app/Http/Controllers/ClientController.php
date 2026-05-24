@@ -5,8 +5,62 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 
+use Illuminate\Support\Facades\DB;
+
 class ClientController
 {
+
+    public function getByBarangay(Request $request)
+    {
+        $barangayCode = $request->query('barangay_code');
+        if (!$barangayCode) {
+            return response()->json([]);
+        }
+
+        $clients = Client::where('barangay', $barangayCode)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Resolve location names from codes
+        $regionCodes = $clients->pluck('region')->unique()->filter();
+        $provinceCodes = $clients->pluck('province')->unique()->filter();
+        $cityCodes = $clients->pluck('city_municipality')->unique()->filter();
+        $barangayCodes = $clients->pluck('barangay')->unique()->filter();
+
+        $regionNames = $regionCodes->isNotEmpty()
+            ? DB::table('region')->whereIn('code', $regionCodes)->pluck('name', 'code')
+            : collect();
+        $provinceNames = $provinceCodes->isNotEmpty()
+            ? DB::table('province')->whereIn('code', $provinceCodes)->pluck('name', 'code')
+            : collect();
+        $cityNames = $cityCodes->isNotEmpty()
+            ? DB::table('city_municipality')->whereIn('code', $cityCodes)->pluck('name', 'code')
+            : collect();
+        $barangayNames = $barangayCodes->isNotEmpty()
+            ? DB::table('barangay')->whereIn('code', $barangayCodes)->pluck('name', 'code')
+            : collect();
+
+        $result = $clients->map(function ($client) use ($regionNames, $provinceNames, $cityNames, $barangayNames) {
+            return [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'first_name' => $client->first_name,
+                'middle_name' => $client->middle_name,
+                'last_name' => $client->last_name,
+                'suffix' => $client->suffix,
+                'category_of_client' => $client->category_of_client,
+                'msme_classification' => $client->msme_classification,
+                'status_of_client' => $client->status_of_client,
+                'created_at' => $client->created_at,
+                'region_name' => $regionNames[$client->region] ?? $client->region,
+                'province_name' => $provinceNames[$client->province] ?? $client->province,
+                'city_name' => $cityNames[$client->city_municipality] ?? $client->city_municipality,
+                'barangay_name' => $barangayNames[$client->barangay] ?? $client->barangay,
+            ];
+        });
+
+        return response()->json($result);
+    }
 
     public function mergeToCentralDatabase(Request $request) {
 

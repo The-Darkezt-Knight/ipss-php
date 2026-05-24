@@ -64,6 +64,11 @@ class AuthController extends Controller
         return view('private.form', compact('employee'));
     }
 
+    public function surveyorDashboard() {
+        $employee = Auth::user();
+        return view('private.surveyor-dashboard', compact('employee'));
+    }
+
     public function logout(Request $request) {
         Auth::logout();
         $request->session()->invalidate();

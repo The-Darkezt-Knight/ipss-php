@@ -396,7 +396,63 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    loadRegions();
+    async function initializeLocations() {
+        await loadRegions();
+
+        const params = new URLSearchParams(window.location.search);
+        const pRegion = params.get('regionCode');
+        const pProvince = params.get('provinceCode');
+        const pCity = params.get('cityMunicipalityCode');
+        const pBarangay = params.get('baranggayCode');
+
+        if (pRegion) {
+            regionSelect.value = pRegion;
+            regionSelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+            regionSelect.tabIndex = -1;
+            
+            try {
+                let cached = await getCachedProvinces(pRegion);
+                if (!cached || cached.length === 0) {
+                    const res = await fetch(`/api/provinces?region_code=${pRegion}`);
+                    cached = await res.json();
+                }
+                populateSelect(provinceSelect, cached, 'Select province');
+                if (pProvince) {
+                    provinceSelect.value = pProvince;
+                    provinceSelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+                    provinceSelect.tabIndex = -1;
+                    
+                    let cachedCity = await getCachedCities(pProvince);
+                    if (!cachedCity || cachedCity.length === 0) {
+                        const res = await fetch(`/api/cities-municipalities?province_code=${pProvince}`);
+                        cachedCity = await res.json();
+                    }
+                    populateSelect(citySelect, cachedCity, 'Select city / municipality');
+                    if (pCity) {
+                        citySelect.value = pCity;
+                        citySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+                        citySelect.tabIndex = -1;
+                        
+                        let cachedBrgy = await getCachedBarangays(pCity);
+                        if (!cachedBrgy || cachedBrgy.length === 0) {
+                            const res = await fetch(`/api/barangays?city_municipality_code=${pCity}`);
+                            cachedBrgy = await res.json();
+                        }
+                        populateSelect(barangaySelect, cachedBrgy, 'Select baranggay');
+                        if (pBarangay) {
+                            barangaySelect.value = pBarangay;
+                            barangaySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+                            barangaySelect.tabIndex = -1;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error prefilling locations:', err);
+            }
+        }
+    }
+
+    initializeLocations();
 
     regionSelect.addEventListener('change', async function () {
         const regionCode = this.value;

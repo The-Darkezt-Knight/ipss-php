@@ -148,9 +148,7 @@
             <div class="hidden md:flex gap-md">
                 <nav class="flex items-center space-x-md">
                     <a class="text-label-md font-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors px-sm py-xs"
-                        href="#">Dashboard</a>
-                    <a class="text-label-md font-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors px-sm py-xs"
-                        href="#">Active Surveys</a>
+                        href="{{ route('private.surveyor-dashboard') }}">Dashboard</a>
                     <a class="text-label-md font-label-md text-primary dark:text-primary-fixed-dim border-b-2 border-primary px-sm py-xs"
                         href="#">Sync History</a>
                 </nav>
@@ -159,9 +157,6 @@
                 <span
                     class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-xs rounded-full transition-colors"
                     data-icon="sync">sync</span>
-                <span
-                    class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-xs rounded-full transition-colors"
-                    data-icon="cloud_done">cloud_done</span>
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
                     <button type="submit"
@@ -189,7 +184,7 @@
 
         <nav class="flex-1 flex flex-col gap-xs">
             <a class="flex items-center gap-md p-md text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group"
-                href="#">
+                href="{{ route('private.surveyor-dashboard') }}">
                 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
                 <span class="text-label-lg font-label-lg">Dashboard</span>
             </a>
