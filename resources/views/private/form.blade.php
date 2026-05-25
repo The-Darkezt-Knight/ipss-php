@@ -605,70 +605,64 @@
 
         </section>
         <!-- SECTION 6: Location -->
-        <section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+        <section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant"
+          data-district-code="{{ $employee->district_code ?? '' }}">
           <div class="flex items-center gap-sm mb-lg">
             <span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
             <h2 class="text-headline-sm font-headline-sm text-primary">6. Location</h2>
           </div>
 
           <div class="flex flex-col gap-md">
-            <div class="flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Region</label>
-              <select id="regionCode" name="regionCode"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="">Select region</option>
-              </select>
+            <!-- Jurisdiction Badge (read-only display) -->
+            <div class="bg-primary-fixed/20 border border-primary-fixed-dim/30 rounded-lg p-md">
+              <p class="text-label-md font-label-md text-primary mb-sm flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[16px]">shield_person</span>
+                Assigned Jurisdiction
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-sm text-body-sm">
+                <div>
+                  <span class="text-on-surface-variant text-label-md">Region</span>
+                  <p class="font-semibold text-on-surface">{{ $employee->region ?? '—' }}</p>
+                </div>
+                <div>
+                  <span class="text-on-surface-variant text-label-md">Province</span>
+                  <p class="font-semibold text-on-surface">{{ $employee->province ?? '—' }}</p>
+                </div>
+                <div>
+                  <span class="text-on-surface-variant text-label-md">District</span>
+                  <p class="font-semibold text-on-surface">{{ $employee->district ?? '—' }}</p>
+                </div>
+              </div>
             </div>
 
-            <div class="flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Province</label>
-              <select id="provinceCode" name="provinceCode"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="">Select province</option>
-              </select>
-            </div>
+            <!-- Hidden inputs for Region, Province, District (auto-filled from profile) -->
+            <input type="hidden" id="regionCode" name="regionCode" value="{{ $employee->region ?? '' }}" />
+            <input type="hidden" id="provinceCode" name="provinceCode" value="{{ $employee->province ?? '' }}" />
+            <input type="hidden" id="district" name="district" value="{{ $employee->district ?? '' }}" />
 
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">City / Municipality</label>
               <select id="cityMunicipalityCode" name="cityMunicipalityCode"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="">Select city / municipality</option>
+                <option value="">Loading cities…</option>
               </select>
             </div>
 
             <div class="flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Baranggay</label>
+              <label class="text-label-md font-label-md text-on-surface-variant">Barangay</label>
               <select id="barangayCode" name="barangayCode"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="">Select baranggay</option>
+                <option value="">Select barangay</option>
               </select>
             </div>
 
             <div class="grid grid-cols-2 gap-sm">
-              <div class="flex flex-col gap-xs">
-                <label class="text-label-md font-label-md text-on-surface-variant">District</label>
-                <select id="district" name="district"
-                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                  <option value="">Select District</option>
-                  <option value="1st">1st</option>
-                  <option value="2nd">2nd</option>
-                  <option value="3rd">3rd</option>
-                  <option value="4th">4th</option>
-                  <option value="5th">5th</option>
-                  <option value="6th">6th</option>
-                  <option value="7th">7th</option>
-                  <option value="8th">8th</option>
-                  <option value="Lone District">Lone District</option>
-                </select>
-              </div>
-
               <div class="flex flex-col gap-xs">
                 <label class="text-label-md font-label-md text-on-surface-variant">Zip Code</label>
                 <input id="zipCode" name="zipCode"
                   class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="4026"
                   type="text" />
               </div>
-
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Full Address</label>

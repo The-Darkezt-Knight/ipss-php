@@ -3,12 +3,12 @@
  *
  * Lightweight IndexedDB wrapper for:
  * 1. Storing survey submissions when offline (synced when back online)
- * 2. Pre-caching all location data (regions → barangays) so cascading
- *    dropdowns work fully offline
+ * 2. Pre-caching location data scoped to the surveyor's assigned district
+ *    so cascading dropdowns work fully offline
  */
 
 const DB_NAME = 'ipss-offline';
-const DB_VERSION = 2; // Bumped to add 'locations' store
+const DB_VERSION = 3; // Bumped to v3 for district-scoped locations
 const SURVEYS_STORE = 'pendingSurveys';
 const LOCATIONS_STORE = 'locations';
 
@@ -29,8 +29,8 @@ export function openDB() {
                 store.createIndex('timestamp', 'timestamp', { unique: false });
             }
 
-            // Location cache store (new in v2)
-            // Stores 4 keys: 'regions', 'provinces', 'cities', 'barangays'
+            // Location cache store (v2, updated in v3 for district-scoped data)
+            // Stores keys: 'cities', 'barangays' (scoped to district)
             if (!db.objectStoreNames.contains(LOCATIONS_STORE)) {
                 db.createObjectStore(LOCATIONS_STORE, { keyPath: 'type' });
             }
@@ -138,16 +138,17 @@ export async function getPendingCount() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Location Cache Functions
+// Location Cache Functions (District-Scoped)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Fetches ALL location data from /api/locations/all and stores it in IndexedDB.
+ * Fetches cities and barangays for a specific district and stores them in IndexedDB.
  * Call this once when the surveyor logs in / lands on the dashboard.
- * @returns {Promise<{regions: number, provinces: number, cities: number, barangays: number}>}
+ * @param {string} districtCode - The district code (e.g. "0645-D1")
+ * @returns {Promise<{cities: number, barangays: number}>}
  */
-export async function prefetchLocations() {
-    const response = await fetch('/api/locations/all');
+export async function prefetchLocationsByDistrict(districtCode) {
+    const response = await fetch(`/api/locations/by-district?district_code=${districtCode}`);
     if (!response.ok) {
         throw new Error(`Failed to fetch locations: ${response.status}`);
     }
@@ -160,16 +161,12 @@ export async function prefetchLocations() {
         const store = tx.objectStore(LOCATIONS_STORE);
 
         // Store each category as a separate record keyed by 'type'
-        store.put({ type: 'regions',    items: data.regions,    cachedAt: new Date().toISOString() });
-        store.put({ type: 'provinces',  items: data.provinces,  cachedAt: new Date().toISOString() });
-        store.put({ type: 'cities',     items: data.cities,     cachedAt: new Date().toISOString() });
-        store.put({ type: 'barangays',  items: data.barangays,  cachedAt: new Date().toISOString() });
+        store.put({ type: 'cities',     items: data.cities,     districtCode, cachedAt: new Date().toISOString() });
+        store.put({ type: 'barangays',  items: data.barangays,  districtCode, cachedAt: new Date().toISOString() });
 
         tx.oncomplete = () => {
             db.close();
             resolve({
-                regions: data.regions.length,
-                provinces: data.provinces.length,
                 cities: data.cities.length,
                 barangays: data.barangays.length,
             });
@@ -192,7 +189,7 @@ export async function hasLocationCache() {
         const store = tx.objectStore(LOCATIONS_STORE);
         const request = store.count();
 
-        request.onsuccess = () => resolve(request.result >= 4);
+        request.onsuccess = () => resolve(request.result >= 2); // cities + barangays
         request.onerror = () => reject(request.error);
 
         tx.oncomplete = () => db.close();
@@ -200,31 +197,16 @@ export async function hasLocationCache() {
 }
 
 /**
- * Gets all cached regions.
+ * Gets cached cities filtered by district code.
+ * Since the cache is already scoped to the surveyor's district,
+ * this returns all cached cities (optionally filtered further).
+ * @param {string} districtCode
  * @returns {Promise<Array<{code: string, name: string}>>}
  */
-export async function getCachedRegions() {
-    return _getCachedLocationType('regions');
-}
-
-/**
- * Gets cached provinces filtered by region code.
- * @param {string} regionCode
- * @returns {Promise<Array<{code: string, name: string}>>}
- */
-export async function getCachedProvinces(regionCode) {
-    const all = await _getCachedLocationType('provinces');
-    return all.filter((p) => p.region_code === regionCode);
-}
-
-/**
- * Gets cached cities filtered by province code.
- * @param {string} provinceCode
- * @returns {Promise<Array<{code: string, name: string}>>}
- */
-export async function getCachedCities(provinceCode) {
+export async function getCachedCitiesByDistrict(districtCode) {
     const all = await _getCachedLocationType('cities');
-    return all.filter((c) => c.province_code === provinceCode);
+    // Cache is already district-scoped, return all
+    return all;
 }
 
 /**
@@ -246,7 +228,7 @@ export async function getCachedBarangays(cityCode) {
 
 /**
  * Internal helper — reads a location type from IndexedDB.
- * @param {string} type - 'regions' | 'provinces' | 'cities' | 'barangays'
+ * @param {string} type - 'cities' | 'barangays'
  * @returns {Promise<Array>}
  */
 async function _getCachedLocationType(type) {

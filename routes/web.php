@@ -30,7 +30,9 @@ Route::middleware('auth')->group(function () {
 // API Routes for cascading dropdowns
 Route::get('/api/regions', [LocationController::class, 'getRegions']);
 Route::get('/api/provinces', [LocationController::class, 'getProvinces']);
+Route::get('/api/districts', [LocationController::class, 'getDistricts']);
 Route::get('/api/cities-municipalities', [LocationController::class, 'getCitiesMunicipalities']);
 Route::get('/api/barangays', [LocationController::class, 'getBarangays']);
 Route::get('/api/locations/all', [LocationController::class, 'getAllLocations']);
+Route::get('/api/locations/by-district', [LocationController::class, 'getLocationsByDistrict']);
 Route::get('/api/clients', [ClientController::class, 'getByBarangay']);

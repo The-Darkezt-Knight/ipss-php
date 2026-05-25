@@ -286,35 +286,30 @@
 
             <!-- Main Content Area -->
             <main class="ml-64 flex-1 overflow-y-auto p-lg">
+                <!-- Jurisdiction Badge -->
                 <section
-                    class="bg-surface-container-low border border-outline-variant rounded-xl p-lg mb-lg shadow-sm"
+                    class="bg-primary-fixed/10 border border-primary-fixed-dim/30 rounded-xl p-lg mb-lg shadow-sm"
+                    data-district-code="{{ $employee->district_code ?? '' }}"
                 >
+                    <div class="flex items-center gap-sm mb-md">
+                        <span class="material-symbols-outlined text-primary">shield_person</span>
+                        <span class="text-label-lg font-label-lg text-primary">Assigned Jurisdiction</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-lg mb-lg">
+                        <div>
+                            <p class="text-label-md font-label-md text-on-surface-variant">Region</p>
+                            <p class="text-body-md font-semibold text-on-surface">{{ $employee->region ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-label-md font-label-md text-on-surface-variant">Province</p>
+                            <p class="text-body-md font-semibold text-on-surface">{{ $employee->province ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-label-md font-label-md text-on-surface-variant">District</p>
+                            <p class="text-body-md font-semibold text-on-surface">{{ $employee->district ?? '—' }}</p>
+                        </div>
+                    </div>
                     <div class="flex flex-wrap items-end gap-lg">
-                        <div class="flex-1 min-w-[200px]">
-                            <label
-                                class="block text-label-md font-label-md text-on-surface-variant mb-xs"
-                                >Region</label
-                            >
-                            <select
-                                id="geo-region"
-                                class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
-                            >
-                                <option value="">Select Region</option>
-                            </select>
-                        </div>
-                        <div class="flex-1 min-w-[200px]">
-                            <label
-                                class="block text-label-md font-label-md text-on-surface-variant mb-xs"
-                                >Province</label
-                            >
-                            <select
-                                id="geo-province"
-                                class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
-                                disabled
-                            >
-                                <option value="">Select Province</option>
-                            </select>
-                        </div>
                         <div class="flex-1 min-w-[200px]">
                             <label
                                 class="block text-label-md font-label-md text-on-surface-variant mb-xs"
@@ -323,9 +318,8 @@
                             <select
                                 id="geo-city"
                                 class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
-                                disabled
                             >
-                                <option value="">Select City / Municipality</option>
+                                <option value="">Loading cities…</option>
                             </select>
                         </div>
                         <div class="flex-1 min-w-[200px]">
@@ -557,8 +551,6 @@
         ></div>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const regionSelect = document.getElementById('geo-region');
-                const provinceSelect = document.getElementById('geo-province');
                 const citySelect = document.getElementById('geo-city');
                 const barangaySelect = document.getElementById('geo-barangay');
                 const tbody = document.getElementById('clients-tbody');
@@ -567,6 +559,10 @@
                 const entryCount = document.getElementById('table-entry-count');
                 const addLink = document.getElementById('add-new-survey-link');
                 const baseFormUrl = addLink ? addLink.getAttribute('href') : '';
+
+                // Read district code from the jurisdiction section's data attribute
+                const jurisdictionSection = document.querySelector('[data-district-code]');
+                const districtCode = jurisdictionSection ? jurisdictionSection.dataset.districtCode : '';
 
                 // ── Helpers ──────────────────────────────────────────────
                 function resetSelect(select, defaultText) {
@@ -617,7 +613,7 @@
                                 <div class="flex flex-col items-center gap-md text-on-surface-variant">
                                     <span class="material-symbols-outlined text-[48px] text-outline">location_on</span>
                                     <p class="text-body-md font-bold">Select a location</p>
-                                    <p class="text-body-sm">Choose a Region, Province, City, and Barangay above to load registered clients.</p>
+                                    <p class="text-body-sm">Choose a City and Barangay above to load registered clients.</p>
                                 </div>
                             </td>
                         </tr>`;
@@ -653,8 +649,6 @@
                 function updateAddLink() {
                     if (!addLink) return;
                     const params = new URLSearchParams();
-                    if (regionSelect.value) params.set('regionCode', regionSelect.value);
-                    if (provinceSelect.value) params.set('provinceCode', provinceSelect.value);
                     if (citySelect.value) params.set('cityMunicipalityCode', citySelect.value);
                     if (barangaySelect.value) params.set('baranggayCode', barangaySelect.value);
                     const qs = params.toString();
@@ -721,58 +715,23 @@
                     }
                 }
 
-                // ── Cascading Dropdowns ──────────────────────────────
-                async function loadRegions() {
+                // ── Load Cities by District ──────────────────────────
+                async function loadCitiesByDistrict() {
+                    if (!districtCode) {
+                        citySelect.innerHTML = '<option value="">No district assigned</option>';
+                        return;
+                    }
                     try {
-                        const res = await fetch('/api/regions');
+                        const res = await fetch(`/api/cities-municipalities?district_code=${districtCode}`);
                         const data = await res.json();
-                        populateSelect(regionSelect, data, 'Select Region');
+                        populateSelect(citySelect, data, 'Select City / Municipality');
                     } catch (err) {
-                        console.error('Error loading regions:', err);
+                        console.error('Error loading cities:', err);
+                        citySelect.innerHTML = '<option value="">Failed to load</option>';
                     }
                 }
 
-                regionSelect.addEventListener('change', async function () {
-                    resetSelect(provinceSelect, 'Select Province');
-                    resetSelect(citySelect, 'Select City / Municipality');
-                    resetSelect(barangaySelect, 'Select Barangay');
-                    heading.textContent = 'Registered Clients';
-                    totalCount.textContent = '—';
-                    entryCount.textContent = '';
-                    showInitial();
-                    updateAddLink();
-
-                    if (this.value) {
-                        try {
-                            const res = await fetch(`/api/provinces?region_code=${this.value}`);
-                            const data = await res.json();
-                            populateSelect(provinceSelect, data, 'Select Province');
-                        } catch (err) {
-                            console.error('Error loading provinces:', err);
-                        }
-                    }
-                });
-
-                provinceSelect.addEventListener('change', async function () {
-                    resetSelect(citySelect, 'Select City / Municipality');
-                    resetSelect(barangaySelect, 'Select Barangay');
-                    heading.textContent = 'Registered Clients';
-                    totalCount.textContent = '—';
-                    entryCount.textContent = '';
-                    showInitial();
-                    updateAddLink();
-
-                    if (this.value) {
-                        try {
-                            const res = await fetch(`/api/cities-municipalities?province_code=${this.value}`);
-                            const data = await res.json();
-                            populateSelect(citySelect, data, 'Select City / Municipality');
-                        } catch (err) {
-                            console.error('Error loading cities:', err);
-                        }
-                    }
-                });
-
+                // ── Cascading: City → Barangay ──────────────────────
                 citySelect.addEventListener('change', async function () {
                     resetSelect(barangaySelect, 'Select Barangay');
                     heading.textContent = 'Registered Clients';
@@ -805,7 +764,7 @@
                 });
 
                 // ── Init ─────────────────────────────────────────────
-                loadRegions();
+                loadCitiesByDistrict();
             });
         </script>
     </body>

@@ -20,6 +20,8 @@ class Employee extends Authenticatable
         'city_municipality',
         'province',
         'region',
+        'district',
+        'district_code',
         'sex',
         'password',
         'is_active',

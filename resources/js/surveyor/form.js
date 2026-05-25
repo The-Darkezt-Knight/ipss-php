@@ -1,7 +1,7 @@
 import {
     saveSurvey, getAllPendingSurveys, deleteSurvey, getPendingCount,
-    getCachedRegions, getCachedProvinces, getCachedCities, getCachedBarangays,
-    hasLocationCache, prefetchLocations
+    getCachedCitiesByDistrict, getCachedBarangays,
+    hasLocationCache, prefetchLocationsByDistrict
 } from './offline-db.js';
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -346,11 +346,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ─── Cascading Location Dropdowns (IndexedDB-first) ─────────────────────
-    const regionSelect = document.getElementById('regionCode');
-    const provinceSelect = document.getElementById('provinceCode');
+    // ─── District-Scoped Location Dropdowns ─────────────────────────────────
     const citySelect = document.getElementById('cityMunicipalityCode');
     const barangaySelect = document.getElementById('barangayCode');
+
+    // Read the surveyor's assigned district code from the section data attribute
+    const locationSection = document.querySelector('[data-district-code]');
+    const districtCode = locationSection ? locationSection.dataset.districtCode : '';
 
     function resetSelect(select, defaultText) {
         select.innerHTML = `<option value="">${defaultText}</option>`;
@@ -358,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function populateSelect(select, data, defaultText) {
-        resetSelect(select, defaultText);
+        select.innerHTML = `<option value="">${defaultText}</option>`;
         select.disabled = false;
         data.forEach(item => {
             const option = document.createElement('option');
@@ -369,17 +371,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Initial state
-    resetSelect(provinceSelect, 'Select province');
-    resetSelect(citySelect, 'Select city / municipality');
-    resetSelect(barangaySelect, 'Select baranggay');
+    resetSelect(barangaySelect, 'Select barangay');
 
-    // Load regions — try IndexedDB cache first, then network fallback
-    async function loadRegions() {
+    // Load cities for the surveyor's district — try IndexedDB cache first, then network
+    async function loadCitiesByDistrict() {
+        if (!districtCode) {
+            console.warn('[Locations] No district_code assigned to this surveyor');
+            resetSelect(citySelect, 'No district assigned');
+            return;
+        }
+
         try {
-            const cached = await getCachedRegions();
-            if (cached.length > 0) {
-                populateSelect(regionSelect, cached, 'Select region');
-                console.log('[Locations] Loaded regions from IndexedDB cache');
+            const cached = await getCachedCitiesByDistrict(districtCode);
+            if (cached && cached.length > 0) {
+                populateSelect(citySelect, cached, 'Select city / municipality');
+                console.log('[Locations] Loaded cities from IndexedDB cache');
                 return;
             }
         } catch (err) {
@@ -388,63 +394,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Fallback: fetch from network
         try {
-            const res = await fetch('/api/regions');
+            const res = await fetch(`/api/cities-municipalities?district_code=${districtCode}`);
             const data = await res.json();
-            populateSelect(regionSelect, data, 'Select region');
+            populateSelect(citySelect, data, 'Select city / municipality');
         } catch (err) {
-            console.error('Error fetching regions:', err);
+            console.error('Error fetching cities:', err);
+            resetSelect(citySelect, 'Failed to load cities');
         }
     }
 
     async function initializeLocations() {
-        await loadRegions();
+        await loadCitiesByDistrict();
 
+        // Check for pre-filled values from URL query params
         const params = new URLSearchParams(window.location.search);
-        const pRegion = params.get('regionCode');
-        const pProvince = params.get('provinceCode');
         const pCity = params.get('cityMunicipalityCode');
         const pBarangay = params.get('baranggayCode');
 
-        if (pRegion) {
-            regionSelect.value = pRegion;
-            regionSelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
-            regionSelect.tabIndex = -1;
-            
+        if (pCity) {
+            citySelect.value = pCity;
+            citySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+            citySelect.tabIndex = -1;
+
             try {
-                let cached = await getCachedProvinces(pRegion);
-                if (!cached || cached.length === 0) {
-                    const res = await fetch(`/api/provinces?region_code=${pRegion}`);
-                    cached = await res.json();
+                let cachedBrgy = await getCachedBarangays(pCity);
+                if (!cachedBrgy || cachedBrgy.length === 0) {
+                    const res = await fetch(`/api/barangays?city_municipality_code=${pCity}`);
+                    cachedBrgy = await res.json();
                 }
-                populateSelect(provinceSelect, cached, 'Select province');
-                if (pProvince) {
-                    provinceSelect.value = pProvince;
-                    provinceSelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
-                    provinceSelect.tabIndex = -1;
-                    
-                    let cachedCity = await getCachedCities(pProvince);
-                    if (!cachedCity || cachedCity.length === 0) {
-                        const res = await fetch(`/api/cities-municipalities?province_code=${pProvince}`);
-                        cachedCity = await res.json();
-                    }
-                    populateSelect(citySelect, cachedCity, 'Select city / municipality');
-                    if (pCity) {
-                        citySelect.value = pCity;
-                        citySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
-                        citySelect.tabIndex = -1;
-                        
-                        let cachedBrgy = await getCachedBarangays(pCity);
-                        if (!cachedBrgy || cachedBrgy.length === 0) {
-                            const res = await fetch(`/api/barangays?city_municipality_code=${pCity}`);
-                            cachedBrgy = await res.json();
-                        }
-                        populateSelect(barangaySelect, cachedBrgy, 'Select baranggay');
-                        if (pBarangay) {
-                            barangaySelect.value = pBarangay;
-                            barangaySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
-                            barangaySelect.tabIndex = -1;
-                        }
-                    }
+                populateSelect(barangaySelect, cachedBrgy, 'Select barangay');
+                if (pBarangay) {
+                    barangaySelect.value = pBarangay;
+                    barangaySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
+                    barangaySelect.tabIndex = -1;
                 }
             } catch (err) {
                 console.error('Error prefilling locations:', err);
@@ -454,64 +436,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initializeLocations();
 
-    regionSelect.addEventListener('change', async function () {
-        const regionCode = this.value;
-        resetSelect(provinceSelect, 'Select province');
-        resetSelect(citySelect, 'Select city / municipality');
-        resetSelect(barangaySelect, 'Select baranggay');
-
-        if (regionCode) {
-            try {
-                const cached = await getCachedProvinces(regionCode);
-                if (cached.length > 0) {
-                    populateSelect(provinceSelect, cached, 'Select province');
-                    return;
-                }
-            } catch (err) { /* fall through to network */ }
-
-            try {
-                const res = await fetch(`/api/provinces?region_code=${regionCode}`);
-                const data = await res.json();
-                populateSelect(provinceSelect, data, 'Select province');
-            } catch (err) {
-                console.error('Error fetching provinces:', err);
-            }
-        }
-    });
-
-    provinceSelect.addEventListener('change', async function () {
-        const provinceCode = this.value;
-        resetSelect(citySelect, 'Select city / municipality');
-        resetSelect(barangaySelect, 'Select baranggay');
-
-        if (provinceCode) {
-            try {
-                const cached = await getCachedCities(provinceCode);
-                if (cached.length > 0) {
-                    populateSelect(citySelect, cached, 'Select city / municipality');
-                    return;
-                }
-            } catch (err) { /* fall through to network */ }
-
-            try {
-                const res = await fetch(`/api/cities-municipalities?province_code=${provinceCode}`);
-                const data = await res.json();
-                populateSelect(citySelect, data, 'Select city / municipality');
-            } catch (err) {
-                console.error('Error fetching cities:', err);
-            }
-        }
-    });
-
     citySelect.addEventListener('change', async function () {
         const cityCode = this.value;
-        resetSelect(barangaySelect, 'Select baranggay');
+        resetSelect(barangaySelect, 'Select barangay');
 
         if (cityCode) {
             try {
                 const cached = await getCachedBarangays(cityCode);
                 if (cached.length > 0) {
-                    populateSelect(barangaySelect, cached, 'Select baranggay');
+                    populateSelect(barangaySelect, cached, 'Select barangay');
                     return;
                 }
             } catch (err) { /* fall through to network */ }
@@ -519,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const res = await fetch(`/api/barangays?city_municipality_code=${cityCode}`);
                 const data = await res.json();
-                populateSelect(barangaySelect, data, 'Select baranggay');
+                populateSelect(barangaySelect, data, 'Select barangay');
             } catch (err) {
                 console.error('Error fetching barangays:', err);
             }
@@ -532,14 +465,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (navigator.onLine) {
         syncPendingSurveys();
 
-        // If location cache doesn't exist yet, pre-fetch it now
-        hasLocationCache().then((cached) => {
-            if (!cached) {
-                console.log('[Locations] No cache found — prefetching all locations...');
-                prefetchLocations()
-                    .then((counts) => console.log('[Locations] Prefetched:', counts))
-                    .catch((err) => console.error('[Locations] Prefetch failed:', err));
-            }
-        });
+        // If location cache doesn't exist yet, pre-fetch it now (scoped to district)
+        if (districtCode) {
+            hasLocationCache().then((cached) => {
+                if (!cached) {
+                    console.log('[Locations] No cache found — prefetching district locations...');
+                    prefetchLocationsByDistrict(districtCode)
+                        .then((counts) => console.log('[Locations] Prefetched:', counts))
+                        .catch((err) => console.error('[Locations] Prefetch failed:', err));
+                }
+            });
+        }
     }
 });
