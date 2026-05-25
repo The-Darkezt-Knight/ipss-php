@@ -514,21 +514,7 @@
                 <option value="Female">Female</option>
               </select>
             </div>
-            <div class="md:col-span-2 flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Birthdate</label>
-              <input id="birthdate" name="birthdate"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" type="date" />
-            </div>
-            <div class="md:col-span-1 flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Birth Year</label>
-              <select id="birthYear" name="birthYear"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md">
-                <option value="">Select Year</option>
-                @for($i = date('Y'); $i >= date('Y') - 124; $i--)
-                  <option value="{{ $i }}">{{ $i }}</option>
-                @endfor
-              </select>
-            </div>
+            
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Citizenship</label>
               <select id="citizenship" name="citizenship"
@@ -560,16 +546,7 @@
           </div>
 
           <div class="flex flex-col gap-lg">
-            <div class="flex flex-col gap-xs">
-              <label class="text-label-md font-label-md text-on-surface-variant">Client ID</label>
-              <div class="relative">
-                <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline"
-                  data-icon="badge">badge</span>
-                <input id="clientId" name="id"
-                  class="w-full pl-xl p-md border border-outline rounded-lg bg-surface-bright text-body-md"
-                  placeholder="Client ID" type="text" />
-              </div>
-            </div>
+
 
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Old Client ID</label>
@@ -660,8 +637,8 @@
               <div class="flex flex-col gap-xs">
                 <label class="text-label-md font-label-md text-on-surface-variant">Zip Code</label>
                 <input id="zipCode" name="zipCode"
-                  class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="4026"
-                  type="text" />
+                  class="p-md border border-outline rounded-lg bg-surface-container text-body-md text-on-surface-variant cursor-not-allowed" placeholder="6100"
+                  type="text" value="6100" readonly data-optional />
               </div>
             </div>
             <div class="flex flex-col gap-xs">

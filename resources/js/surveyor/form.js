@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Form Validation ────────────────────────────────────────────────────
     function validateForm() {
         let isValid = true;
-        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([data-auto-geo]), textarea');
+        const fields = form.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([data-auto-geo]):not([data-optional]), textarea:not([data-optional])');
 
         fields.forEach(field => {
             if (!field.value.trim()) {
