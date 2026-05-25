@@ -15,6 +15,12 @@
             href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
             rel="stylesheet"
         />
+        <link
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            rel="stylesheet"
+            integrity="sha256-p4NxAoJBhIINfQVTK9zZ5lCzMfX20S5Kj3b5h3A0m0M="
+            crossorigin=""
+        />
         <style>
             .material-symbols-outlined {
                 font-variation-settings:
@@ -397,6 +403,17 @@
                     </div>
                     -->
                 </div>
+                <!-- All Clients Map -->
+                <section class="bg-surface border border-outline-variant rounded-lg overflow-hidden mb-lg shadow-sm">
+                    <div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+                        <div>
+                            <h2 class="text-headline-sm font-headline-sm text-primary">All Assigned Clients Map</h2>
+                            <p class="text-body-sm text-on-surface-variant">Pins show clients with saved latitude and longitude.</p>
+                        </div>
+                        <span class="material-symbols-outlined text-primary">map</span>
+                    </div>
+                    <div id="surveyor-clients-map" class="h-[420px] w-full"></div>
+                </section>
                 <!-- Filter and Search Bar -->
                 <section
                     class="bg-surface border border-outline-variant rounded-lg p-lg mb-lg shadow-sm"
@@ -549,7 +566,14 @@
                 background-size: 40px 40px;
             "
         ></div>
+        <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""
+        ></script>
         <script>
+            const surveyorClientMapPoints = @json($clientMapPoints ?? []);
+
             document.addEventListener('DOMContentLoaded', function () {
                 const citySelect = document.getElementById('geo-city');
                 const barangaySelect = document.getElementById('geo-barangay');
@@ -559,10 +583,57 @@
                 const entryCount = document.getElementById('table-entry-count');
                 const addLink = document.getElementById('add-new-survey-link');
                 const baseFormUrl = addLink ? addLink.getAttribute('href') : '';
+                const dashboardMapEl = document.getElementById('surveyor-clients-map');
 
                 // Read district code from the jurisdiction section's data attribute
                 const jurisdictionSection = document.querySelector('[data-district-code]');
                 const districtCode = jurisdictionSection ? jurisdictionSection.dataset.districtCode : '';
+
+                function escapeHtml(value) {
+                    return String(value ?? '').replace(/[&<>"']/g, character => ({
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;',
+                    }[character]));
+                }
+
+                function initializeDashboardMap() {
+                    if (!dashboardMapEl || typeof L === 'undefined') return;
+
+                    const defaultCenter = [10.6765, 122.9509];
+                    const map = L.map(dashboardMapEl).setView(defaultCenter, 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    }).addTo(map);
+
+                    const markers = [];
+                    surveyorClientMapPoints.forEach(client => {
+                        if (!Number.isFinite(client.latitude) || !Number.isFinite(client.longitude)) return;
+
+                        const marker = L.marker([client.latitude, client.longitude]).addTo(map);
+                        marker.bindPopup(`
+                            <div class="text-sm">
+                                <strong>${escapeHtml(client.name)}</strong><br>
+                                <span>${escapeHtml(client.client_id || 'No client ID')}</span>
+                            </div>
+                        `);
+                        markers.push(marker);
+                    });
+
+                    if (markers.length > 0) {
+                        const group = L.featureGroup(markers);
+                        map.fitBounds(group.getBounds(), { padding: [32, 32], maxZoom: 16 });
+                    }
+
+                    requestAnimationFrame(() => {
+                        map.invalidateSize();
+                    });
+                }
+
+                initializeDashboardMap();
 
                 // ── Helpers ──────────────────────────────────────────────
                 function resetSelect(select, defaultText) {
@@ -704,7 +775,7 @@
                                 </td>
                                 <td class="px-lg py-lg text-right">
                                     <div class="flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button class="px-md py-xs text-primary border border-primary rounded text-label-md font-bold hover:bg-primary hover:text-on-primary transition-all">View</button>
+                                        <a href="${c.show_url}" class="px-md py-xs text-primary border border-primary rounded text-label-md font-bold hover:bg-primary hover:text-on-primary transition-all">View</a>
                                     </div>
                                 </td>`;
                             tbody.appendChild(tr);

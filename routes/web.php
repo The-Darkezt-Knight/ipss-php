@@ -23,7 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::get('private/surveyor', [AuthController::class, 'surveyor'])->name('private.surveyor');
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
-    Route::get('surveyor/dashboard', [AuthController::class, 'surveyorDashboard'])->name('private.surveyor-dashboard');
+    Route::get('surveyor/dashboard', [ClientController::class, 'surveyorDashboard'])->name('private.surveyor-dashboard');
+    Route::get('surveyor/clients/{client}', [ClientController::class, 'showForSurveyor'])->name('surveyor.clients.show');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 

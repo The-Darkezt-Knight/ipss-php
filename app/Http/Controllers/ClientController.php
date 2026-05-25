@@ -6,9 +6,103 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ClientController
 {
+    public function surveyorDashboard()
+    {
+        $employee = Auth::user();
+
+        $clientMapPoints = $this->clientsAssignedToSurveyor($employee)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get(['id', 'client_id', 'first_name', 'middle_name', 'last_name', 'suffix', 'latitude', 'longitude'])
+            ->filter(fn ($client) => is_numeric($client->latitude) && is_numeric($client->longitude))
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'name' => $this->formatClientName($client),
+                'latitude' => (float) $client->latitude,
+                'longitude' => (float) $client->longitude,
+                'url' => route('surveyor.clients.show', $client),
+            ])
+            ->values();
+
+        return view('private.surveyor-dashboard', compact('employee', 'clientMapPoints'));
+    }
+
+    public function showForSurveyor(Client $client)
+    {
+        $employee = Auth::user();
+
+        abort_unless($this->clientBelongsToSurveyor($client, $employee), 403);
+
+        $clientMapPoint = null;
+        if (is_numeric($client->latitude) && is_numeric($client->longitude)) {
+            $clientMapPoint = [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'name' => $this->formatClientName($client),
+                'latitude' => (float) $client->latitude,
+                'longitude' => (float) $client->longitude,
+            ];
+        }
+
+        return view('private.surveyor-client-show', compact('employee', 'client', 'clientMapPoint'));
+    }
+
+    private function clientsAssignedToSurveyor($employee)
+    {
+        return Client::query()
+            ->where(function ($query) use ($employee) {
+                $query->where('surveyed_by', $employee->id);
+
+                if (!empty($employee->district)) {
+                    $query->orWhere('district', $employee->district);
+                }
+
+                if (!empty($employee->district_code)) {
+                    $cityCodes = DB::table('city_municipality')
+                        ->where('district_code', $employee->district_code)
+                        ->pluck('code');
+
+                    if ($cityCodes->isNotEmpty()) {
+                        $query->orWhereIn('city_municipality', $cityCodes);
+                    }
+                }
+            });
+    }
+
+    private function clientBelongsToSurveyor(Client $client, $employee): bool
+    {
+        if ((string) $client->surveyed_by === (string) $employee->id) {
+            return true;
+        }
+
+        if (!empty($employee->district) && (string) $client->district === (string) $employee->district) {
+            return true;
+        }
+
+        if (!empty($employee->district_code) && !empty($client->city_municipality)) {
+            return DB::table('city_municipality')
+                ->where('district_code', $employee->district_code)
+                ->where('code', $client->city_municipality)
+                ->exists();
+        }
+
+        return false;
+    }
+
+    private function formatClientName(Client $client): string
+    {
+        return collect([
+            $client->first_name,
+            $client->middle_name,
+            $client->last_name,
+            $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+        ])->filter()->implode(' ') ?: 'Unnamed Client';
+    }
 
     public function getByBarangay(Request $request)
     {
@@ -52,6 +146,7 @@ class ClientController
                 'msme_classification' => $client->msme_classification,
                 'status_of_client' => $client->status_of_client,
                 'created_at' => $client->created_at,
+                'show_url' => route('surveyor.clients.show', $client),
                 'region_name' => $regionNames[$client->region] ?? $client->region,
                 'province_name' => $provinceNames[$client->province] ?? $client->province,
                 'city_name' => $cityNames[$client->city_municipality] ?? $client->city_municipality,
