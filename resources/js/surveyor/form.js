@@ -7,6 +7,45 @@ import {
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('survey-form');
 
+    function initializeLockedPrefixInputs(root = document) {
+        root.querySelectorAll('[data-locked-prefix]').forEach(input => {
+            const prefix = input.dataset.lockedPrefix || '';
+
+            function enforcePrefix() {
+                if (!input.value.startsWith(prefix)) {
+                    input.value = prefix + input.value.replace(prefix, '');
+                }
+            }
+
+            function keepCursorAfterPrefix() {
+                if (input.selectionStart < prefix.length) {
+                    input.setSelectionRange(prefix.length, prefix.length);
+                }
+            }
+
+            enforcePrefix();
+
+            input.addEventListener('input', enforcePrefix);
+            input.addEventListener('focus', () => {
+                enforcePrefix();
+                requestAnimationFrame(keepCursorAfterPrefix);
+            });
+            input.addEventListener('click', keepCursorAfterPrefix);
+            input.addEventListener('keydown', event => {
+                const selectionStartsBeforePrefix = input.selectionStart <= prefix.length;
+                const selectionEndsBeforePrefix = input.selectionEnd <= prefix.length;
+
+                if ((event.key === 'Backspace' && selectionStartsBeforePrefix) ||
+                    (event.key === 'Delete' && selectionStartsBeforePrefix && selectionEndsBeforePrefix)) {
+                    event.preventDefault();
+                    keepCursorAfterPrefix();
+                }
+            });
+        });
+    }
+
+    initializeLockedPrefixInputs(form);
+
     // ─── Toast Notification System ──────────────────────────────────────────
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');

@@ -120,6 +120,40 @@ export async function deleteSurvey(id) {
 }
 
 /**
+ * Updates an existing survey record's data in IndexedDB.
+ * Preserves the original ID and timestamp.
+ * @param {string} id - The record UUID
+ * @param {Object} newData - The updated form data key/value pairs
+ * @returns {Promise<void>}
+ */
+export async function updateSurvey(id, newData) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(SURVEYS_STORE, 'readwrite');
+        const store = tx.objectStore(SURVEYS_STORE);
+
+        // First get the existing record to preserve its timestamp
+        const getRequest = store.get(id);
+        getRequest.onsuccess = () => {
+            const existing = getRequest.result;
+            if (!existing) {
+                reject(new Error(`Survey record ${id} not found`));
+                return;
+            }
+
+            // Merge updated data, keeping the original id and timestamp
+            existing.data = newData;
+            const putRequest = store.put(existing);
+            putRequest.onsuccess = () => resolve();
+            putRequest.onerror = () => reject(putRequest.error);
+        };
+        getRequest.onerror = () => reject(getRequest.error);
+
+        tx.oncomplete = () => db.close();
+    });
+}
+
+/**
  * Returns the count of pending survey records.
  * @returns {Promise<number>}
  */

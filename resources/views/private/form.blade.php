@@ -694,7 +694,7 @@
               <label class="text-label-md font-label-md text-on-surface-variant">Mobile Number</label>
               <input id="mobileNumber" name="mobileNumber"
                 class="p-md border border-outline rounded-lg bg-surface-bright text-body-md"
-                placeholder="+63 9xx xxx xxxx" type="tel" />
+                placeholder="+63" type="tel" value="+63" data-locked-prefix="+63" />
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Email Address</label>
@@ -705,7 +705,8 @@
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Landline</label>
               <input id="landlineNumber" name="landlineNumber"
-                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" type="tel" />
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" placeholder="+63"
+                type="tel" value="+63" data-locked-prefix="+63" />
             </div>
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Fax</label>

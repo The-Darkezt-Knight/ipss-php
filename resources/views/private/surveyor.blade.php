@@ -451,6 +451,294 @@
 
     </main>
 
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Edit Client Modal -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="edit-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col mx-4">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant bg-surface-container-low">
+                <div class="flex items-center gap-sm">
+                    <span class="material-symbols-outlined text-primary">edit_note</span>
+                    <h2 class="text-headline-sm font-headline-sm text-primary">Edit Client Record</h2>
+                </div>
+                <button id="edit-modal-close" class="p-xs rounded-full hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-on-surface-variant">close</span>
+                </button>
+            </div>
+
+            <!-- Modal Body (scrollable) -->
+            <div class="overflow-y-auto flex-1 p-lg">
+                <form id="edit-client-form" class="flex flex-col gap-xl">
+                    <!-- Hidden record ID -->
+                    <input type="hidden" id="edit-record-id" />
+
+                    <!-- Section 1: Client Status & Classification -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">category</span>
+                            <span class="text-label-lg font-label-lg text-primary">Client Status & Classification</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Status of Client</label>
+                                <select id="edit-statusOfClient" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm">
+                                    <option value="">Select…</option>
+                                    <option value="New Registrant">New Registrant</option>
+                                    <option value="Renewal">Renewal</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Category of Client</label>
+                                <select id="edit-categoryOfClient" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm">
+                                    <option value="">Select…</option>
+                                    <option value="Micro">Micro</option>
+                                    <option value="Small">Small</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Large">Large</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">MSME Classification</label>
+                                <input id="edit-msmeClassification" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Client Designation</label>
+                                <input id="edit-clientDesignation" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Social Classification</label>
+                                <input id="edit-socialClassification" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Specify Level</label>
+                                <input id="edit-specifyLevel" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Differently-abled Type</label>
+                                <input id="edit-diffAbledType" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                        </div>
+                        <div class="flex gap-lg mt-md">
+                            <label class="flex items-center gap-sm text-body-sm cursor-pointer">
+                                <input id="edit-isSenior" type="checkbox" class="rounded border-outline text-primary focus:ring-primary" />
+                                Senior Citizen
+                            </label>
+                            <label class="flex items-center gap-sm text-body-sm cursor-pointer">
+                                <input id="edit-isIndigeneous" type="checkbox" class="rounded border-outline text-primary focus:ring-primary" />
+                                Indigenous People
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 2: Digitalization -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">devices</span>
+                            <span class="text-label-lg font-label-lg text-primary">Digitalization</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Level of Digitalization</label>
+                                <input id="edit-levelOfDigitalization" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Digital Tools</label>
+                                <input id="edit-digitalTools" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 3: Personal Information -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">person</span>
+                            <span class="text-label-lg font-label-lg text-primary">Personal Information</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">First Name</label>
+                                <input id="edit-firstName" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Middle Name</label>
+                                <input id="edit-middleName" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Last Name</label>
+                                <input id="edit-lastName" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Suffix</label>
+                                <select id="edit-suffix" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm">
+                                    <option value="--N/A--">N/A</option>
+                                    <option value="Jr.">Jr.</option>
+                                    <option value="Sr.">Sr.</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Sex</label>
+                                <select id="edit-sex" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm">
+                                    <option value="">Select…</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Civil Status</label>
+                                <select id="edit-civilStatus" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm">
+                                    <option value="">Select…</option>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="Widowed">Widowed</option>
+                                    <option value="Separated">Separated</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Citizenship</label>
+                                <input id="edit-citizenship" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 4: Identifiers -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">badge</span>
+                            <span class="text-label-lg font-label-lg text-primary">Identifiers</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <!-- Client ID — READ ONLY (greyed out) -->
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Client ID <span class="text-outline text-[10px]">(auto-generated)</span></label>
+                                <input id="edit-id" type="text" readonly
+                                    class="p-md border border-outline-variant rounded-lg bg-surface-container text-body-sm text-on-surface-variant cursor-not-allowed" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Old Client ID</label>
+                                <input id="edit-oldId" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">DTI Konek ID</label>
+                                <input id="edit-dtiKonekId" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">PhilSys ID</label>
+                                <input id="edit-philippineIdentificationSystem" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 5: Contact Details -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">call</span>
+                            <span class="text-label-lg font-label-lg text-primary">Contact Details</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Mobile Number</label>
+                                <input id="edit-mobileNumber" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm"
+                                    placeholder="+63" value="+63" data-locked-prefix="+63" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Email Address</label>
+                                <input id="edit-emailAddress" type="email" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Landline Number</label>
+                                <input id="edit-landlineNumber" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm"
+                                    placeholder="+63" value="+63" data-locked-prefix="+63" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Fax Number</label>
+                                <input id="edit-faxNumber" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Social Media</label>
+                                <input id="edit-socialMedia" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Website</label>
+                                <input id="edit-website" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs md:col-span-2">
+                                <label class="text-label-md font-label-md text-on-surface-variant">E-Commerce Platform</label>
+                                <input id="edit-eCommercePlatform" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Section 6: Location -->
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">location_on</span>
+                            <span class="text-label-lg font-label-lg text-primary">Location</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Region</label>
+                                <input id="edit-regionCode" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Province</label>
+                                <input id="edit-provinceCode" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">City / Municipality Code</label>
+                                <input id="edit-cityMunicipalityCode" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Barangay Code</label>
+                                <input id="edit-barangayCode" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">District</label>
+                                <input id="edit-district" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Zip Code</label>
+                                <input id="edit-zipCode" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
+                            </div>
+                            <div class="flex flex-col gap-xs md:col-span-2">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Full Address</label>
+                                <textarea id="edit-address" rows="2" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm"></textarea>
+                            </div>
+                            <!-- Latitude — READ ONLY (greyed out) -->
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Latitude <span class="text-outline text-[10px]">(auto-captured)</span></label>
+                                <input id="edit-latitude" type="text" readonly
+                                    class="p-md border border-outline-variant rounded-lg bg-surface-container text-body-sm text-on-surface-variant cursor-not-allowed" />
+                            </div>
+                            <!-- Longitude — READ ONLY (greyed out) -->
+                            <div class="flex flex-col gap-xs">
+                                <label class="text-label-md font-label-md text-on-surface-variant">Longitude <span class="text-outline text-[10px]">(auto-captured)</span></label>
+                                <input id="edit-longitude" type="text" readonly
+                                    class="p-md border border-outline-variant rounded-lg bg-surface-container text-body-sm text-on-surface-variant cursor-not-allowed" />
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-md px-lg py-md border-t border-outline-variant bg-surface-container-lowest">
+                <button id="edit-modal-cancel"
+                    class="px-lg py-sm text-on-surface-variant border border-outline-variant rounded-lg hover:bg-surface-container-high transition-colors font-bold text-label-lg">
+                    Cancel
+                </button>
+                <button id="edit-modal-save"
+                    class="px-lg py-sm bg-primary text-on-primary rounded-lg hover:opacity-90 transition-all font-bold text-label-lg flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="md:ml-64 bg-surface-container-lowest border-t border-outline-variant dark:border-outline">
         <div

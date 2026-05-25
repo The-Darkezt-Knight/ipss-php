@@ -1,4 +1,11 @@
-import { getAllPendingSurveys, deleteSurvey, getPendingCount } from './offline-db.js';
+import {
+    getAllPendingSurveys,
+    deleteSurvey,
+    getPendingCount,
+    updateSurvey,
+    getCachedCitiesByDistrict,
+    getCachedBarangays,
+} from './offline-db.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('pending-surveys-tbody');
@@ -45,6 +52,399 @@ document.addEventListener('DOMContentLoaded', () => {
         return d.msmeClassification || d.statusOfClient || 'MSME Survey';
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // Edit Modal Logic
+    // ═══════════════════════════════════════════════════════════════════════
+
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-client-form');
+    const editRecordId = document.getElementById('edit-record-id');
+    const editModalClose = document.getElementById('edit-modal-close');
+    const editModalCancel = document.getElementById('edit-modal-cancel');
+    const editModalSave = document.getElementById('edit-modal-save');
+    const selectClass = 'p-md border border-outline rounded-lg bg-surface-bright text-body-sm';
+
+    const SELECT_OPTIONS = {
+        statusOfClient: ['Level 0 - Would be or Potential Entrepreneurs'],
+        specifyLevel: ['Potential', 'Other Clients Assisted'],
+        categoryOfClient: [
+            '4Ps Beneficiary', 'Agrarian Reform Beneficiary', 'Alien/Foreigner',
+            'Balik Probinsya Bagong Pag-asa (BP2)', 'Drug Surrenderee', 'Ex-convict',
+            'Farmer', 'Former Rebel', 'Government Employee', 'Housewife/Husband',
+            'KIA/WIA/KIPO/WIPO', 'Military/Police', 'OFW', 'Out-of-School-Youth',
+            'Person Deprived of Liberty',
+            'Persons of Concern (Stateless Person, Internally-Displaced Person, Refugee)',
+            'Private Employee', 'Professional', 'PWD', 'Retiree', 'Self-Employed',
+            'Senior Citizen', 'Student', 'Unemployed', 'Urban Poor', 'Youth',
+        ],
+        socialClassification: ['Abled', 'Person with Disabilities'],
+        diffAbledType: [
+            '', 'Autism', 'Breast Cancer', 'Cervical Cancer Survivor', 'Chronic Illness',
+            'Deaf/Hard of Hearing', 'Heart Disease', 'Learning Disability', 'Mastectomy',
+            'Nephrectomy', 'Orthopedic', 'Physical', 'Psychological',
+            'Speech and Language Impairment', 'Visual Impairment/One Eye',
+        ],
+        isSenior: ['No', 'Yes'],
+        isIndigeneous: ['No', 'Yes'],
+        levelOfDigitalization: [
+            'Level 0 - No use of digital tools',
+            'Level 1 (Basic) - MSMEs that use basic digital tools for business',
+            'Level 2 (Intermediate) - MSMEs that have an online presence',
+            'Level 3 (Advanced) - Use of advanced digital tools',
+        ],
+        digitalTools: [
+            '', 'Bank Account', 'Big data, automation tools i.e. chatbots',
+            'Business process management software', 'Business Website',
+            'Chat apps i.e. Messenger, Viber',
+            'Creative Tools (e.g. Photoshop, Canva, Illustrator)',
+            'Customer Relationship Management (CRM)', 'Cybersecurity Risk Tools',
+            'E-commerce i.e. Shopee, Lazada', 'Email', 'ERP', 'Fintech i.e. GCash, PayMaya',
+            'Internet connection for business', 'Laptop', 'Microsoft Office i.e. Excel, Word',
+            'Online Banking', 'Platforms', 'Printer', 'Smartphone',
+            'Smartphones, tablets, desktop computers', 'Tablet',
+        ],
+        msmeClassification: [
+            'Large - More than Php 100,000,000',
+            'Medium - Php 15,000,001 to Php 100,000,000',
+            'Micro - Up to Php 3,000,000',
+            'Not Applicable - Would-be/Potential Entrepreneur',
+            'Small - Php 3,000,001 to Php 15,000,000',
+        ],
+        clientDesignation: ['Owner', 'Representative'],
+        suffix: [
+            '--N/A--', 'SR', 'JR', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX',
+            'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX',
+        ],
+        civilStatus: ['Legally Separated', 'Married', 'Single', 'Widowed'],
+        sex: ['Male', 'Female'],
+        citizenship: ['Filipino'],
+        eCommercePlatform: ['Shopee / Lazada', 'Facebook Marketplace', 'Proprietary Platform', 'None'],
+    };
+
+    function applyOptions(select, options) {
+        select.innerHTML = '';
+        options.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value || '-- Select if applicable --';
+            select.appendChild(option);
+        });
+    }
+
+    function initializeLockedPrefixInputs(root = document) {
+        root.querySelectorAll('[data-locked-prefix]').forEach(input => {
+            const prefix = input.dataset.lockedPrefix || '';
+
+            function enforcePrefix() {
+                if (!input.value.startsWith(prefix)) {
+                    input.value = prefix + input.value.replace(prefix, '');
+                }
+            }
+
+            function keepCursorAfterPrefix() {
+                if (input.selectionStart < prefix.length) {
+                    input.setSelectionRange(prefix.length, prefix.length);
+                }
+            }
+
+            enforcePrefix();
+
+            input.addEventListener('input', enforcePrefix);
+            input.addEventListener('focus', () => {
+                enforcePrefix();
+                requestAnimationFrame(keepCursorAfterPrefix);
+            });
+            input.addEventListener('click', keepCursorAfterPrefix);
+            input.addEventListener('keydown', event => {
+                const selectionStartsBeforePrefix = input.selectionStart <= prefix.length;
+                const selectionEndsBeforePrefix = input.selectionEnd <= prefix.length;
+
+                if ((event.key === 'Backspace' && selectionStartsBeforePrefix) ||
+                    (event.key === 'Delete' && selectionStartsBeforePrefix && selectionEndsBeforePrefix)) {
+                    event.preventDefault();
+                    keepCursorAfterPrefix();
+                }
+            });
+        });
+    }
+
+    function replaceWithSelect(key, options) {
+        const current = document.getElementById(`edit-${key}`);
+        if (!current) return;
+
+        const select = document.createElement('select');
+        select.id = current.id;
+        select.className = selectClass;
+        applyOptions(select, options);
+        current.replaceWith(select);
+    }
+
+    function replaceCheckboxWithSelect(key, labelText) {
+        const current = document.getElementById(`edit-${key}`);
+        if (!current) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col gap-xs';
+        wrapper.innerHTML = `
+            <label class="text-label-md font-label-md text-on-surface-variant">${labelText}</label>
+            <select id="edit-${key}" class="${selectClass}">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        `;
+
+        const parentLabel = current.closest('label');
+        if (parentLabel) {
+            parentLabel.replaceWith(wrapper);
+        } else {
+            current.replaceWith(wrapper.querySelector('select'));
+        }
+    }
+
+    function initializeEditModalControls() {
+        Object.entries(SELECT_OPTIONS).forEach(([key, options]) => {
+            if (key === 'isSenior' || key === 'isIndigeneous') return;
+            replaceWithSelect(key, options);
+        });
+
+        replaceCheckboxWithSelect('isSenior', 'Client is Senior');
+        replaceCheckboxWithSelect('isIndigeneous', 'Client is Indigenous');
+        replaceWithSelect('cityMunicipalityCode', []);
+        replaceWithSelect('barangayCode', []);
+
+        const zipCode = document.getElementById('edit-zipCode');
+        if (zipCode) {
+            zipCode.className = 'p-md border border-outline rounded-lg bg-surface-container text-body-sm text-on-surface-variant cursor-not-allowed';
+            zipCode.placeholder = '6100';
+            zipCode.readOnly = true;
+        }
+
+        initializeLockedPrefixInputs(editForm);
+    }
+
+    initializeEditModalControls();
+
+    // All editable field keys (must match the form field name attributes used in form.blade.php)
+    const EDITABLE_FIELDS = [
+        'statusOfClient', 'categoryOfClient', 'msmeClassification', 'clientDesignation',
+        'socialClassification', 'specifyLevel', 'diffAbledType', 'isSenior', 'isIndigeneous',
+        'levelOfDigitalization', 'digitalTools',
+        'firstName', 'middleName', 'lastName', 'suffix',
+        'sex', 'civilStatus', 'citizenship',
+        'oldId', 'dtiKonekId', 'philippineIdentificationSystem',
+        'mobileNumber', 'emailAddress', 'landlineNumber', 'faxNumber',
+        'socialMedia', 'website', 'eCommercePlatform',
+        'regionCode', 'provinceCode', 'cityMunicipalityCode', 'barangayCode',
+        'district', 'zipCode', 'address',
+    ];
+
+    // Read-only fields (displayed but not collected on save)
+    const READONLY_FIELDS = ['id', 'latitude', 'longitude'];
+
+    const locationSection = document.querySelector('[data-district-code]');
+    const districtCode = locationSection ? locationSection.dataset.districtCode : '';
+
+    function resetSelect(select, defaultText) {
+        if (!select) return;
+        select.innerHTML = `<option value="">${defaultText}</option>`;
+        select.disabled = true;
+    }
+
+    function populateSelect(select, data, defaultText) {
+        if (!select) return;
+        select.innerHTML = `<option value="">${defaultText}</option>`;
+        select.disabled = false;
+        data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.code;
+            option.textContent = item.name;
+            select.appendChild(option);
+        });
+    }
+
+    function setFieldValue(el, value) {
+        const normalizedValue = value ?? '';
+        if (el.tagName === 'SELECT' && normalizedValue && !Array.from(el.options).some(option => option.value === normalizedValue)) {
+            const option = document.createElement('option');
+            option.value = normalizedValue;
+            option.textContent = normalizedValue;
+            el.appendChild(option);
+        }
+
+        el.value = normalizedValue;
+    }
+
+    function normalizeYesNo(value) {
+        if (value === true || value === 'true' || value === 'on' || value === 'Yes') return 'Yes';
+        return 'No';
+    }
+
+    async function populateEditLocationDropdowns(data) {
+        const citySelect = document.getElementById('edit-cityMunicipalityCode');
+        const barangaySelect = document.getElementById('edit-barangayCode');
+
+        try {
+            let cities = [];
+            if (districtCode) {
+                cities = await getCachedCitiesByDistrict(districtCode);
+            }
+
+            if (!cities || cities.length === 0) {
+                const res = await fetch(`/api/cities-municipalities?district_code=${districtCode}`);
+                cities = await res.json();
+            }
+
+            populateSelect(citySelect, cities, 'Select city / municipality');
+            setFieldValue(citySelect, data.cityMunicipalityCode);
+        } catch (err) {
+            console.error('Error loading edit modal cities:', err);
+            resetSelect(citySelect, 'Failed to load cities');
+            setFieldValue(citySelect, data.cityMunicipalityCode);
+        }
+
+        try {
+            let barangays = [];
+            if (data.cityMunicipalityCode) {
+                barangays = await getCachedBarangays(data.cityMunicipalityCode);
+            }
+
+            if ((!barangays || barangays.length === 0) && data.cityMunicipalityCode) {
+                const res = await fetch(`/api/barangays?city_municipality_code=${data.cityMunicipalityCode}`);
+                barangays = await res.json();
+            }
+
+            populateSelect(barangaySelect, barangays || [], 'Select barangay');
+            setFieldValue(barangaySelect, data.barangayCode);
+        } catch (err) {
+            console.error('Error loading edit modal barangays:', err);
+            resetSelect(barangaySelect, 'Failed to load barangays');
+            setFieldValue(barangaySelect, data.barangayCode);
+        }
+    }
+
+    document.getElementById('edit-cityMunicipalityCode')?.addEventListener('change', async (event) => {
+        const cityCode = event.target.value;
+        const barangaySelect = document.getElementById('edit-barangayCode');
+        resetSelect(barangaySelect, 'Select barangay');
+
+        if (!cityCode) return;
+
+        try {
+            let barangays = await getCachedBarangays(cityCode);
+            if (!barangays || barangays.length === 0) {
+                const res = await fetch(`/api/barangays?city_municipality_code=${cityCode}`);
+                barangays = await res.json();
+            }
+
+            populateSelect(barangaySelect, barangays || [], 'Select barangay');
+        } catch (err) {
+            console.error('Error loading edit modal barangays:', err);
+            resetSelect(barangaySelect, 'Failed to load barangays');
+        }
+    });
+
+    async function openEditModal(record) {
+        const d = record.data || {};
+        editRecordId.value = record.id;
+
+        await populateEditLocationDropdowns(d);
+
+        // Populate editable fields
+        EDITABLE_FIELDS.forEach(key => {
+            const el = document.getElementById(`edit-${key}`);
+            if (!el) return;
+            if (key === 'isSenior' || key === 'isIndigeneous') {
+                setFieldValue(el, normalizeYesNo(d[key]));
+                return;
+            }
+            if (key === 'mobileNumber' || key === 'landlineNumber') {
+                setFieldValue(el, d[key] || '+63');
+                return;
+            }
+            setFieldValue(el, key === 'zipCode' ? (d[key] || '6100') : d[key]);
+        });
+
+        // Populate readonly fields
+        READONLY_FIELDS.forEach(key => {
+            const el = document.getElementById(`edit-${key}`);
+            if (!el) return;
+            if (key === 'id') {
+                const clientIdDisplay = d[key] || 'Auto-generated';
+                el.placeholder = clientIdDisplay;
+                setFieldValue(el, clientIdDisplay);
+                return;
+            }
+            setFieldValue(el, d[key]);
+        });
+
+        // Show modal
+        editModal.classList.remove('hidden');
+        editModal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        editModal.classList.add('hidden');
+        editModal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    // Close modal on X button, Cancel button, or backdrop click
+    editModalClose?.addEventListener('click', closeEditModal);
+    editModalCancel?.addEventListener('click', closeEditModal);
+    editModal?.addEventListener('click', (e) => {
+        if (e.target === editModal) closeEditModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !editModal.classList.contains('hidden')) {
+            closeEditModal();
+        }
+    });
+
+    // Save button handler
+    editModalSave?.addEventListener('click', async () => {
+        const recordId = editRecordId.value;
+        if (!recordId) return;
+
+        // Collect data from the modal form
+        const updatedData = {};
+
+        EDITABLE_FIELDS.forEach(key => {
+            const el = document.getElementById(`edit-${key}`);
+            if (el) {
+                updatedData[key] = el.value;
+            }
+        });
+
+        // Preserve readonly fields from the original data
+        READONLY_FIELDS.forEach(key => {
+            const el = document.getElementById(`edit-${key}`);
+            if (el && el.value) {
+                updatedData[key] = el.value;
+            }
+        });
+
+        // Disable save button while processing
+        const originalContent = editModalSave.innerHTML;
+        editModalSave.disabled = true;
+        editModalSave.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Saving…`;
+
+        try {
+            await updateSurvey(recordId, updatedData);
+            closeEditModal();
+            showStatusToast('Client record updated successfully!', 'success');
+            await loadPendingSurveys(); // Refresh the table
+        } catch (err) {
+            console.error('Error updating survey:', err);
+            showStatusToast('Failed to update record. Please try again.', 'error');
+        } finally {
+            editModalSave.disabled = false;
+            editModalSave.innerHTML = originalContent;
+        }
+    });
+
     // ─── Render a Single Row ────────────────────────────────────────────────
     function createRow(record) {
         const tr = document.createElement('tr');
@@ -61,12 +461,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 </span>
             </td>
             <td class="px-lg py-md text-right flex justify-end gap-sm">
+                <button class="edit-single-btn text-on-surface-variant hover:text-primary transition-colors" data-id="${record.id}" title="Edit">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
                 <button class="sync-single-btn text-primary hover:underline font-bold" data-id="${record.id}">Sync Now</button>
-                <button class="delete-single-btn text-on-surface-variant hover:text-error" data-id="${record.id}" title="Delete">
+                <button class="delete-single-btn text-on-surface-variant hover:text-error transition-colors" data-id="${record.id}" title="Delete">
                     <span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
                 </button>
             </td>
         `;
+
+        // Edit single record
+        tr.querySelector('.edit-single-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            openEditModal(record);
+        });
 
         // Sync single record
         tr.querySelector('.sync-single-btn').addEventListener('click', async (e) => {
