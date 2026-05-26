@@ -16,10 +16,12 @@
             rel="stylesheet"
         />
         <link
-            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
             rel="stylesheet"
-            integrity="sha256-p4NxAoJBhIINfQVTK9zZ5lCzMfX20S5Kj3b5h3A0m0M="
-            crossorigin=""
+        />
+        <link
+            href="{{ asset('css/maplibre-map.css') }}"
+            rel="stylesheet"
         />
         <style>
             .material-symbols-outlined {
@@ -412,8 +414,9 @@
                         </div>
                         <span class="material-symbols-outlined text-primary">map</span>
                     </div>
-                    <div id="surveyor-clients-map" class="h-[420px] w-full"></div>
+                    <div id="surveyor-clients-map" class="h-[420px] w-full overflow-hidden"></div>
                 </section>
+
                 <!-- Filter and Search Bar -->
                 <section
                     class="bg-surface border border-outline-variant rounded-lg p-lg mb-lg shadow-sm"
@@ -566,11 +569,7 @@
                 background-size: 40px 40px;
             "
         ></div>
-        <script
-            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""
-        ></script>
+        <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
         <script>
             const surveyorClientMapPoints = @json($clientMapPoints ?? []);
 
@@ -600,36 +599,139 @@
                 }
 
                 function initializeDashboardMap() {
-                    if (!dashboardMapEl || typeof L === 'undefined') return;
+                    if (!dashboardMapEl || typeof maplibregl === 'undefined') return;
 
-                    const defaultCenter = [10.6765, 122.9509];
-                    const map = L.map(dashboardMapEl).setView(defaultCenter, 10);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    // Negros Island bounding box: [west, south, east, north]
+                    const negrosBounds = [122.25, 9.0, 123.55, 11.1];
+                    // Pad bounds by ~8 % so the map doesn't feel cramped at the edges
+                    const lngPad = (negrosBounds[2] - negrosBounds[0]) * 0.08;
+                    const latPad = (negrosBounds[3] - negrosBounds[1]) * 0.08;
+                    const paddedBounds = [
+                        [negrosBounds[0] - lngPad, negrosBounds[1] - latPad],
+                        [negrosBounds[2] + lngPad, negrosBounds[3] + latPad],
+                    ];
+
+                    const map = new maplibregl.Map({
+                        container: dashboardMapEl,
+                        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+                        center: [122.9509, 10.6765],
+                        zoom: 9,
+                        minZoom: 8,
                         maxZoom: 19,
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                    }).addTo(map);
-
-                    const markers = [];
-                    surveyorClientMapPoints.forEach(client => {
-                        if (!Number.isFinite(client.latitude) || !Number.isFinite(client.longitude)) return;
-
-                        const marker = L.marker([client.latitude, client.longitude]).addTo(map);
-                        marker.bindPopup(`
-                            <div class="text-sm">
-                                <strong>${escapeHtml(client.name)}</strong><br>
-                                <span>${escapeHtml(client.client_id || 'No client ID')}</span>
-                            </div>
-                        `);
-                        markers.push(marker);
+                        maxBounds: paddedBounds,
+                        attributionControl: true,
                     });
+                    map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-                    if (markers.length > 0) {
-                        const group = L.featureGroup(markers);
-                        map.fitBounds(group.getBounds(), { padding: [32, 32], maxZoom: 16 });
-                    }
+                    // Build GeoJSON from server-provided points
+                    const geojson = {
+                        type: 'FeatureCollection',
+                        features: surveyorClientMapPoints
+                            .filter(c => Number.isFinite(c.latitude) && Number.isFinite(c.longitude))
+                            .map(c => ({
+                                type: 'Feature',
+                                geometry: { type: 'Point', coordinates: [c.longitude, c.latitude] },
+                                properties: { name: c.name || '', client_id: c.client_id || '' },
+                            })),
+                    };
 
-                    requestAnimationFrame(() => {
-                        map.invalidateSize();
+                    map.on('load', () => {
+                        // ── Clustered GeoJSON source ──
+                        map.addSource('clients', {
+                            type: 'geojson',
+                            data: geojson,
+                            cluster: true,
+                            clusterMaxZoom: 14,
+                            clusterRadius: 50,
+                        });
+
+                        // ── Cluster circles ──
+                        map.addLayer({
+                            id: 'clusters',
+                            type: 'circle',
+                            source: 'clients',
+                            filter: ['has', 'point_count'],
+                            paint: {
+                                'circle-color': [
+                                    'step', ['get', 'point_count'],
+                                    '#3a5f94',   // < 20
+                                    20, '#1f477b', // 20-99
+                                    100, '#001e40', // ≥ 100
+                                ],
+                                'circle-radius': [
+                                    'step', ['get', 'point_count'],
+                                    18,          // < 20
+                                    20, 24,      // 20-99
+                                    100, 32,     // ≥ 100
+                                ],
+                                'circle-stroke-width': 3,
+                                'circle-stroke-color': 'rgba(255,255,255,0.85)',
+                            },
+                        });
+
+                        // ── Cluster count labels ──
+                        map.addLayer({
+                            id: 'cluster-count',
+                            type: 'symbol',
+                            source: 'clients',
+                            filter: ['has', 'point_count'],
+                            layout: {
+                                'text-field': '{point_count_abbreviated}',
+                                'text-size': 13,
+                                'text-font': ['Open Sans Bold'],
+                            },
+                            paint: {
+                                'text-color': '#ffffff',
+                            },
+                        });
+
+                        // ── Individual point markers ──
+                        map.addLayer({
+                            id: 'unclustered-point',
+                            type: 'circle',
+                            source: 'clients',
+                            filter: ['!', ['has', 'point_count']],
+                            paint: {
+                                'circle-color': '#3a5f94',
+                                'circle-radius': 7,
+                                'circle-stroke-width': 2,
+                                'circle-stroke-color': '#ffffff',
+                            },
+                        });
+
+                        // ── Click cluster → zoom in ──
+                        map.on('click', 'clusters', async (e) => {
+                            const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+                            const clusterId = features[0].properties.cluster_id;
+                            const zoom = await map.getSource('clients').getClusterExpansionZoom(clusterId);
+                            map.easeTo({ center: features[0].geometry.coordinates, zoom });
+                        });
+
+                        // ── Click single point → popup ──
+                        map.on('click', 'unclustered-point', (e) => {
+                            const coords = e.features[0].geometry.coordinates.slice();
+                            const props = e.features[0].properties;
+                            new maplibregl.Popup({ offset: 12 })
+                                .setLngLat(coords)
+                                .setHTML(`
+                                    <strong>${escapeHtml(props.name)}</strong>
+                                    <span>${escapeHtml(props.client_id || 'No client ID')}</span>
+                                `)
+                                .addTo(map);
+                        });
+
+                        // ── Pointer cursors ──
+                        map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+                        map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
+                        map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+                        map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
+
+                        // ── Fit bounds to data ──
+                        if (geojson.features.length > 0) {
+                            const bounds = new maplibregl.LngLatBounds();
+                            geojson.features.forEach(f => bounds.extend(f.geometry.coordinates));
+                            map.fitBounds(bounds, { padding: 48, maxZoom: 16 });
+                        }
                     });
                 }
 

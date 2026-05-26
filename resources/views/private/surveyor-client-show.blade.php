@@ -10,10 +10,12 @@
             rel="stylesheet"
         />
         <link
-            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
             rel="stylesheet"
-            integrity="sha256-p4NxAoJBhIINfQVTK9zZ5lCzMfX20S5Kj3b5h3A0m0M="
-            crossorigin=""
+        />
+        <link
+            href="{{ asset('css/maplibre-map.css') }}"
+            rel="stylesheet"
         />
         <script id="tailwind-config">
             tailwind.config = {
@@ -69,7 +71,7 @@
                 </div>
 
                 @if($clientMapPoint)
-                    <div id="single-client-map" class="h-[320px] w-full"></div>
+                    <div id="single-client-map" class="h-[320px] w-full overflow-hidden"></div>
                 @else
                     <div class="h-[220px] flex flex-col items-center justify-center gap-2 text-on-surface-variant">
                         <span class="material-symbols-outlined text-[42px] text-outline">location_off</span>
@@ -91,39 +93,50 @@
             </section>
         </main>
 
-        <script
-            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""
-        ></script>
+        <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
         <script>
             const singleClientMapPoint = @json($clientMapPoint);
 
             document.addEventListener('DOMContentLoaded', function () {
                 const mapEl = document.getElementById('single-client-map');
-                if (!mapEl || !singleClientMapPoint || typeof L === 'undefined') return;
+                if (!mapEl || !singleClientMapPoint || typeof maplibregl === 'undefined') return;
 
-                const position = [singleClientMapPoint.latitude, singleClientMapPoint.longitude];
-                const map = L.map(mapEl).setView(position, 16);
+                // Negros Island bounding box: [west, south, east, north]
+                const negrosBounds = [122.25, 9.0, 123.55, 11.1];
+                const lngPad = (negrosBounds[2] - negrosBounds[0]) * 0.08;
+                const latPad = (negrosBounds[3] - negrosBounds[1]) * 0.08;
+                const paddedBounds = [
+                    [negrosBounds[0] - lngPad, negrosBounds[1] - latPad],
+                    [negrosBounds[2] + lngPad, negrosBounds[3] + latPad],
+                ];
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                const position = [singleClientMapPoint.longitude, singleClientMapPoint.latitude];
+
+                const map = new maplibregl.Map({
+                    container: mapEl,
+                    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+                    center: position,
+                    zoom: 16,
+                    minZoom: 8,
                     maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                }).addTo(map);
-
-                L.marker(position)
-                    .addTo(map)
-                    .bindPopup(`
-                        <div class="text-sm">
-                            <strong>${singleClientMapPoint.name}</strong><br>
-                            <span>${singleClientMapPoint.client_id || 'No client ID'}</span>
-                        </div>
-                    `)
-                    .openPopup();
-
-                requestAnimationFrame(() => {
-                    map.invalidateSize();
+                    maxBounds: paddedBounds,
+                    attributionControl: true,
                 });
+                map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+                const popup = new maplibregl.Popup({ offset: 25 })
+                    .setHTML(`
+                        <strong>${singleClientMapPoint.name}</strong>
+                        <span>${singleClientMapPoint.client_id || 'No client ID'}</span>
+                    `);
+
+                new maplibregl.Marker({ color: '#3a5f94' })
+                    .setLngLat(position)
+                    .setPopup(popup)
+                    .addTo(map);
+
+                // Open popup by default
+                popup.addTo(map);
             });
         </script>
     </body>
