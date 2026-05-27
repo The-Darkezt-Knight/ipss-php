@@ -913,6 +913,10 @@
                     showInitial();
                     updateAddLink();
 
+                    // Persist selection
+                    localStorage.setItem('ipss-selectedCity', this.value);
+                    localStorage.removeItem('ipss-selectedBarangay');
+
                     if (this.value) {
                         try {
                             const res = await fetch(`/api/barangays?city_municipality_code=${this.value}`);
@@ -926,6 +930,9 @@
 
                 barangaySelect.addEventListener('change', function () {
                     updateAddLink();
+                    // Persist selection
+                    localStorage.setItem('ipss-selectedBarangay', this.value);
+
                     if (this.value) {
                         loadClients(this.value);
                     } else {
@@ -937,7 +944,36 @@
                 });
 
                 // ── Init ─────────────────────────────────────────────
-                loadCitiesByDistrict();
+                async function initDashboard() {
+                    await loadCitiesByDistrict();
+
+                    // Restore persisted city selection
+                    const savedCity = localStorage.getItem('ipss-selectedCity');
+                    if (savedCity && Array.from(citySelect.options).some(o => o.value === savedCity)) {
+                        citySelect.value = savedCity;
+
+                        // Load barangays for the saved city
+                        if (savedCity) {
+                            try {
+                                const res = await fetch(`/api/barangays?city_municipality_code=${savedCity}`);
+                                const data = await res.json();
+                                populateSelect(barangaySelect, data, 'Select Barangay');
+
+                                // Restore persisted barangay selection
+                                const savedBarangay = localStorage.getItem('ipss-selectedBarangay');
+                                if (savedBarangay && Array.from(barangaySelect.options).some(o => o.value === savedBarangay)) {
+                                    barangaySelect.value = savedBarangay;
+                                    updateAddLink();
+                                    loadClients(savedBarangay);
+                                }
+                            } catch (err) {
+                                console.error('Error restoring barangays:', err);
+                            }
+                        }
+                    }
+                }
+
+                initDashboard();
             });
         </script>
     </body>

@@ -1,5 +1,5 @@
 // IPSS Offline-First Service Worker
-const CACHE_VERSION = 'ipss-v2';
+const CACHE_VERSION = 'ipss-v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
@@ -7,6 +7,9 @@ const API_CACHE = `api-${CACHE_VERSION}`;
 const PRECACHE_URLS = [
     '/',
     '/private/form',
+    '/private/surveyor',
+    '/surveyor/dashboard',
+    '/offline-client.html',
     'https://cdn.tailwindcss.com?plugins=forms,container-queries',
     'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap',
     'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
@@ -80,9 +83,9 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navigation requests → Network-first, fallback to cached shell
+    // Navigation requests → Network-first, fallback to smart offline routing
     if (request.mode === 'navigate') {
-        event.respondWith(networkFirst(request, STATIC_CACHE));
+        event.respondWith(networkFirstWithSmartFallback(request));
         return;
     }
 
@@ -129,13 +132,56 @@ async function networkFirst(request, cacheName) {
             return cachedResponse;
         }
 
-        // For navigation, try to serve the cached form page as a fallback
-        if (request.mode === 'navigate') {
-            const fallback = await caches.match('/private/form');
-            if (fallback) return fallback;
+        return new Response('Offline — resource not available', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+        });
+    }
+}
+
+// ─── Strategy: Network-first with smart offline fallback for navigation ─────
+async function networkFirstWithSmartFallback(request) {
+    const url = new URL(request.url);
+
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const cache = await caches.open(STATIC_CACHE);
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    } catch (error) {
+        // Network failed — we're offline. Try exact cache match first.
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+            return cachedResponse;
         }
 
-        return new Response('Offline — resource not available', {
+        // Smart fallback based on the requested URL pattern:
+        // Client detail pages → serve the offline client viewer
+        if (url.pathname.startsWith('/surveyor/clients/')) {
+            const offlinePage = await caches.match('/offline-client.html');
+            if (offlinePage) return offlinePage;
+        }
+
+        // Dashboard → try cached dashboard
+        if (url.pathname.startsWith('/surveyor/dashboard')) {
+            const dashboard = await caches.match('/surveyor/dashboard');
+            if (dashboard) return dashboard;
+        }
+
+        // Sync page → try cached sync page
+        if (url.pathname.startsWith('/private/surveyor')) {
+            const syncPage = await caches.match('/private/surveyor');
+            if (syncPage) return syncPage;
+        }
+
+        // General fallback → serve the cached form page
+        const fallback = await caches.match('/private/form');
+        if (fallback) return fallback;
+
+        return new Response('Offline — page not available', {
             status: 503,
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain' },

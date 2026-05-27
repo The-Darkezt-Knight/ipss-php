@@ -437,6 +437,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ─── Form Submission Handler ────────────────────────────────────────────
+    // ─── Restore Location Selections After Reset ─────────────────────────
+    // After form.reset() clears everything, this re-applies the persisted
+    // city/municipality and barangay so the surveyor doesn't re-select them.
+    async function restoreLocationSelections() {
+        const params = new URLSearchParams(window.location.search);
+        // If URL params locked the dropdowns, don't touch them
+        if (params.get('cityMunicipalityCode')) return;
+
+        const savedCity = localStorage.getItem('ipss-selectedCity');
+        if (savedCity && Array.from(citySelect.options).some(o => o.value === savedCity)) {
+            citySelect.value = savedCity;
+
+            try {
+                let brgyData = await getCachedBarangays(savedCity);
+                if (!brgyData || brgyData.length === 0) {
+                    const res = await fetch(`/api/barangays?city_municipality_code=${savedCity}`);
+                    brgyData = await res.json();
+                }
+                populateSelect(barangaySelect, brgyData, 'Select barangay');
+
+                const savedBarangay = localStorage.getItem('ipss-selectedBarangay');
+                if (savedBarangay && Array.from(barangaySelect.options).some(o => o.value === savedBarangay)) {
+                    barangaySelect.value = savedBarangay;
+                }
+            } catch (err) {
+                console.warn('[Locations] Error restoring barangays after reset:', err);
+            }
+        }
+    }
+
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
@@ -470,6 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 await sendToServer(data);
                 showToast('Survey submitted successfully!', 'success');
                 form.reset();
+                await restoreLocationSelections();
             } catch (err) {
                 // Network failed even though navigator.onLine — save locally
                 console.warn('Online send failed, saving locally:', err);
@@ -478,6 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     await updatePendingBadge();
                     showToast('Network error — saved locally. Will sync when connection is stable.', 'info');
                     form.reset();
+                    await restoreLocationSelections();
                 } catch (dbErr) {
                     showToast('Failed to save survey. Please try again.', 'error');
                     console.error('IndexedDB save error:', dbErr);
@@ -490,6 +522,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 await updatePendingBadge();
                 showToast('Saved offline — will auto-sync when back online.', 'info');
                 form.reset();
+                await restoreLocationSelections();
             } catch (dbErr) {
                 showToast('Failed to save survey locally. Please try again.', 'error');
                 console.error('IndexedDB save error:', dbErr);
@@ -514,6 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 await updatePendingBadge();
                 showToast('Survey saved locally for later sync.', 'info');
                 form.reset();
+                await restoreLocationSelections();
             } catch (err) {
                 showToast('Failed to save survey. Please try again.', 'error');
                 console.error('Save for sync error:', err);
@@ -615,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const pBarangay = params.get('baranggayCode');
 
         if (pCity) {
+            // URL params take priority — lock the dropdowns
             citySelect.value = pCity;
             citySelect.classList.add('pointer-events-none', 'opacity-60', 'bg-surface-variant');
             citySelect.tabIndex = -1;
@@ -634,6 +669,9 @@ document.addEventListener('DOMContentLoaded', function () {
             } catch (err) {
                 console.error('Error prefilling locations:', err);
             }
+        } else {
+            // No URL params — restore from localStorage
+            await restoreLocationSelections();
         }
     }
 
@@ -642,6 +680,10 @@ document.addEventListener('DOMContentLoaded', function () {
     citySelect.addEventListener('change', async function () {
         const cityCode = this.value;
         resetSelect(barangaySelect, 'Select barangay');
+
+        // Persist selection
+        localStorage.setItem('ipss-selectedCity', cityCode);
+        localStorage.removeItem('ipss-selectedBarangay');
 
         if (cityCode) {
             try {
@@ -660,6 +702,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error fetching barangays:', err);
             }
         }
+    });
+
+    barangaySelect.addEventListener('change', function () {
+        // Persist selection
+        localStorage.setItem('ipss-selectedBarangay', this.value);
     });
 
     // ─── Init: Update badge, sync, and ensure locations cached ──────────────

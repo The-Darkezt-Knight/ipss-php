@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Client Profile — Offline</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet"
+    />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#001e40",
+                        background: "#f9f9fc",
+                        surface: "#f9f9fc",
+                        "surface-container-low": "#f3f3f6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "on-surface": "#1a1c1e",
+                        "on-surface-variant": "#44474e",
+                        outline: "#737780",
+                        "outline-variant": "#c3c6d1",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#cbe2fc",
+                        "on-secondary-container": "#4f657b",
+                        error: "#ba1a1a",
+                    },
+                    fontFamily: {
+                        display: ["Public Sans", "sans-serif"],
+                        body: ["Public Sans", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body { font-family: "Public Sans", sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        @keyframes pulse-fade {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-fade { animation: pulse-fade 2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+    <main id="app" class="max-w-5xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-6 flex items-center justify-between gap-4">
+            <div>
+                <a href="/surveyor/dashboard" class="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to Dashboard
+                </a>
+                <h1 id="client-name" class="mt-3 text-3xl font-bold text-primary">Loading…</h1>
+                <p id="client-id" class="text-sm text-on-surface-variant"></p>
+            </div>
+        </div>
+
+        <!-- Offline Banner -->
+        <div class="bg-amber-50 border border-amber-200 rounded-lg px-5 py-4 mb-6 flex items-center gap-3">
+            <span class="material-symbols-outlined text-amber-600">cloud_off</span>
+            <div>
+                <p class="text-sm font-semibold text-amber-800">You are viewing cached data</p>
+                <p class="text-xs text-amber-700">This page was loaded from local cache. The map requires an internet connection. Reconnect to see the full client profile.</p>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="flex flex-col items-center gap-4 py-16 text-on-surface-variant">
+            <span class="material-symbols-outlined text-[48px] text-primary animate-pulse-fade">person_search</span>
+            <p class="text-lg font-semibold">Looking up cached client data…</p>
+        </div>
+
+        <!-- Not Found State -->
+        <div id="not-found-state" class="hidden flex flex-col items-center gap-4 py-16 text-on-surface-variant">
+            <span class="material-symbols-outlined text-[48px] text-outline">person_off</span>
+            <p class="text-lg font-semibold">Client data not available offline</p>
+            <p class="text-sm max-w-md text-center">This client's data wasn't cached on your device. Please reconnect to the internet and try again.</p>
+            <a href="/surveyor/dashboard" class="mt-4 px-6 py-3 bg-primary text-on-primary rounded-lg font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Return to Dashboard
+            </a>
+        </div>
+
+        <!-- Client Data (populated by JS) -->
+        <div id="client-data" class="hidden">
+            <!-- Location Section -->
+            <section class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+                <div class="px-5 py-4 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-primary">Client Location</h2>
+                        <p class="text-sm text-on-surface-variant">Saved latitude and longitude for this client.</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary">location_on</span>
+                </div>
+
+                <div id="coords-display" class="hidden p-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-surface-container-low rounded-lg p-4">
+                            <p class="text-xs uppercase font-semibold text-on-surface-variant mb-1">Latitude</p>
+                            <p id="lat-value" class="text-lg font-bold text-primary font-mono">—</p>
+                        </div>
+                        <div class="bg-surface-container-low rounded-lg p-4">
+                            <p class="text-xs uppercase font-semibold text-on-surface-variant mb-1">Longitude</p>
+                            <p id="lng-value" class="text-lg font-bold text-primary font-mono">—</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 bg-surface-container rounded-lg p-4 flex items-center gap-3 text-on-surface-variant">
+                        <span class="material-symbols-outlined text-outline">map</span>
+                        <p class="text-sm">The interactive map requires an internet connection and will display when you're back online.</p>
+                    </div>
+                </div>
+
+                <div id="no-coords" class="hidden h-[180px] flex flex-col items-center justify-center gap-2 text-on-surface-variant">
+                    <span class="material-symbols-outlined text-[42px] text-outline">location_off</span>
+                    <p class="font-semibold">No saved coordinates</p>
+                    <p class="text-sm">This client does not have latitude and longitude values yet.</p>
+                </div>
+            </section>
+
+            <!-- Details Grid -->
+            <section class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">Mobile</p>
+                    <p id="detail-mobile" class="mt-1 text-sm">—</p>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">Email</p>
+                    <p id="detail-email" class="mt-1 text-sm">—</p>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">Address</p>
+                    <p id="detail-address" class="mt-1 text-sm">—</p>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">Category</p>
+                    <p id="detail-category" class="mt-1 text-sm">—</p>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">MSME Classification</p>
+                    <p id="detail-msme" class="mt-1 text-sm">—</p>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5">
+                    <p class="text-xs uppercase font-semibold text-on-surface-variant">Status</p>
+                    <p id="detail-status" class="mt-1 text-sm">—</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * Offline Client Viewer
+         *
+         * Attempts to find client data from two sources:
+         * 1. The browser's Cache API (cached API responses from /api/clients?barangay_code=...)
+         * 2. IndexedDB pendingSurveys store (locally saved but unsynced surveys)
+         *
+         * If neither source has data for the client ID in the URL, shows a "not found" message.
+         */
+        (function () {
+            const DB_NAME = 'ipss-offline';
+            const DB_VERSION = 3;
+            const SURVEYS_STORE = 'pendingSurveys';
+
+            // Extract the client ID from the URL path: /surveyor/clients/{id}
+            const pathParts = window.location.pathname.split('/');
+            const clientIdFromUrl = pathParts[pathParts.length - 1];
+
+            const nameEl = document.getElementById('client-name');
+            const idEl = document.getElementById('client-id');
+            const loadingEl = document.getElementById('loading-state');
+            const notFoundEl = document.getElementById('not-found-state');
+            const dataEl = document.getElementById('client-data');
+            const coordsEl = document.getElementById('coords-display');
+            const noCoordsEl = document.getElementById('no-coords');
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str ?? '';
+                return div.innerHTML;
+            }
+
+            function showNotFound() {
+                loadingEl.classList.add('hidden');
+                notFoundEl.classList.remove('hidden');
+                nameEl.textContent = 'Client Not Available';
+                document.title = 'Client Not Available — Offline';
+            }
+
+            function renderClient(client) {
+                loadingEl.classList.add('hidden');
+                dataEl.classList.remove('hidden');
+
+                // Build name
+                const fullName = [client.first_name, client.middle_name, client.last_name]
+                    .filter(Boolean).join(' ')
+                    + (client.suffix && client.suffix !== '--N/A--' ? ' ' + client.suffix : '');
+                nameEl.textContent = fullName || 'Unnamed Client';
+                idEl.textContent = client.client_id || 'No client ID';
+                document.title = (fullName || 'Client') + ' — Offline';
+
+                // Coordinates
+                const hasCoords = client.latitude && client.longitude;
+                if (hasCoords) {
+                    coordsEl.classList.remove('hidden');
+                    document.getElementById('lat-value').textContent = client.latitude;
+                    document.getElementById('lng-value').textContent = client.longitude;
+                } else {
+                    noCoordsEl.classList.remove('hidden');
+                }
+
+                // Details
+                document.getElementById('detail-mobile').textContent = client.mobile_number || '—';
+                document.getElementById('detail-email').textContent = client.email_address || '—';
+                document.getElementById('detail-address').textContent = client.address || '—';
+                document.getElementById('detail-category').textContent = client.category_of_client || '—';
+                document.getElementById('detail-msme').textContent = client.msme_classification || '—';
+                document.getElementById('detail-status').textContent = client.status_of_client || 'Registered';
+            }
+
+            // Source 1: Try the Cache API for any cached /api/clients responses
+            async function searchCacheApi() {
+                try {
+                    const cache = await caches.open('api-ipss-v2');
+                    const keys = await cache.keys();
+
+                    for (const request of keys) {
+                        if (!request.url.includes('/api/clients')) continue;
+
+                        const response = await cache.match(request);
+                        if (!response) continue;
+
+                        const clients = await response.clone().json();
+                        if (!Array.isArray(clients)) continue;
+
+                        // Match by database ID (primary key used in URLs)
+                        const match = clients.find(c =>
+                            String(c.id) === String(clientIdFromUrl)
+                        );
+                        if (match) return match;
+                    }
+                } catch (err) {
+                    console.warn('[Offline Viewer] Cache API search failed:', err);
+                }
+                return null;
+            }
+
+            // Source 2: Try IndexedDB pendingSurveys (unsynced local data)
+            async function searchIndexedDB() {
+                try {
+                    const db = await new Promise((resolve, reject) => {
+                        const req = indexedDB.open(DB_NAME, DB_VERSION);
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                    });
+
+                    const records = await new Promise((resolve, reject) => {
+                        const tx = db.transaction(SURVEYS_STORE, 'readonly');
+                        const store = tx.objectStore(SURVEYS_STORE);
+                        const req = store.getAll();
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                        tx.oncomplete = () => db.close();
+                    });
+
+                    // Pending surveys don't have server-assigned IDs,
+                    // but check if any match by the data.id field (client_id)
+                    for (const record of records) {
+                        const d = record.data || {};
+                        if (String(d.id) === String(clientIdFromUrl)) {
+                            // Normalize field names from camelCase form data to snake_case display
+                            return {
+                                first_name: d.firstName,
+                                middle_name: d.middleName,
+                                last_name: d.lastName,
+                                suffix: d.suffix,
+                                client_id: d.id,
+                                latitude: d.latitude,
+                                longitude: d.longitude,
+                                mobile_number: d.mobileNumber,
+                                email_address: d.emailAddress,
+                                address: d.address,
+                                category_of_client: d.categoryOfClient,
+                                msme_classification: d.msmeClassification,
+                                status_of_client: d.statusOfClient,
+                            };
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[Offline Viewer] IndexedDB search failed:', err);
+                }
+                return null;
+            }
+
+            // Main
+            async function init() {
+                if (!clientIdFromUrl) {
+                    showNotFound();
+                    return;
+                }
+
+                // Try Cache API first (server-synced data), then IndexedDB (pending local data)
+                let client = await searchCacheApi();
+                if (!client) {
+                    client = await searchIndexedDB();
+                }
+
+                if (client) {
+                    renderClient(client);
+                } else {
+                    showNotFound();
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

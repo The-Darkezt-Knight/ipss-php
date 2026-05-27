@@ -729,6 +729,8 @@
               </div>
 
             </div>
+            
+            <!--
             <div class="h-32 rounded-xl bg-surface-container overflow-hidden mt-sm relative group">
               <div
                 class="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -741,6 +743,7 @@
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1kAA3cfhixcamhOTmpitN-HDLOV8ITI7zz9JFfDAPQoKtfSxVX6_ZJdU2DtWbM6muWJ9-ufE8UMDGWwTr7GZb64ChA8N2M13Pfl8ayqh1fKp-JwtcysIRw50kkaaPEkRwi8LORWWM0XpSDIwR_JrhP-nUS9BB5ud0vxA_n1_xvHJQzn3CWHU5Jggy1AmKB1ApdNDf2Lv7LEEcn6fRykyOHfXDAOCSCeoLhQn38NTYlRbEOSzwBev2g6UwAOWU1pqrTkTR7C-oN1t9" />
             
             </div>
+            -->
 
           </div>
         </section>

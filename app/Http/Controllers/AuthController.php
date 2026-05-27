@@ -49,6 +49,11 @@ class AuthController extends Controller
         return view('index');
     }
 
+    public function admin() {
+        $employee = Auth::user();
+        return view('private.admin.admin-dashboard', compact('employee'));
+    }
+
     public function superadmin() {
         $employees = \App\Models\Employee::all();
         return view('private.superadmin', compact('employees'));
