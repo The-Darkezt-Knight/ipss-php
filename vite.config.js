@@ -6,7 +6,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/superadmin.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/superadmin.js',
+                'resources/js/surveyor/form.js',
+                'resources/js/surveyor/offline-db.js',
+                'resources/js/surveyor/location-prefetch.js',
+                'resources/js/surveyor/surveyor.js',
+            ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {

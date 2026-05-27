@@ -165,7 +165,10 @@
       </nav>
     </div>
     <div class="flex items-center gap-md">
-      <button class="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors">Help Center</button>
+      <form method="POST" action="{{ route('logout') }}" class="inline">
+        @csrf
+        <button type="submit" class="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors">Log out</button>
+      </form>
       <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xs" aria-label="Signed in as SA" title="System Administrator">SA</div>
     </div>
   </div>
@@ -426,39 +429,74 @@
               <label class="text-[12px] font-semibold text-on-surface-variant" for="region">
                 Region <span class="text-error" aria-hidden="true">*</span>
               </label>
-              <input
-                id="region" name="region" type="text" required
-                placeholder="e.g. Region VII"
+              <select
+                id="region" name="region" required
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="region-err"
-              />
+              >
+                <option value="">Select Region…</option>
+              </select>
               <span id="region-err" class="error-msg" role="alert">Region is required.</span>
-            </div>
-
-            <div class="flex flex-col gap-xs">
-              <label class="text-[12px] font-semibold text-on-surface-variant" for="city">
-                City / Municipality <span class="text-error" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="city" name="city_municipality" type="text" required
-                placeholder="e.g. Cebu City"
-                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
-                aria-required="true" aria-describedby="city-err"
-              />
-              <span id="city-err" class="error-msg" role="alert">City/Municipality is required.</span>
             </div>
 
             <div class="flex flex-col gap-xs">
               <label class="text-[12px] font-semibold text-on-surface-variant" for="province">
                 Province <span class="text-error" aria-hidden="true">*</span>
               </label>
-              <input
-                id="province" name="province" type="text" required
-                placeholder="e.g. Cebu"
+              <select
+                id="province" name="province" required disabled
                 class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
                 aria-required="true" aria-describedby="province-err"
-              />
+              >
+                <option value="">Select Province…</option>
+              </select>
               <span id="province-err" class="error-msg" role="alert">Province is required.</span>
+            </div>
+
+            <div id="district-field" class="flex flex-col gap-xs">
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="district">
+                District <span class="text-error district-required-marker" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="district" name="district" disabled
+                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
+                aria-describedby="district-err"
+              >
+                <option value="">Select District…</option>
+              </select>
+              <input type="hidden" id="district_code" name="district_code" value="" />
+              <span id="district-err" class="error-msg" role="alert">District is required for Surveyor accounts.</span>
+            </div>
+          </div>
+
+          <!-- City / Barangay — shown for non-surveyor roles -->
+          <div id="city-barangay-fields" class="grid grid-cols-1 md:grid-cols-2 gap-md mt-md">
+            <div class="flex flex-col gap-xs">
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="city">
+                City / Municipality <span class="text-outline font-normal">(optional)</span>
+              </label>
+              
+              <!--
+              <select
+                id="city" name="city_municipality" disabled
+                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
+              >
+                <option value="">Select City / Municipality…</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-xs">
+              <label class="text-[12px] font-semibold text-on-surface-variant" for="barangay">
+                Barangay <span class="text-outline font-normal">(optional)</span>
+              </label>
+              <select
+                id="barangay" name="barangay" disabled
+                class="border border-outline rounded-lg px-md py-sm bg-surface text-[14px] outline-none transition-all"
+              >
+                <option value="">Select Barangay…</option>
+              </select>
+              -->
+              
             </div>
           </div>
         </fieldset>

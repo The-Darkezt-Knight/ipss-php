@@ -1,0 +1,100 @@
+/* ─── MapLibre GL — Map Overrides ──────────────────────────────────────────── */
+
+/* Ensure the map canvas fills its container */
+.maplibregl-map {
+    font-family: "Public Sans", sans-serif;
+}
+
+/* ─── Popup ───────────────────────────────────────────────────────────────── */
+.maplibregl-popup-content {
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    font-family: "Public Sans", sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #1a1c1e;
+    max-width: 260px;
+}
+
+.maplibregl-popup-content strong {
+    display: block;
+    font-weight: 700;
+    color: #001e40;
+    margin-bottom: 2px;
+}
+
+.maplibregl-popup-content span {
+    color: #44474e;
+    font-size: 12px;
+}
+
+.maplibregl-popup-close-button {
+    font-size: 18px;
+    color: #737780;
+    padding: 4px 8px;
+}
+.maplibregl-popup-close-button:hover {
+    color: #001e40;
+    background: transparent;
+}
+
+/* ─── Attribution ─────────────────────────────────────────────────────────── */
+.maplibregl-ctrl-attrib {
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(4px);
+}
+
+/* ─── Cluster marker (rendered via HTML marker) ───────────────────────────── */
+.cluster-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-family: "Public Sans", sans-serif;
+    font-weight: 700;
+    color: #ffffff;
+    border: 3px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 2px 8px rgba(0, 30, 64, 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cluster-marker:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 16px rgba(0, 30, 64, 0.35);
+}
+
+/* Size tiers */
+.cluster-marker--sm {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+    background: #3a5f94;
+}
+.cluster-marker--md {
+    width: 42px;
+    height: 42px;
+    font-size: 13px;
+    background: #1f477b;
+}
+.cluster-marker--lg {
+    width: 52px;
+    height: 52px;
+    font-size: 15px;
+    background: #001e40;
+}
+
+/* ─── Single-point marker pin ─────────────────────────────────────────────── */
+.point-marker {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+.point-marker:hover {
+    transform: scale(1.15);
+}
+.point-marker svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 30, 64, 0.3));
+}

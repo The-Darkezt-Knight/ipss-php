@@ -6,25 +6,36 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
     public function store(Request $request) {
 
-
-        $validated = $request->validate([
+        $rules = [
             'govt_id' => 'required|unique:employee',
             'govt_email' => 'required|unique:employee',
             'first_name' => 'required',
             'middle_name' => 'nullable',
             'last_name' => 'required',
             'birth_date' => 'required',
-            'city_municipality' => 'required',
+            'barangay' => 'nullable',
+            'city_municipality' => 'nullable',
             'province' => 'required',
             'region' => 'required',
+            'district' => 'nullable',
+            'district_code' => 'nullable',
             'sex' => 'required',
-            'role'=>'required'
-        ]);
+            'role'=> 'required'
+        ];
+
+        // District is required for surveyors
+        if ($request->input('role') === 'ROLE_SURVEYOR') {
+            $rules['district'] = 'required';
+            $rules['district_code'] = 'required';
+        }
+
+        $validated = $request->validate($rules);
 
         $password = $request->last_name . $request->govt_id;
         $is_active = true;
@@ -33,38 +44,53 @@ class EmployeeController extends Controller
 
 
         $employee = Employee::create([
-            'govt_id' =>                $request->govt_id,
-            'govt_email' =>             $request->govt_email,
-            'first_name' =>             $request->first_name,
-            'middle_name' =>            $request->middle_name,
-            'last_name' =>              $request->last_name,
-            'birth_date' =>             $request->birth_date,
-            'city_municipality' =>      $request->city_municipality,
-            'province' =>               $request->province,
-            'region' =>                 $request->region,
-            'sex' =>                    $request->sex,
-            'role'=>                    $request->role,
+            'govt_id' =>                $validated['govt_id'],
+            'govt_email' =>             $validated['govt_email'],
+            'first_name' =>             $validated['first_name'],
+            'middle_name' =>            $validated['middle_name'],
+            'last_name' =>              $validated['last_name'],
+            'birth_date' =>             $validated['birth_date'],
+            'barangay' =>               $validated['barangay'] ?? null,
+            'city_municipality' =>      $validated['city_municipality'] ?? null,
+            'province' =>               $validated['province'],
+            'region' =>                 $validated['region'],
+            'district' =>               $validated['district'] ?? null,
+            'district_code' =>          $validated['district_code'] ?? null,
+            'sex' =>                    $validated['sex'],
+            'role'=>                    $validated['role'],
             'password' =>               $hashed_password,
-            'is_active' =>              $is_active
+            'is_active' =>              $is_active,
+            'age' =>                    $age
         ]);
 
         return redirect()->back()->with('success', 'User created successfully!');
     }
 
     public function update(Request $request, Employee $employee) {
-        $validated = $request->validate([
+        $rules = [
             'govt_id' => 'required|unique:employee,govt_id,' . $employee->id,
             'govt_email' => 'required|email|unique:employee,govt_email,' . $employee->id,
             'first_name' => 'required',
             'middle_name' => 'nullable',
             'last_name' => 'required',
             'birth_date' => 'required',
-            'city_municipality' => 'required',
+            'barangay' => 'nullable',
+            'city_municipality' => 'nullable',
             'province' => 'required',
             'region' => 'required',
+            'district' => 'nullable',
+            'district_code' => 'nullable',
             'sex' => 'required',
-            'role'=>'required'
-        ]);
+            'role'=> 'required'
+        ];
+
+        // District is required for surveyors
+        if ($request->input('role') === 'ROLE_SURVEYOR') {
+            $rules['district'] = 'required';
+            $rules['district_code'] = 'required';
+        }
+
+        $validated = $request->validate($rules);
 
         $employee->update([
             'govt_id' =>                $request->govt_id,
@@ -73,9 +99,12 @@ class EmployeeController extends Controller
             'middle_name' =>            $request->middle_name,
             'last_name' =>              $request->last_name,
             'birth_date' =>             $request->birth_date,
+            'barangay' =>               $request->barangay,
             'city_municipality' =>      $request->city_municipality,
             'province' =>               $request->province,
             'region' =>                 $request->region,
+            'district' =>               $request->district,
+            'district_code' =>          $request->district_code,
             'sex' =>                    $request->sex,
             'role'=>                    $request->role,
         ]);
