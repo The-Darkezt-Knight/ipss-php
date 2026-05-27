@@ -50,6 +50,7 @@ class Client extends Model
         "social_media",
         "website",
         "e_commerce_platform",
+        "survey_status",
         "surveyed_by"
     ];
 

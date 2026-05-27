@@ -254,6 +254,7 @@ class ClientController
             'longitude'                        => $validated['longitude'] ?? null,
 
             //surveyor
+            'survey_status'                    => 'pending',
             'surveyed_by'                      => $validated['surveyed_by'] ?? null,
         ]);
 
@@ -262,5 +263,35 @@ class ClientController
         }
 
         return redirect() -> back() -> with('success', 'Client data successfully sent to the central database');
+    }
+
+    public function updateSurveyStatus(Request $request, Client $client)
+    {
+        $validated = $request->validate([
+            'survey_status' => 'required|in:pending,rejected,returned',
+        ]);
+
+        $client->update([
+            'survey_status' => $validated['survey_status'],
+        ]);
+
+        return redirect()
+            ->to(route('admin') . '#verification')
+            ->with('success', 'Client verification status updated.');
+    }
+
+    public function destroyRejected(Client $client)
+    {
+        if (($client->survey_status ?? 'pending') !== 'rejected') {
+            return redirect()
+                ->to(route('admin') . '#verification')
+                ->withErrors(['client' => 'Only rejected client records can be deleted.']);
+        }
+
+        $client->delete();
+
+        return redirect()
+            ->to(route('admin') . '#verification')
+            ->with('success', 'Rejected client record deleted.');
     }
 }

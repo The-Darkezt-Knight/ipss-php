@@ -51,7 +51,51 @@ class AuthController extends Controller
 
     public function admin() {
         $employee = Auth::user();
-        return view('private.admin.admin-dashboard', compact('employee'));
+        $verificationBaseQuery = \App\Models\Client::query()
+            ->whereNotNull('surveyed_by')
+            ->orderByDesc('created_at');
+
+        $verificationClients = (clone $verificationBaseQuery)
+            ->where(function ($query) {
+                $query->where('survey_status', 'pending')
+                    ->orWhereNull('survey_status');
+            })
+            ->paginate(10)
+            ->withQueryString();
+
+        $returnedClients = (clone $verificationBaseQuery)
+            ->where('survey_status', 'returned')
+            ->paginate(10, ['*'], 'returned_page')
+            ->withQueryString();
+
+        $surveyorNames = \App\Models\Employee::query()
+            ->whereIn('id', $verificationClients->getCollection()
+                ->merge($returnedClients->getCollection())
+                ->pluck('surveyed_by')
+                ->filter()
+                ->unique())
+            ->get()
+            ->mapWithKeys(fn ($surveyor) => [
+                $surveyor->id => trim(implode(' ', array_filter([
+                    $surveyor->first_name,
+                    $surveyor->middle_name,
+                    $surveyor->last_name,
+                ]))),
+            ]);
+        $verificationStatusSource = (clone $verificationBaseQuery)->get();
+        $verificationStatusCounts = [
+            'pending' => $verificationStatusSource->filter(fn ($client) => ($client->survey_status ?? 'pending') === 'pending')->count(),
+            'returned' => $verificationStatusSource->where('survey_status', 'returned')->count(),
+            'rejected' => $verificationStatusSource->where('survey_status', 'rejected')->count(),
+        ];
+
+        return view('private.admin.admin-dashboard', compact(
+            'employee',
+            'verificationClients',
+            'returnedClients',
+            'surveyorNames',
+            'verificationStatusCounts'
+        ));
     }
 
     public function superadmin() {
