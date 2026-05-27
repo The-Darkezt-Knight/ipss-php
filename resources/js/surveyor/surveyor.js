@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModalCancel = document.getElementById('edit-modal-cancel');
     const editModalSave = document.getElementById('edit-modal-save');
     const selectClass = 'p-md border border-outline rounded-lg bg-surface-bright text-body-sm';
+    let activeEditRecord = null;
 
     const SELECT_OPTIONS = {
         statusOfClient: ['Level 0 - Would be or Potential Entrepreneurs'],
@@ -344,6 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function openEditModal(record) {
+        activeEditRecord = record;
         const d = record.data || {};
         editRecordId.value = record.id;
 
@@ -384,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeEditModal() {
+        activeEditRecord = null;
         editModal.classList.add('hidden');
         editModal.classList.remove('flex');
         document.body.style.overflow = '';
@@ -408,8 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const recordId = editRecordId.value;
         if (!recordId) return;
 
-        // Collect data from the modal form
-        const updatedData = {};
+        // Preserve hidden/non-editable payload fields such as surveyed_by.
+        const updatedData = { ...(activeEditRecord?.data || {}) };
 
         EDITABLE_FIELDS.forEach(key => {
             const el = document.getElementById(`edit-${key}`);
@@ -425,6 +428,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedData[key] = el.value;
             }
         });
+
+        // Always ensure surveyed_by is present from the hidden field
+        const surveyedByEl = document.getElementById('edit-surveyed_by');
+        if (surveyedByEl && surveyedByEl.value) {
+            updatedData.surveyed_by = surveyedByEl.value;
+        }
 
         // Disable save button while processing
         const originalContent = editModalSave.innerHTML;

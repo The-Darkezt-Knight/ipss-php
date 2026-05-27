@@ -1,5 +1,5 @@
 // IPSS Offline-First Service Worker
-const CACHE_VERSION = 'ipss-v1';
+const CACHE_VERSION = 'ipss-v2';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
@@ -10,6 +10,20 @@ const PRECACHE_URLS = [
     'https://cdn.tailwindcss.com?plugins=forms,container-queries',
     'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap',
     'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap',
+    '/tesseract/worker.min.js',
+    '/tesseract/tesseract-core.wasm.js',
+    '/tesseract/tesseract-core.wasm',
+    '/tesseract/tesseract-core-simd.wasm.js',
+    '/tesseract/tesseract-core-simd.wasm',
+    '/tesseract/tesseract-core-lstm.wasm.js',
+    '/tesseract/tesseract-core-lstm.wasm',
+    '/tesseract/tesseract-core-simd-lstm.wasm.js',
+    '/tesseract/tesseract-core-simd-lstm.wasm',
+    '/tesseract/tesseract-core-relaxedsimd.wasm.js',
+    '/tesseract/tesseract-core-relaxedsimd.wasm',
+    '/tesseract/tesseract-core-relaxedsimd-lstm.wasm.js',
+    '/tesseract/tesseract-core-relaxedsimd-lstm.wasm',
+    '/tesseract/lang-data/eng.traineddata.gz',
 ];
 
 // ─── Install: Pre-cache critical assets ─────────────────────────────────────
@@ -18,7 +32,15 @@ self.addEventListener('install', (event) => {
         caches.open(STATIC_CACHE)
             .then((cache) => {
                 console.log('[SW] Pre-caching app shell');
-                return cache.addAll(PRECACHE_URLS);
+                return Promise.allSettled(
+                    PRECACHE_URLS.map((url) => cache.add(url))
+                ).then((results) => {
+                    results.forEach((result, index) => {
+                        if (result.status === 'rejected') {
+                            console.warn('[SW] Pre-cache failed:', PRECACHE_URLS[index], result.reason);
+                        }
+                    });
+                });
             })
             .then(() => self.skipWaiting())
     );

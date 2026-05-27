@@ -447,10 +447,69 @@
 
         <!-- SECTION 3: Personal Information -->
         <section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
-          <div class="flex items-center gap-sm mb-lg">
-            <span class="material-symbols-outlined text-primary" data-icon="person">person</span>
-            <h2 class="text-headline-sm font-headline-sm text-primary">3. Personal Information</h2>
+          <div class="flex flex-col gap-md mb-lg md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-sm">
+              <span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+              <h2 class="text-headline-sm font-headline-sm text-primary">3. Personal Information</h2>
+            </div>
+            <div class="flex flex-wrap gap-sm">
+              <button id="use-manual-entry-btn" type="button"
+                class="px-md py-sm bg-primary text-on-primary font-label-lg rounded-full hover:opacity-90 transition-opacity">
+                Use Manual Entry
+              </button>
+              <button id="scan-national-id-btn" type="button"
+                class="px-md py-sm bg-secondary-container text-on-secondary-container font-label-lg rounded-full hover:opacity-90 transition-opacity">
+                Scan National ID
+              </button>
+            </div>
           </div>
+
+          <div id="national-id-scanner" class="hidden mb-lg rounded-xl border border-outline-variant bg-surface-container-low p-md">
+            <div class="flex flex-col gap-md">
+              <div class="flex flex-wrap gap-sm">
+                <button id="open-camera-btn" type="button"
+                  class="px-md py-sm bg-primary text-on-primary font-label-lg rounded-full hover:opacity-90 transition-opacity">
+                  Open Camera
+                </button>
+                <button id="capture-id-btn" type="button"
+                  class="px-md py-sm bg-primary-fixed-dim text-on-primary-fixed font-label-lg rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+                  disabled>
+                  Capture ID
+                </button>
+                <button id="retake-id-btn" type="button"
+                  class="hidden px-md py-sm bg-surface-container-high text-on-surface font-label-lg rounded-full hover:opacity-90 transition-opacity">
+                  Retake
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                <div class="relative overflow-hidden rounded-lg border border-outline-variant bg-black min-h-48">
+                  <video id="national-id-video" class="w-full h-full object-contain" playsinline muted></video>
+                  <canvas id="national-id-canvas" class="hidden w-full h-full object-contain"></canvas>
+                </div>
+                <div class="flex flex-col gap-sm">
+                  <p id="ocr-status" class="hidden text-body-sm font-semibold text-primary">Reading ID, please wait...</p>
+                  <p id="ocr-warning" class="hidden text-body-sm text-amber-700"></p>
+                  <p id="ocr-error" class="hidden text-body-sm text-error"></p>
+                  <div id="ocr-review" class="hidden rounded-lg border border-outline-variant bg-surface-container-lowest p-md">
+                    <p class="text-label-md font-label-md text-on-surface-variant mb-sm">Extracted fields for review</p>
+                    <dl class="grid grid-cols-1 gap-xs text-body-sm">
+                      <div><dt class="font-semibold text-on-surface">First Name</dt><dd id="ocr-review-first-name" class="text-on-surface-variant"></dd></div>
+                      <div><dt class="font-semibold text-on-surface">Middle Name</dt><dd id="ocr-review-middle-name" class="text-on-surface-variant"></dd></div>
+                      <div><dt class="font-semibold text-on-surface">Last Name</dt><dd id="ocr-review-last-name" class="text-on-surface-variant"></dd></div>
+                      <div><dt class="font-semibold text-on-surface">Sex</dt><dd id="ocr-review-sex" class="text-on-surface-variant"></dd></div>
+                      <div><dt class="font-semibold text-on-surface">Birth Date</dt><dd id="ocr-review-birth-date" class="text-on-surface-variant"></dd></div>
+                    </dl>
+                    <details class="mt-sm">
+                      <summary class="cursor-pointer text-label-md font-label-md text-primary">Raw OCR text</summary>
+                      <pre id="ocr-raw-text" class="mt-sm max-h-40 overflow-auto whitespace-pre-wrap text-xs text-on-surface-variant"></pre>
+                    </details>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-4 gap-lg">
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">First Name</label>
@@ -514,6 +573,11 @@
                 <option value="Female">Female</option>
               </select>
             </div>
+            <div class="md:col-span-1 flex flex-col gap-xs">
+              <label class="text-label-md font-label-md text-on-surface-variant">Birth Date</label>
+              <input id="birthdate" name="birthdate"
+                class="p-md border border-outline rounded-lg bg-surface-bright text-body-md" type="date" />
+            </div>
             
             <div class="md:col-span-1 flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Citizenship</label>
@@ -547,7 +611,7 @@
 
           <div class="flex flex-col gap-lg">
 
-
+            <!--
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Old Client ID</label>
               <div class="relative">
@@ -569,7 +633,8 @@
                   placeholder="ID Number" type="text" />
               </div>
             </div>
-
+            -->
+            
             <div class="flex flex-col gap-xs">
               <label class="text-label-md font-label-md text-on-surface-variant">Philippine ID System (PhilSys)</label>
               <input id="philippineIdentificationSystem" name="philippineIdentificationSystem"

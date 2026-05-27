@@ -472,6 +472,8 @@
                 <form id="edit-client-form" class="flex flex-col gap-xl">
                     <!-- Hidden record ID -->
                     <input type="hidden" id="edit-record-id" />
+                    <!-- Surveyor ID (always injected so it survives edits) -->
+                    <input type="hidden" id="edit-surveyed_by" value="{{ $employee->id }}" />
 
                     <!-- Section 1: Client Status & Classification -->
                     <fieldset>
@@ -617,6 +619,8 @@
                                 <input id="edit-id" type="text" readonly
                                     class="p-md border border-outline-variant rounded-lg bg-surface-container text-body-sm text-on-surface-variant cursor-not-allowed" />
                             </div>
+
+                            <!--
                             <div class="flex flex-col gap-xs">
                                 <label class="text-label-md font-label-md text-on-surface-variant">Old Client ID</label>
                                 <input id="edit-oldId" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
@@ -625,6 +629,8 @@
                                 <label class="text-label-md font-label-md text-on-surface-variant">DTI Konek ID</label>
                                 <input id="edit-dtiKonekId" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />
                             </div>
+                            -->
+                            
                             <div class="flex flex-col gap-xs">
                                 <label class="text-label-md font-label-md text-on-surface-variant">PhilSys ID</label>
                                 <input id="edit-philippineIdentificationSystem" type="text" class="p-md border border-outline rounded-lg bg-surface-bright text-body-sm" />

@@ -3,6 +3,10 @@ import {
     getCachedCitiesByDistrict, getCachedBarangays,
     hasLocationCache, prefetchLocationsByDistrict
 } from './offline-db.js';
+import {
+    startCamera, stopCamera, captureImage, preprocessImage, runOcr,
+    parsePhilippineNationalIdText, fillSurveyFormFields
+} from './national-id-ocr.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('survey-form');
@@ -85,6 +89,166 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => toast.remove(), 500);
         }, 4000);
     }
+
+    // National ID OCR scanning stays client-side. The captured image is not uploaded
+    // or persisted; only extracted editable form values are applied.
+    function initializeNationalIdScanner() {
+        const scannerPanel = document.getElementById('national-id-scanner');
+        const scanBtn = document.getElementById('scan-national-id-btn');
+        const manualBtn = document.getElementById('use-manual-entry-btn');
+        const openCameraBtn = document.getElementById('open-camera-btn');
+        const captureBtn = document.getElementById('capture-id-btn');
+        const retakeBtn = document.getElementById('retake-id-btn');
+        const video = document.getElementById('national-id-video');
+        const canvas = document.getElementById('national-id-canvas');
+        const status = document.getElementById('ocr-status');
+        const warning = document.getElementById('ocr-warning');
+        const error = document.getElementById('ocr-error');
+        const review = document.getElementById('ocr-review');
+        const rawText = document.getElementById('ocr-raw-text');
+
+        if (!scannerPanel || !scanBtn || !manualBtn || !openCameraBtn || !captureBtn || !retakeBtn || !video || !canvas) {
+            return;
+        }
+
+        const reviewFields = {
+            first_name: document.getElementById('ocr-review-first-name'),
+            middle_name: document.getElementById('ocr-review-middle-name'),
+            last_name: document.getElementById('ocr-review-last-name'),
+            sex: document.getElementById('ocr-review-sex'),
+            birth_date: document.getElementById('ocr-review-birth-date'),
+        };
+
+        function resetMessages() {
+            [status, warning, error, review].forEach(element => element?.classList.add('hidden'));
+            if (warning) warning.textContent = '';
+            if (error) error.textContent = '';
+            if (rawText) rawText.textContent = '';
+        }
+
+        function switchToManual(message = '') {
+            stopCamera(video);
+            scannerPanel.classList.add('hidden');
+            canvas.classList.add('hidden');
+            video.classList.remove('hidden');
+            captureBtn.disabled = true;
+            retakeBtn.classList.add('hidden');
+            openCameraBtn.disabled = false;
+            if (message) {
+                showToast(message, 'info');
+            }
+        }
+
+        function showScanner() {
+            scannerPanel.classList.remove('hidden');
+            resetMessages();
+        }
+
+        function setBusy(isBusy, message = 'Reading ID, please wait...') {
+            status.textContent = message;
+            status.classList.toggle('hidden', !isBusy);
+            openCameraBtn.disabled = isBusy;
+            captureBtn.disabled = isBusy || video.paused || video.classList.contains('hidden');
+            retakeBtn.disabled = isBusy;
+        }
+
+        function showError(message) {
+            if (error) {
+                error.textContent = message;
+                error.classList.remove('hidden');
+            }
+            showToast(message, 'error');
+        }
+
+        function renderReview(parsed, confidence) {
+            Object.entries(reviewFields).forEach(([key, element]) => {
+                if (element) {
+                    element.textContent = parsed[key] || 'Not detected';
+                }
+            });
+
+            if (rawText) {
+                rawText.textContent = parsed.raw_text || '';
+            }
+
+            if (confidence < 65 && warning) {
+                warning.textContent = `OCR confidence is low (${Math.round(confidence)}%). Please review and correct the fields before submitting.`;
+                warning.classList.remove('hidden');
+            }
+
+            review?.classList.remove('hidden');
+        }
+
+        scanBtn.addEventListener('click', showScanner);
+        manualBtn.addEventListener('click', () => switchToManual());
+
+        openCameraBtn.addEventListener('click', async () => {
+            resetMessages();
+            try {
+                await startCamera(video);
+                video.classList.remove('hidden');
+                canvas.classList.add('hidden');
+                captureBtn.disabled = false;
+                retakeBtn.classList.add('hidden');
+            } catch (err) {
+                console.error('[OCR] Camera failed:', err);
+                showError('Camera permission was denied or unavailable. Manual entry is still available.');
+                switchToManual();
+            }
+        });
+
+        captureBtn.addEventListener('click', async () => {
+            resetMessages();
+            setBusy(true);
+
+            try {
+                const capturedBlob = await captureImage(video, canvas);
+                const capturedFile = new File([capturedBlob], 'national-id-capture.jpg', { type: capturedBlob.type });
+                stopCamera(video);
+                video.classList.add('hidden');
+                canvas.classList.remove('hidden');
+                retakeBtn.classList.remove('hidden');
+
+                const processedBlob = await preprocessImage(capturedFile, canvas);
+                const processedFile = new File([processedBlob], 'national-id-processed.png', { type: processedBlob.type });
+                const ocrResult = await runOcr(processedFile, progress => {
+                    if (progress.status === 'recognizing text' && progress.progress) {
+                        setBusy(true, `Reading ID, please wait... ${Math.round(progress.progress * 100)}%`);
+                    }
+                });
+
+                const parsed = parsePhilippineNationalIdText(ocrResult.text);
+                fillSurveyFormFields(parsed);
+                renderReview(parsed, ocrResult.confidence);
+                showToast('OCR complete. Review the extracted fields before submitting.', 'success');
+            } catch (err) {
+                console.error('[OCR] Scan failed:', err);
+                showError(err?.message || 'Scanning failed. Please use manual entry.');
+            } finally {
+                setBusy(false);
+                captureBtn.disabled = true;
+            }
+        });
+
+        retakeBtn.addEventListener('click', async () => {
+            resetMessages();
+            canvas.classList.add('hidden');
+            video.classList.remove('hidden');
+            retakeBtn.classList.add('hidden');
+            try {
+                await startCamera(video);
+                captureBtn.disabled = false;
+            } catch (err) {
+                console.error('[OCR] Retake camera failed:', err);
+                showError('Camera permission was denied or unavailable. Manual entry is still available.');
+                switchToManual();
+            }
+        });
+
+        window.addEventListener('beforeunload', () => stopCamera(video));
+    }
+
+    initializeNationalIdScanner();
 
     // ─── Pending Badge Update ───────────────────────────────────────────────
     async function updatePendingBadge() {
