@@ -18,7 +18,11 @@ class LocationController
         if (!$regionCode) {
             return response()->json([]);
         }
-        return response()->json(DB::table('province')->where('region_code', $regionCode)->orderBy('name')->get(['code', 'name']));
+        return response()->json(
+            DB::table('province')
+            ->where('region_code', $regionCode)
+            ->orderBy('name')
+            ->get(['code', 'name']));
     }
 
     /**
@@ -59,7 +63,12 @@ class LocationController
         if (!$provinceCode) {
             return response()->json([]);
         }
-        return response()->json(DB::table('city_municipality')->where('province_code', $provinceCode)->orderBy('name')->get(['code', 'name']));
+        
+        return response()->json(
+            DB::table('city_municipality')
+            ->where('province_code', $provinceCode)
+            ->orderBy('name')
+            ->get(['code', 'name']));
     }
 
     public function getBarangays(Request $request)

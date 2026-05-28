@@ -49,6 +49,8 @@
         </style>
     </head>
     <body class="bg-background text-on-surface min-h-screen">
+
+        <!--Individual client modal-->
         <main class="max-w-5xl mx-auto px-6 py-8">
             <div class="mb-6 flex items-center justify-between gap-4">
                 <div>
@@ -114,7 +116,26 @@
 
                 const map = new maplibregl.Map({
                     container: mapEl,
-                    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+                    style: {
+                        version: 8,
+                        sources: {
+                            'esri-satellite': {
+                                type: 'raster',
+                                tiles: [
+                                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                                ],
+                                tileSize: 256,
+                                attribution: 'Tiles © Esri'
+                            }
+                        },
+                        layers: [
+                            {
+                                id: 'esri-satellite-layer',
+                                type: 'raster',
+                                source: 'esri-satellite'
+                            }
+                        ]
+                    },
                     center: position,
                     zoom: 16,
                     minZoom: 8,

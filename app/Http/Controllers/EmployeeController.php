@@ -113,8 +113,10 @@ class EmployeeController extends Controller
     }
 
     public function destroy(Employee $employee) {
-        $employee->delete();
-        return redirect()->back()->with('success', 'User deleted successfully!');
+        $employee->update([
+            'is_active' => false
+        ]);
+        return redirect()->back()->with('success', 'User successfully deactivated.');
     }
 
     public function toggleStatus(Employee $employee) {

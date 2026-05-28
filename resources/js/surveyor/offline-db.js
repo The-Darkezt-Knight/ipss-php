@@ -250,6 +250,8 @@ export async function getCachedCitiesByDistrict(districtCode) {
  */
 export async function getCachedBarangays(cityCode) {
     const all = await _getCachedLocationType('barangays');
+
+    //returns all barangays whose city_municipality_code matches that of the parameter
     return all.filter((b) => {
         if (b.city_municipality_code === cityCode) return true;
         if (!b.city_municipality_code) {

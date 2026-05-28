@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 source: 'returned',
                 serverId: record.id,
                 updateUrl: record.update_url,
+                sendBackUrl: record.send_back_url,
                 data: record.data || {},
                 timestamp: record.updated_at || new Date().toISOString(),
             },
@@ -670,6 +671,94 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             openEditModal(record);
+        });
+    });
+
+    // ─── Send Back Returned Survey ──────────────────────────────────────────
+    document.querySelectorAll('.send-returned-btn').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const recordId = String(button.dataset.returnedRecordId);
+            const sendBackUrl = button.dataset.sendBackUrl;
+            const record = returnedSurveyRecords.get(recordId);
+
+            if (!record || !sendBackUrl) {
+                showStatusToast('Returned client record is missing from this page.', 'error');
+                return;
+            }
+
+            // ── 1. Connection check ─────────────────────────────────────────
+            if (!navigator.onLine) {
+                showStatusToast('Cannot send — you are offline. Please check your connection.', 'error');
+                return;
+            }
+
+            // ── 2. Capture surveyor geolocation ─────────────────────────────
+            let coords = null;
+            try {
+                coords = await getCurrentPosition();
+            } catch (geoErr) {
+                console.warn('[Geo] Geolocation failed, will send without coordinates:', geoErr);
+            }
+
+            // ── 3. Disable button and show loading state ────────────────────
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Sending…';
+            button.classList.add('opacity-60', 'cursor-not-allowed');
+
+            // ── 4. POST to the send-back endpoint ───────────────────────────
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const payload = {};
+                if (coords) {
+                    payload.latitude = coords.latitude;
+                    payload.longitude = coords.longitude;
+                }
+
+                const response = await fetch(sendBackUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+                // ── 5. Animate row removal on success ───────────────────────
+                const row = button.closest('tr');
+                if (row) {
+                    row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(20px)';
+                    setTimeout(() => row.remove(), 300);
+                }
+
+                // Remove from in-memory map
+                returnedSurveyRecords.delete(recordId);
+
+                showStatusToast('Returned survey sent back for verification!', 'success');
+            } catch (err) {
+                console.error('Send-back failed:', err);
+                button.disabled = false;
+                button.textContent = 'Retry';
+                button.classList.remove('opacity-60', 'cursor-not-allowed');
+
+                // Show failed status on the row
+                const statusCell = button.closest('tr')?.querySelector('td:nth-child(4) span');
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <span class="material-symbols-outlined text-[16px]" data-icon="error_outline">error_outline</span> Failed
+                    `;
+                    statusCell.className = 'inline-flex items-center gap-xs text-error font-bold';
+                }
+
+                showStatusToast('Failed to send survey. Please try again.', 'error');
+            }
         });
     });
 

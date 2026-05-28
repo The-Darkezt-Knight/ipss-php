@@ -392,7 +392,7 @@
                                         <tr data-returned-record-id="{{ $record['id'] }}">
                                             <td class="returned-client-name px-lg py-md font-bold text-primary">{{ $record['name'] }}</td>
                                             <td class="returned-client-date px-lg py-md">
-                                                {{ !empty($record['updated_at']) ? \Carbon\Carbon::parse($record['updated_at'])->format('M d, Y - h:i A') : 'Not recorded' }}
+                                                {{ !empty($record['updated_at']) ? \Carbon\Carbon::parse($record['updated_at'])->format('M d, Y') : 'Not recorded' }}
                                             </td>
                                             <td class="returned-client-type px-lg py-md">{{ $record['type'] }}</td>
                                             <td class="px-lg py-md">
@@ -409,10 +409,10 @@
                                                         <span class="material-symbols-outlined text-[20px]">edit</span>
                                                     </button>
                                                     <button type="button"
-                                                        class="send-returned-btn text-primary/50 font-bold cursor-not-allowed"
+                                                        class="send-returned-btn text-primary hover:underline font-bold transition-colors"
                                                         data-returned-record-id="{{ $record['id'] }}"
-                                                        title="Send is not available yet"
-                                                        disabled>
+                                                        data-send-back-url="{{ $record['send_back_url'] }}"
+                                                        title="Send back for verification">
                                                         Send
                                                     </button>
                                                 </div>

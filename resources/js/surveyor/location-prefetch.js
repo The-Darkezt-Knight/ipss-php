@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    //checks if there are cached location data on IndexDB. If none, it will download the data from the server.
     hasLocationCache()
         .then((cached) => {
             if (!cached) {

@@ -19,6 +19,7 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
+        //The system takes the employees' credentials via the built-in attempt method from the Auth facade
         if(Auth::attempt(['govt_email' => $credentials['govt_email'], 'password' => $credentials['password']])) {
             $request -> session() -> regenerate();
 
@@ -48,16 +49,20 @@ class AuthController extends Controller
         ])->onlyInput('govt_email');
     }
 
+
     public function index() {
         return view('index');
     }
+    
 
     public function admin() {
         $employee = Auth::user();
+        //Will be reused many times
         $verificationBaseQuery = \App\Models\Client::query()
             ->whereNotNull('surveyed_by')
             ->orderByDesc('created_at');
 
+        //gets the clients with survey_status = pending
         $verificationClients = (clone $verificationBaseQuery)
             ->where(function ($query) {
                 $query->where('survey_status', 'pending')
@@ -75,21 +80,29 @@ class AuthController extends Controller
             ->where('survey_status', 'verified')
             ->get();
 
+        //queries surveyor ID to extract names
         $surveyorNames = \App\Models\Employee::query()
+            //acquires the surveyor IDs in the current verification, returned, and verified lists
             ->whereIn('id', $verificationClients->getCollection()
                 ->merge($returnedClients->getCollection())
                 ->merge($dashboardVerifiedClients)
+                //returns only the id
                 ->pluck('surveyed_by')
                 ->filter()
                 ->unique())
+            //using the ID, get all the employee information
             ->get()
+            //maps the first_name, middle_name, and last_name to the surveyor's ID
             ->mapWithKeys(fn ($surveyor) => [
+                //returns the name
                 $surveyor->id => trim(implode(' ', array_filter([
                     $surveyor->first_name,
                     $surveyor->middle_name,
                     $surveyor->last_name,
                 ]))),
             ]);
+
+        //gets the current status counts by querying the status
         $verificationStatusSource = (clone $verificationBaseQuery)->get();
         $verificationStatusCounts = [
             'pending' => $verificationStatusSource->filter(fn ($client) => ($client->survey_status ?? 'pending') === 'pending')->count(),
@@ -109,6 +122,8 @@ class AuthController extends Controller
         $adminClientMapPoints = $this->adminClientMapPoints();
         $dashboardVerifiedMapPoints = $this->dashboardVerifiedMapPoints();
 
+
+        //standard method for blade to use fields without using js
         return view('private.admin.admin-dashboard', compact(
             'employee',
             'verificationClients',
@@ -128,20 +143,24 @@ class AuthController extends Controller
         return response()->json($this->surveyorLocations());
     }
 
+
     public function clientLocationsApi()
     {
         return response()->json($this->adminClientMapPoints());
     }
+
 
     public function verifiedClientLocationsApi()
     {
         return response()->json($this->dashboardVerifiedMapPoints());
     }
 
+
     public function superadmin() {
         $employees = \App\Models\Employee::all();
         return view('private.superadmin', compact('employees'));
     }
+
 
     public function surveyor() {
         $employee = Auth::user();
@@ -149,6 +168,7 @@ class AuthController extends Controller
 
         return view('private.surveyor', compact('employee', 'returnedSurveyClients'));
     }
+
 
     public function form() {
         $employee = Auth::user();
@@ -159,6 +179,7 @@ class AuthController extends Controller
         $employee = Auth::user();
         return view('private.surveyor-dashboard', compact('employee'));
     }
+
 
     public function logout(Request $request) {
         $employee = Auth::user();
@@ -177,12 +198,14 @@ class AuthController extends Controller
         return redirect()->route('index');
     }
 
+
     private function surveyorLocations()
     {
         return Employee::query()
             ->where('role', 'ROLE_SURVEYOR')
             ->whereNotNull('current_latitude')
             ->whereNotNull('current_longitude')
+            //Return surveyors who have latitude or longitude or have not updated their location in 24 hours
             ->where('current_location_updated_at', '>=', now()->subHours(24))
             ->get([
                 'id',
@@ -195,7 +218,9 @@ class AuthController extends Controller
                 'current_longitude',
                 'current_location_updated_at',
             ])
+            //filters surveyors whose LNG and LAT are valid values
             ->filter(fn ($surveyor) => is_numeric($surveyor->current_latitude) && is_numeric($surveyor->current_longitude))
+            //maps the attributes above to the array below
             ->map(fn ($surveyor) => [
                 'id' => $surveyor->id,
                 'govt_id' => $surveyor->govt_id,
@@ -212,6 +237,8 @@ class AuthController extends Controller
             ->values();
     }
 
+
+    //Returns some information of the Admin's PENDING and RETURNED clients along with their longitude and latitude
     private function adminClientMapPoints()
     {
         return Client::query()
@@ -249,6 +276,7 @@ class AuthController extends Controller
             ->values();
     }
 
+    //Returns some information of VERIFIED clients along with their longitude and latitude
     private function dashboardVerifiedMapPoints()
     {
         return Client::query()
@@ -285,8 +313,11 @@ class AuthController extends Controller
             ->values();
     }
 
+
+    //Returns all surveyed clients to their respective surveyor
     private function returnedSurveyClients($employee)
     {
+        //queries all clients that meets the requirements below
         return Client::query()
             ->where('survey_status', 'returned')
             ->where('surveyed_by', $employee->id)
@@ -304,6 +335,7 @@ class AuthController extends Controller
                 'type' => $client->msme_classification ?: ($client->status_of_client ?: 'MSME Survey'),
                 'updated_at' => optional($client->updated_at)->toIso8601String(),
                 'update_url' => route('surveyor.clients.update-returned', $client),
+                'send_back_url' => route('surveyor.clients.send-back', $client),
                 'data' => [
                     'statusOfClient' => $client->status_of_client,
                     'specifyLevel' => $client->specify_level,

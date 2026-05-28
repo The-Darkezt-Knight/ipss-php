@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showToast(message, 'error');
         }
 
+        //Determines the output based on the confidence level
         function renderReview(parsed, confidence) {
             Object.entries(reviewFields).forEach(([key, element]) => {
                 if (element) {
@@ -436,8 +437,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return isValid;
     }
 
-    // ─── Form Submission Handler ────────────────────────────────────────────
-    // ─── Restore Location Selections After Reset ─────────────────────────
+    // Form Submission Handler
+    // Restore Location Selections After Reset
     // After form.reset() clears everything, this re-applies the persisted
     // city/municipality and barangay so the surveyor doesn't re-select them.
     async function restoreLocationSelections() {
@@ -466,6 +467,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+
+
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -677,6 +680,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initializeLocations();
 
+    //Ensures that the form updates the city of concern of the surveyor
     citySelect.addEventListener('change', async function () {
         const cityCode = this.value;
         resetSelect(barangaySelect, 'Select barangay');

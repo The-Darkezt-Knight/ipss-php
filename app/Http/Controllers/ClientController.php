@@ -159,6 +159,8 @@ class ClientController
         return response()->json($result);
     }
 
+
+    //Creates client record
     public function mergeToCentralDatabase(Request $request) {
 
         $validated = $request->validate([
@@ -182,7 +184,6 @@ class ClientController
             "birthdate"                        => "nullable",
             "citizenship"                      => "nullable",
             "id"                               => "nullable", // Client ID
-            "oldId"                            => "nullable", // Old Client ID
             "dtiKonekId"                       => "nullable",
             "philippineIdentificationSystem"   => "nullable",
             "regionCode"                       => "nullable",
@@ -261,7 +262,10 @@ class ClientController
             'survey_status'                    => 'pending',
             'surveyed_by'                      => $validated['surveyed_by'] ?? null,
         ]);
+        
 
+        //Updates the surveyor's location after saving the client
+        //IF the client has a latitude and longitude and the account role is "ROLE_SURVEYOR"
         if (
             is_numeric($validated['latitude'] ?? null) &&
             is_numeric($validated['longitude'] ?? null) &&
@@ -283,6 +287,9 @@ class ClientController
         return redirect() -> back() -> with('success', 'Client data successfully sent to the central database');
     }
 
+
+    //Updates the survey status of the client
+    //then returns the admin to the #verification section of the page
     public function updateSurveyStatus(Request $request, Client $client)
     {
         $validated = $request->validate([
@@ -299,10 +306,16 @@ class ClientController
             ->with('success', 'Client verification status updated.');
     }
 
+    
+    //Updates client information returned to the surveyor
+    //Then updates surveyor's location
     public function updateReturnedForSurveyor(Request $request, Client $client)
     {
+        //Retrieves the currently logged-in user's information
         $employee = Auth::user();
 
+        //Safety check
+        //Aborts the operation if the condition below meets the requirements
         abort_unless(
             $employee &&
             (string) $client->surveyed_by === (string) $employee->id &&
@@ -409,6 +422,56 @@ class ClientController
         ]);
     }
 
+
+
+    //Sends a returned client survey back to the central database
+    //Changes the client's survey_status from 'returned' to 'pending'
+    //Also updates the surveyor's location on the admin map
+    public function sendBackReturnedSurvey(Request $request, Client $client)
+    {
+        $employee = Auth::user();
+
+        //Safety check: the surveyor must own this record and it must still be 'returned'
+        abort_unless(
+            $employee &&
+            (string) $client->surveyed_by === (string) $employee->id &&
+            ($client->survey_status ?? null) === 'returned',
+            403
+        );
+
+        $validated = $request->validate([
+            'latitude'  => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        //Update the client's survey status back to 'pending'
+        $client->update([
+            'survey_status' => 'pending',
+            'updated_at'    => now(),
+        ]);
+
+        //Update the surveyor's location on the admin map
+        if (
+            is_numeric($validated['latitude'] ?? null) &&
+            is_numeric($validated['longitude'] ?? null)
+        ) {
+            Employee::where('id', $employee->id)
+                ->where('role', 'ROLE_SURVEYOR')
+                ->update([
+                    'current_latitude'            => $validated['latitude'],
+                    'current_longitude'            => $validated['longitude'],
+                    'current_location_updated_at' => now(),
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Returned client survey sent back for verification.',
+        ]);
+    }
+
+
+    //Removes client information
     public function destroyRejected(Client $client)
     {
         if (($client->survey_status ?? 'pending') !== 'rejected') {

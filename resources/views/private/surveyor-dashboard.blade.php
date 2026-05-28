@@ -555,7 +555,7 @@
                     <p
                         class="text-body-sm font-body-sm text-on-surface-variant mb-md md:mb-0"
                     >
-                        © 2024 Municipal Governance Authority. All data is
+                        © 2026 Department of Trade and Industry. All data is
                         encrypted and official.
                     </p>
                     <div class="flex gap-lg">
@@ -630,7 +630,7 @@
 
                     const map = new maplibregl.Map({
                         container: dashboardMapEl,
-                        style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+                        style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
                         center: [122.9509, 10.6765],
                         zoom: 9,
                         minZoom: 8,

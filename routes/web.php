@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('private/form', [AuthController::class, 'form'])->name('private.form');
     Route::post('surveyor/merge', [ClientController::class, 'mergeToCentralDatabase'])->name('surveyor.merge');
     Route::patch('surveyor/clients/{client}/returned', [ClientController::class, 'updateReturnedForSurveyor'])->name('surveyor.clients.update-returned');
+    Route::post('surveyor/clients/{client}/send-back', [ClientController::class, 'sendBackReturnedSurvey'])->name('surveyor.clients.send-back');
     Route::patch('admin/clients/{client}/survey-status', [ClientController::class, 'updateSurveyStatus'])->name('admin.clients.survey-status');
     Route::delete('admin/clients/{client}/rejected', [ClientController::class, 'destroyRejected'])->name('admin.clients.destroy-rejected');
     Route::get('surveyor/dashboard', [ClientController::class, 'surveyorDashboard'])->name('private.surveyor-dashboard');
