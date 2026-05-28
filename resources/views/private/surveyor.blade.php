@@ -370,6 +370,70 @@
 
                     </div>
 
+                    <div class="mt-lg bg-white border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
+                        <div class="p-lg border-b border-outline-variant/30">
+                            <h2 class="font-headline-sm text-headline-sm text-primary">Returned Client Records</h2>
+                            <p class="text-body-sm text-on-surface-variant">Client surveys returned by admin for review and correction.</p>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left zebra-stripe">
+                                <thead class="bg-surface-container-low">
+                                    <tr>
+                                        <th class="px-lg py-md text-label-md font-label-md text-on-surface-variant">Client Name</th>
+                                        <th class="px-lg py-md text-label-md font-label-md text-on-surface-variant">Last Returned</th>
+                                        <th class="px-lg py-md text-label-md font-label-md text-on-surface-variant">Type</th>
+                                        <th class="px-lg py-md text-label-md font-label-md text-on-surface-variant">Status</th>
+                                        <th class="px-lg py-md text-label-md font-label-md text-on-surface-variant text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returned-surveys-tbody" class="text-body-sm font-body-sm">
+                                    @forelse ($returnedSurveyClients ?? [] as $record)
+                                        <tr data-returned-record-id="{{ $record['id'] }}">
+                                            <td class="returned-client-name px-lg py-md font-bold text-primary">{{ $record['name'] }}</td>
+                                            <td class="returned-client-date px-lg py-md">
+                                                {{ !empty($record['updated_at']) ? \Carbon\Carbon::parse($record['updated_at'])->format('M d, Y - h:i A') : 'Not recorded' }}
+                                            </td>
+                                            <td class="returned-client-type px-lg py-md">{{ $record['type'] }}</td>
+                                            <td class="px-lg py-md">
+                                                <span class="inline-flex items-center gap-xs text-primary font-bold">
+                                                    <span class="w-2 h-2 rounded-full bg-primary"></span> Returned
+                                                </span>
+                                            </td>
+                                            <td class="px-lg py-md">
+                                                <div class="flex justify-end gap-sm">
+                                                    <button type="button"
+                                                        class="edit-returned-btn text-on-surface-variant hover:text-primary transition-colors"
+                                                        data-returned-record-id="{{ $record['id'] }}"
+                                                        title="Edit">
+                                                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                                                    </button>
+                                                    <button type="button"
+                                                        class="send-returned-btn text-primary/50 font-bold cursor-not-allowed"
+                                                        data-returned-record-id="{{ $record['id'] }}"
+                                                        title="Send is not available yet"
+                                                        disabled>
+                                                        Send
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="px-lg py-xxl text-center">
+                                                <div class="flex flex-col items-center gap-md text-on-surface-variant">
+                                                    <span class="material-symbols-outlined text-[48px] text-outline">assignment_turned_in</span>
+                                                    <p class="text-body-md font-bold">No returned surveys</p>
+                                                    <p class="text-body-sm">Returned client surveys from admin will appear here.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </section>
 
 
@@ -450,6 +514,10 @@
 
 
     </main>
+
+    <script>
+        window.returnedSurveyRecords = @json($returnedSurveyClients ?? []);
+    </script>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- Edit Client Modal -->

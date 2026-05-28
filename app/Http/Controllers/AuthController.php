@@ -124,7 +124,9 @@ class AuthController extends Controller
 
     public function surveyor() {
         $employee = Auth::user();
-        return view('private.surveyor', compact('employee'));
+        $returnedSurveyClients = $this->returnedSurveyClients($employee);
+
+        return view('private.surveyor', compact('employee', 'returnedSurveyClients'));
     }
 
     public function form() {
@@ -219,6 +221,69 @@ class AuthController extends Controller
                 'survey_status' => $client->survey_status ?? 'pending',
                 'latitude' => (float) $client->latitude,
                 'longitude' => (float) $client->longitude,
+            ])
+            ->values();
+    }
+
+    private function returnedSurveyClients($employee)
+    {
+        return Client::query()
+            ->where('survey_status', 'returned')
+            ->where('surveyed_by', $employee->id)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'name' => trim(implode(' ', array_filter([
+                    $client->first_name,
+                    $client->middle_name,
+                    $client->last_name,
+                    $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+                ]))) ?: 'Unnamed Client',
+                'type' => $client->msme_classification ?: ($client->status_of_client ?: 'MSME Survey'),
+                'updated_at' => optional($client->updated_at)->toIso8601String(),
+                'update_url' => route('surveyor.clients.update-returned', $client),
+                'data' => [
+                    'statusOfClient' => $client->status_of_client,
+                    'specifyLevel' => $client->specify_level,
+                    'categoryOfClient' => $client->category_of_client,
+                    'socialClassification' => $client->social_classification,
+                    'diffAbledType' => $client->diff_abled_type,
+                    'isSenior' => $client->client_is_senior ? 'Yes' : 'No',
+                    'isIndigeneous' => $client->client_is_indigeneous ? 'Yes' : 'No',
+                    'levelOfDigitalization' => $client->level_of_digitalization,
+                    'digitalTools' => $client->digital_tools,
+                    'msmeClassification' => $client->msme_classification,
+                    'clientDesignation' => $client->client_designation,
+                    'firstName' => $client->first_name,
+                    'middleName' => $client->middle_name,
+                    'lastName' => $client->last_name,
+                    'suffix' => $client->suffix,
+                    'civilStatus' => $client->civil_status,
+                    'sex' => $client->sex,
+                    'birthdate' => $client->birthdate,
+                    'citizenship' => $client->citizenship,
+                    'id' => $client->client_id,
+                    'philippineIdentificationSystem' => $client->philippine_identification_system,
+                    'regionCode' => $client->region,
+                    'provinceCode' => $client->province,
+                    'cityMunicipalityCode' => $client->city_municipality,
+                    'barangayCode' => $client->barangay,
+                    'district' => $client->district,
+                    'zipCode' => $client->zip_code,
+                    'address' => $client->address,
+                    'latitude' => $client->latitude,
+                    'longitude' => $client->longitude,
+                    'mobileNumber' => $client->mobile_number,
+                    'emailAddress' => $client->email_address,
+                    'landlineNumber' => $client->landline_number,
+                    'faxNumber' => $client->fax_number,
+                    'socialMedia' => $client->social_media,
+                    'website' => $client->website,
+                    'eCommercePlatform' => $client->e_commerce_platform,
+                    'surveyed_by' => $client->surveyed_by,
+                ],
             ])
             ->values();
     }

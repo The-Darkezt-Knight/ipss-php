@@ -12,6 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendingCountCard = document.getElementById('pending-sync-count');
     const lastSyncedCard = document.getElementById('last-synced-time');
     const emptyStateRow = document.getElementById('empty-state-row');
+    const returnedSurveyRecords = new Map(
+        (window.returnedSurveyRecords || []).map(record => [
+            String(record.id),
+            {
+                id: `returned-${record.id}`,
+                source: 'returned',
+                serverId: record.id,
+                updateUrl: record.update_url,
+                data: record.data || {},
+                timestamp: record.updated_at || new Date().toISOString(),
+            },
+        ])
+    );
 
     // ─── Format Date ────────────────────────────────────────────────────────
     function formatDate(isoString) {
@@ -441,10 +454,30 @@ document.addEventListener('DOMContentLoaded', () => {
         editModalSave.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Saving…`;
 
         try {
-            await updateSurvey(recordId, updatedData);
+            if (activeEditRecord?.source === 'returned') {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const response = await fetch(activeEditRecord.updateUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(updatedData),
+                });
+
+                if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+                activeEditRecord.data = updatedData;
+                activeEditRecord.timestamp = new Date().toISOString();
+                updateReturnedRow(activeEditRecord);
+            } else {
+                await updateSurvey(recordId, updatedData);
+                await loadPendingSurveys(); // Refresh the table
+            }
+
             closeEditModal();
             showStatusToast('Client record updated successfully!', 'success');
-            await loadPendingSurveys(); // Refresh the table
         } catch (err) {
             console.error('Error updating survey:', err);
             showStatusToast('Failed to update record. Please try again.', 'error');
@@ -567,6 +600,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return tr;
     }
+
+    function updateReturnedRow(record) {
+        const row = document.querySelector(`[data-returned-record-id="${CSS.escape(String(record.serverId))}"]`);
+        if (!row) return;
+
+        const nameCell = row.querySelector('.returned-client-name');
+        const dateCell = row.querySelector('.returned-client-date');
+        const typeCell = row.querySelector('.returned-client-type');
+
+        if (nameCell) nameCell.textContent = getClientName(record);
+        if (dateCell) dateCell.textContent = formatDate(record.timestamp);
+        if (typeCell) typeCell.textContent = getSurveyType(record);
+    }
+
+    document.querySelectorAll('.edit-returned-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            const record = returnedSurveyRecords.get(String(button.dataset.returnedRecordId));
+            if (!record) {
+                showStatusToast('Returned client record is missing from this page.', 'error');
+                return;
+            }
+
+            openEditModal(record);
+        });
+    });
 
     // ─── Show Empty State ───────────────────────────────────────────────────
     function showEmptyState() {

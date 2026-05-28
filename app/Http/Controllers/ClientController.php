@@ -298,6 +298,102 @@ class ClientController
             ->with('success', 'Client verification status updated.');
     }
 
+    public function updateReturnedForSurveyor(Request $request, Client $client)
+    {
+        $employee = Auth::user();
+
+        abort_unless(
+            $employee &&
+            (string) $client->surveyed_by === (string) $employee->id &&
+            ($client->survey_status ?? null) === 'returned',
+            403
+        );
+
+        $validated = $request->validate([
+            "statusOfClient" => "nullable",
+            "specifyLevel" => "nullable",
+            "categoryOfClient" => "nullable",
+            "socialClassification" => "nullable",
+            "diffAbledType" => "nullable",
+            "isSenior" => "nullable",
+            "isIndigeneous" => "nullable",
+            "levelOfDigitalization" => "nullable",
+            "digitalTools" => "nullable",
+            "msmeClassification" => "nullable",
+            "clientDesignation" => "nullable",
+            "firstName" => "nullable",
+            "middleName" => "nullable",
+            "lastName" => "nullable",
+            "suffix" => "nullable",
+            "civilStatus" => "nullable",
+            "sex" => "nullable",
+            "birthdate" => "nullable",
+            "citizenship" => "nullable",
+            "philippineIdentificationSystem" => "nullable",
+            "regionCode" => "nullable",
+            "provinceCode" => "nullable",
+            "cityMunicipalityCode" => "nullable",
+            "barangayCode" => "nullable",
+            "district" => "nullable",
+            "zipCode" => "nullable",
+            "address" => "nullable",
+            "latitude" => "nullable",
+            "longitude" => "nullable",
+            "mobileNumber" => "nullable",
+            "emailAddress" => "nullable",
+            "landlineNumber" => "nullable",
+            "faxNumber" => "nullable",
+            "socialMedia" => "nullable",
+            "website" => "nullable",
+            "eCommercePlatform" => "nullable",
+        ]);
+
+        $client->update([
+            'status_of_client' => $validated['statusOfClient'] ?? null,
+            'specify_level' => $validated['specifyLevel'] ?? null,
+            'category_of_client' => $validated['categoryOfClient'] ?? null,
+            'social_classification' => $validated['socialClassification'] ?? null,
+            'diff_abled_type' => $validated['diffAbledType'] ?? null,
+            'client_is_senior' => ($validated['isSenior'] ?? null) === 'Yes',
+            'client_is_indigeneous' => ($validated['isIndigeneous'] ?? null) === 'Yes',
+            'level_of_digitalization' => $validated['levelOfDigitalization'] ?? null,
+            'digital_tools' => $validated['digitalTools'] ?? null,
+            'msme_classification' => $validated['msmeClassification'] ?? null,
+            'client_designation' => $validated['clientDesignation'] ?? null,
+            'first_name' => $validated['firstName'] ?? null,
+            'middle_name' => $validated['middleName'] ?? null,
+            'last_name' => $validated['lastName'] ?? null,
+            'suffix' => $validated['suffix'] ?? null,
+            'civil_status' => $validated['civilStatus'] ?? null,
+            'sex' => $validated['sex'] ?? null,
+            'birthdate' => $validated['birthdate'] ?? null,
+            'citizenship' => $validated['citizenship'] ?? 'Filipino',
+            'philippine_identification_system' => $validated['philippineIdentificationSystem'] ?? null,
+            'region' => $validated['regionCode'] ?? null,
+            'province' => $validated['provinceCode'] ?? null,
+            'city_municipality' => $validated['cityMunicipalityCode'] ?? null,
+            'barangay' => $validated['barangayCode'] ?? null,
+            'district' => $validated['district'] ?? null,
+            'zip_code' => $validated['zipCode'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'mobile_number' => $validated['mobileNumber'] ?? null,
+            'email_address' => $validated['emailAddress'] ?? null,
+            'landline_number' => $validated['landlineNumber'] ?? null,
+            'fax_number' => $validated['faxNumber'] ?? null,
+            'social_media' => $validated['socialMedia'] ?? null,
+            'website' => $validated['website'] ?? null,
+            'e_commerce_platform' => $validated['eCommercePlatform'] ?? null,
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Returned client record updated.',
+        ]);
+    }
+
     public function destroyRejected(Client $client)
     {
         if (($client->survey_status ?? 'pending') !== 'rejected') {
