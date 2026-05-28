@@ -71,9 +71,14 @@ class AuthController extends Controller
             ->paginate(10, ['*'], 'returned_page')
             ->withQueryString();
 
+        $dashboardVerifiedClients = (clone $verificationBaseQuery)
+            ->where('survey_status', 'verified')
+            ->get();
+
         $surveyorNames = \App\Models\Employee::query()
             ->whereIn('id', $verificationClients->getCollection()
                 ->merge($returnedClients->getCollection())
+                ->merge($dashboardVerifiedClients)
                 ->pluck('surveyed_by')
                 ->filter()
                 ->unique())
@@ -92,9 +97,17 @@ class AuthController extends Controller
             'returned' => $verificationStatusSource->where('survey_status', 'returned')->count(),
             'rejected' => $verificationStatusSource->where('survey_status', 'rejected')->count(),
         ];
+        $dashboardClientCounts = [
+            'total' => \App\Models\Client::count(),
+            'pending' => $verificationStatusCounts['pending'],
+            'verified' => $verificationStatusCounts['verified'],
+            'returned' => $verificationStatusCounts['returned'],
+            'rejected' => $verificationStatusCounts['rejected'],
+        ];
 
         $surveyorLocations = $this->surveyorLocations();
         $adminClientMapPoints = $this->adminClientMapPoints();
+        $dashboardVerifiedMapPoints = $this->dashboardVerifiedMapPoints();
 
         return view('private.admin.admin-dashboard', compact(
             'employee',
@@ -102,6 +115,9 @@ class AuthController extends Controller
             'returnedClients',
             'surveyorNames',
             'verificationStatusCounts',
+            'dashboardClientCounts',
+            'dashboardVerifiedClients',
+            'dashboardVerifiedMapPoints',
             'surveyorLocations',
             'adminClientMapPoints'
         ));
@@ -115,6 +131,11 @@ class AuthController extends Controller
     public function clientLocationsApi()
     {
         return response()->json($this->adminClientMapPoints());
+    }
+
+    public function verifiedClientLocationsApi()
+    {
+        return response()->json($this->dashboardVerifiedMapPoints());
     }
 
     public function superadmin() {
@@ -193,6 +214,10 @@ class AuthController extends Controller
     private function adminClientMapPoints()
     {
         return Client::query()
+            ->where(function ($query) {
+                $query->where('survey_status', 'pending')
+                    ->orWhereNull('survey_status');
+            })
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->get([
@@ -219,6 +244,42 @@ class AuthController extends Controller
                 ]))) ?: 'Unnamed Client',
                 'category' => $client->category_of_client,
                 'survey_status' => $client->survey_status ?? 'pending',
+                'latitude' => (float) $client->latitude,
+                'longitude' => (float) $client->longitude,
+            ])
+            ->values();
+    }
+
+    private function dashboardVerifiedMapPoints()
+    {
+        return Client::query()
+            ->where('survey_status', 'verified')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get([
+                'id',
+                'client_id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'suffix',
+                'category_of_client',
+                'survey_status',
+                'latitude',
+                'longitude',
+            ])
+            ->filter(fn ($client) => is_numeric($client->latitude) && is_numeric($client->longitude))
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'name' => trim(implode(' ', array_filter([
+                    $client->first_name,
+                    $client->middle_name,
+                    $client->last_name,
+                    $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+                ]))) ?: 'Unnamed Client',
+                'category' => $client->category_of_client,
+                'survey_status' => 'verified',
                 'latitude' => (float) $client->latitude,
                 'longitude' => (float) $client->longitude,
             ])

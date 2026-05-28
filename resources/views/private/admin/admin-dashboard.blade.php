@@ -356,24 +356,19 @@
                                         >person_add</span
                                     >
                                     <span
-                                        class="text-green-600 font-label-md text-label-md flex items-center"
-                                        >+12.5%
-                                        <span
-                                            class="material-symbols-outlined text-sm"
-                                            data-icon="trending_up"
-                                            >trending_up</span
-                                        ></span
+                                        class="text-on-surface-variant font-label-md text-label-md flex items-center"
+                                        >All</span
                                     >
                                 </div>
                                 <p
                                     class="font-label-lg text-label-lg text-on-surface-variant"
                                 >
-                                    Total Registrations
+                                    Total Clients
                                 </p>
                                 <p
                                     class="font-headline-md text-headline-md text-on-surface"
                                 >
-                                    1,284,392
+                                    {{ number_format($dashboardClientCounts['total'] ?? 0) }}
                                 </p>
                             </div>
                             <div
@@ -398,7 +393,57 @@
                                 <p
                                     class="font-headline-md text-headline-md text-on-surface"
                                 >
-                                    642
+                                    {{ number_format($dashboardClientCounts['pending'] ?? 0) }}
+                                </p>
+                            </div>
+                            <div
+                                class="bg-surface-container-lowest border border-outline-variant/15 p-lg rounded-xl flex flex-col gap-sm"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <span
+                                        class="material-symbols-outlined text-green-700 p-sm bg-green-100 rounded-lg"
+                                        data-icon="verified"
+                                        >verified</span
+                                    >
+                                    <span
+                                        class="text-green-700 font-label-md text-label-md flex items-center"
+                                        >Accepted</span
+                                    >
+                                </div>
+                                <p
+                                    class="font-label-lg text-label-lg text-on-surface-variant"
+                                >
+                                    Verified Clients
+                                </p>
+                                <p
+                                    class="font-headline-md text-headline-md text-on-surface"
+                                >
+                                    {{ number_format($dashboardClientCounts['verified'] ?? 0) }}
+                                </p>
+                            </div>
+                            <div
+                                class="bg-surface-container-lowest border border-outline-variant/15 p-lg rounded-xl flex flex-col gap-sm"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <span
+                                        class="material-symbols-outlined text-primary p-sm bg-secondary-fixed rounded-lg"
+                                        data-icon="assignment_return"
+                                        >assignment_return</span
+                                    >
+                                    <span
+                                        class="text-primary font-label-md text-label-md flex items-center"
+                                        >Returned</span
+                                    >
+                                </div>
+                                <p
+                                    class="font-label-lg text-label-lg text-on-surface-variant"
+                                >
+                                    Returned Clients
+                                </p>
+                                <p
+                                    class="font-headline-md text-headline-md text-on-surface"
+                                >
+                                    {{ number_format($dashboardClientCounts['returned'] ?? 0) }}
                                 </p>
                             </div>
                         </div>
@@ -415,78 +460,51 @@
                                         <h3
                                             class="font-headline-sm text-headline-sm text-primary"
                                         >
-                                            Registration Density
+                                            Verified Client Map
                                         </h3>
                                         <p
                                             class="font-body-sm text-body-sm text-on-surface-variant"
                                         >
-                                            Heatmap of citizen engagement across
-                                            metropolitan districts.
+                                            Accepted client surveys with saved latitude and longitude.
                                         </p>
                                     </div>
-                                    <div
-                                        class="flex gap-xs bg-surface-container-low p-xs rounded-lg"
+                                    <button
+                                        type="button"
+                                        id="dashboard-verified-map-refresh"
+                                        class="p-2 bg-surface-container-low border border-outline-variant/20 rounded-lg"
+                                        title="Refresh verified client locations"
                                     >
-                                        <button
-                                            class="px-md py-xs bg-surface-container-lowest text-label-md font-label-md rounded-md shadow-sm"
-                                        >
-                                            Map
-                                        </button>
-                                        <button
-                                            class="px-md py-xs text-on-surface-variant text-label-md font-label-md"
-                                        >
-                                            Chart
-                                        </button>
-                                    </div>
+                                        <span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                                    </button>
                                 </div>
-                                <div class="relative h-[400px] bg-slate-100">
-                                    <!-- Placeholder for Map -->
+                                <div class="relative h-[400px] bg-surface-container-highest">
+                                    <div id="dashboard-verified-map" class="h-full w-full"></div>
                                     <div
-                                        class="absolute inset-0 grayscale opacity-40 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=1200&amp;q=80')]"
-                                        data-alt="A clean, minimalist high-contrast satellite view of a metropolitan city layout in shades of institutional blue and grey. The map features subtle glowing data points in specific residential districts to represent registration density. The lighting is bright and modern, suggesting a high-tech government operations center with a professional and organized aesthetic."
-                                    ></div>
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 to-transparent flex items-center justify-center"
+                                        id="dashboard-verified-map-empty"
+                                        class="absolute inset-0 hidden items-center justify-center bg-surface-container-highest/90 p-lg text-center text-on-surface-variant"
                                     >
-                                        <div
-                                            class="bg-white/80 backdrop-blur-md p-lg border border-outline-variant/20 rounded-xl shadow-xl max-w-sm text-center"
-                                        >
-                                            <span
-                                                class="material-symbols-outlined text-primary text-4xl mb-sm"
-                                                data-icon="location_on"
-                                                >location_on</span
-                                            >
-                                            <h4
-                                                class="font-headline-sm text-headline-sm"
-                                            >
-                                                Interactive Map Active
-                                            </h4>
-                                            <p
-                                                class="font-body-sm text-body-sm text-on-surface-variant"
-                                            >
-                                                Showing active data points for
-                                                Central, North, and West
-                                                sectors. Filter by demographics
-                                                in settings.
-                                            </p>
+                                        <div>
+                                            <span class="material-symbols-outlined text-[40px] text-lime-700 mb-sm">location_off</span>
+                                            <p class="font-label-lg text-label-lg text-primary">No verified client locations</p>
+                                            <p class="text-body-sm">Verified clients appear here when latitude and longitude are saved.</p>
                                         </div>
                                     </div>
-                                    <!-- Legend -->
                                     <div
                                         class="absolute bottom-md left-md bg-white/90 backdrop-blur-sm p-md rounded-lg border border-outline-variant/15 space-y-sm"
                                     >
                                         <p
                                             class="font-label-md text-label-md text-on-surface"
                                         >
-                                            Density Level
+                                            Verified Clients
+                                            <span id="dashboard-verified-map-count" class="ml-1 inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full bg-lime-200 text-lime-800 text-[10px] font-bold">0</span>
                                         </p>
                                         <div class="flex items-center gap-md">
                                             <div
-                                                class="h-2 w-24 rounded-full bg-gradient-to-r from-blue-100 to-primary"
+                                                class="h-3 w-3 rounded-full bg-lime-500 ring-4 ring-lime-100"
                                             ></div>
                                             <span
                                                 class="text-[10px] text-on-surface-variant"
-                                                >Low to High</span
+                                                >Accepted survey location</span
                                             >
                                         </div>
                                     </div>
@@ -634,70 +652,72 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Secondary Data Row -->
-                        <div
-                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg"
-                        >
-                            <!-- Regional Progress Cards -->
-                            <div
-                                class="bg-surface-container-lowest border border-outline-variant/15 p-lg rounded-xl space-y-md"
-                            >
-                                <h4
-                                    class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-wider"
-                                >
-                                    Top Performing Districts
-                                </h4>
-                                <div class="space-y-lg">
-                                    <div class="space-y-xs">
-                                        <div
-                                            class="flex justify-between font-label-md text-label-md"
-                                        >
-                                            <span>District 1</span>
-                                            <span>98.2%</span>
-                                        </div>
-                                        <div
-                                            class="h-2 bg-surface-container-low rounded-full overflow-hidden"
-                                        >
-                                            <div
-                                                class="h-full bg-primary w-[98%]"
-                                            ></div>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-xs">
-                                        <div
-                                            class="flex justify-between font-label-md text-label-md"
-                                        >
-                                            <span>District 2</span>
-                                            <span>92.5%</span>
-                                        </div>
-                                        <div
-                                            class="h-2 bg-surface-container-low rounded-full overflow-hidden"
-                                        >
-                                            <div
-                                                class="h-full bg-primary w-[92%]"
-                                            ></div>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-xs">
-                                        <div
-                                            class="flex justify-between font-label-md text-label-md"
-                                        >
-                                            <span>Lone District</span>
-                                            <span>88.7%</span>
-                                        </div>
-                                        <div
-                                            class="h-2 bg-surface-container-low rounded-full overflow-hidden"
-                                        >
-                                            <div
-                                                class="h-full bg-primary w-[88%]"
-                                            ></div>
-                                        </div>
-                                    </div>
+                        <div class="bg-surface-container-lowest border border-outline-variant/15 rounded-xl overflow-hidden">
+                            <div class="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-headline-sm text-headline-sm text-primary">Verified Clients</h3>
+                                    <p class="text-body-sm text-on-surface-variant">Client surveys accepted by admin.</p>
                                 </div>
+                                <span class="inline-flex items-center gap-xs rounded-full bg-green-100 px-md py-xs text-label-md font-label-md text-green-800">
+                                    <span class="material-symbols-outlined text-[16px]">verified</span>
+                                    {{ number_format($dashboardClientCounts['verified'] ?? 0) }}
+                                </span>
                             </div>
-
-                            
-                            <!-- Quick Actions -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full border-collapse text-left">
+                                    <thead class="bg-surface-container-low border-b border-outline-variant/20">
+                                        <tr>
+                                            <th class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Business / Client</th>
+                                            <th class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Surveyor</th>
+                                            <th class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Category</th>
+                                            <th class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Verified Date</th>
+                                            <th class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($dashboardVerifiedClients as $client)
+                                            @php
+                                                $clientName = trim(implode(' ', array_filter([
+                                                    $client->first_name,
+                                                    $client->middle_name,
+                                                    $client->last_name,
+                                                    $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+                                                ]))) ?: 'Unnamed Client';
+                                                $surveyorName = $surveyorNames[$client->surveyed_by] ?? 'Unknown Surveyor';
+                                            @endphp
+                                            <tr class="zebra-stripe hover:bg-surface-container transition-colors">
+                                                <td class="px-md py-4">
+                                                    <div class="flex items-center gap-md">
+                                                        <div class="w-10 h-10 rounded bg-green-100 flex items-center justify-center shrink-0">
+                                                            <span class="material-symbols-outlined text-green-700">verified_user</span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-semibold text-primary">{{ $clientName }}</div>
+                                                            <div class="text-body-sm text-on-surface-variant">Ref: {{ $client->client_id ?? 'Auto-generated' }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-md py-4 text-body-sm">{{ $surveyorName }}</td>
+                                                <td class="px-md py-4 text-body-sm text-on-surface-variant">{{ $client->category_of_client ?? '—' }}</td>
+                                                <td class="px-md py-4 text-body-sm text-on-surface-variant">
+                                                    {{ optional($client->updated_at)->format('M d, Y - h:i A') ?? 'Not recorded' }}
+                                                </td>
+                                                <td class="px-md py-4">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-green-100 text-green-800">
+                                                        verified
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td class="px-lg py-xxl text-center text-on-surface-variant" colspan="5">
+                                                    No verified client records yet.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
                     <section
@@ -936,7 +956,7 @@
                                 <div class="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
                                     <div>
                                         <h3 class="font-headline-sm text-headline-sm text-primary">Client Location Map</h3>
-                                        <p class="text-body-sm text-on-surface-variant">Pins show all clients with saved latitude and longitude.</p>
+                                        <p class="text-body-sm text-on-surface-variant">Pins show pending clients with saved latitude and longitude.</p>
                                     </div>
                                     <button
                                         type="button"
@@ -955,8 +975,8 @@
                                     >
                                         <div>
                                             <span class="material-symbols-outlined text-[40px] text-primary mb-sm">location_off</span>
-                                            <p class="font-label-lg text-label-lg text-primary">No client locations</p>
-                                            <p class="text-body-sm">Clients appear here when their records have saved latitude and longitude.</p>
+                                            <p class="font-label-lg text-label-lg text-primary">No pending client locations</p>
+                                            <p class="text-body-sm">Pending clients appear here when their records have saved latitude and longitude.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1394,6 +1414,9 @@
             let verificationClientMapPoints = @json($adminClientMapPoints ?? []);
             let verificationClientMap = null;
             let verificationClientMapLoaded = false;
+            let dashboardVerifiedMapPoints = @json($dashboardVerifiedMapPoints ?? []);
+            let dashboardVerifiedMap = null;
+            let dashboardVerifiedMapLoaded = false;
 
             const modal = document.getElementById("actionModal");
             const modalTitle = document.getElementById("modalTitle");
@@ -1406,6 +1429,9 @@
             const verificationClientMapEl = document.getElementById("verification-client-map");
             const verificationClientMapEmptyEl = document.getElementById("verification-client-map-empty");
             const verificationClientMapRefreshBtn = document.getElementById("verification-client-map-refresh");
+            const dashboardVerifiedMapEl = document.getElementById("dashboard-verified-map");
+            const dashboardVerifiedMapEmptyEl = document.getElementById("dashboard-verified-map-empty");
+            const dashboardVerifiedMapRefreshBtn = document.getElementById("dashboard-verified-map-refresh");
 
             function escapeHtml(value) {
                 return String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -1678,9 +1704,9 @@
                         paint: {
                             "circle-color": [
                                 "step", ["get", "point_count"],
-                                "#3a5f94",
-                                20, "#1f477b",
-                                100, "#001e40",
+                                "#FEF3C7",
+                                20, "#FDE68A",
+                                100, "#FCD34D",
                             ],
                             "circle-radius": [
                                 "step", ["get", "point_count"],
@@ -1714,10 +1740,10 @@
                         source: "verification-clients",
                         filter: ["!", ["has", "point_count"]],
                         paint: {
-                            "circle-color": "#001e40",
+                            "circle-color": "#FEF3C7",
                             "circle-radius": 7,
                             "circle-stroke-width": 2,
-                            "circle-stroke-color": "#ffffff",
+                            "circle-stroke-color": "#D97706",
                         },
                     });
 
@@ -1778,6 +1804,231 @@
             }
 
             verificationClientMapRefreshBtn?.addEventListener("click", () => fetchVerificationClientLocations({ fit: true }));
+
+            function buildDashboardVerifiedMapGeoJson() {
+                return {
+                    type: "FeatureCollection",
+                    features: dashboardVerifiedMapPoints
+                        .filter((client) => Number.isFinite(Number(client.latitude)) && Number.isFinite(Number(client.longitude)))
+                        .map((client) => ({
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [Number(client.longitude), Number(client.latitude)],
+                            },
+                            properties: {
+                                id: client.id,
+                                name: client.name || "Unnamed Client",
+                                client_id: client.client_id || "",
+                                category: client.category || "",
+                                survey_status: client.survey_status || "verified",
+                                latitude: Number(client.latitude),
+                                longitude: Number(client.longitude),
+                            },
+                        })),
+                };
+            }
+
+            function setDashboardVerifiedMapEmptyState(isEmpty) {
+                if (!dashboardVerifiedMapEmptyEl) return;
+                dashboardVerifiedMapEmptyEl.classList.toggle("hidden", !isEmpty);
+                dashboardVerifiedMapEmptyEl.classList.toggle("flex", isEmpty);
+            }
+
+            function fitDashboardVerifiedMapToData(geojson) {
+                if (!dashboardVerifiedMap || geojson.features.length === 0) return;
+
+                const bounds = new maplibregl.LngLatBounds();
+                geojson.features.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+                dashboardVerifiedMap.fitBounds(bounds, { padding: 56, maxZoom: 16 });
+            }
+
+            function updateDashboardVerifiedMapCount(count) {
+                const countEl = document.getElementById("dashboard-verified-map-count");
+                if (countEl) countEl.textContent = count;
+            }
+
+            function refreshDashboardVerifiedMapSource({ fit = false } = {}) {
+                if (!dashboardVerifiedMapLoaded) return;
+
+                const geojson = buildDashboardVerifiedMapGeoJson();
+                const source = dashboardVerifiedMap.getSource("dashboard-verified-clients");
+                if (source) {
+                    source.setData(geojson);
+                }
+
+                setDashboardVerifiedMapEmptyState(geojson.features.length === 0);
+                updateDashboardVerifiedMapCount(geojson.features.length);
+
+                if (fit) {
+                    fitDashboardVerifiedMapToData(geojson);
+                }
+            }
+
+            function initializeDashboardVerifiedMap() {
+                if (!dashboardVerifiedMapEl || dashboardVerifiedMap || typeof maplibregl === "undefined") return;
+
+                const negrosBounds = [122.25, 9.0, 123.55, 11.1];
+                const lngPad = (negrosBounds[2] - negrosBounds[0]) * 0.08;
+                const latPad = (negrosBounds[3] - negrosBounds[1]) * 0.08;
+                const paddedBounds = [
+                    [negrosBounds[0] - lngPad, negrosBounds[1] - latPad],
+                    [negrosBounds[2] + lngPad, negrosBounds[3] + latPad],
+                ];
+
+                dashboardVerifiedMap = new maplibregl.Map({
+                    container: dashboardVerifiedMapEl,
+                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    center: [122.9509, 10.6765],
+                    zoom: 9,
+                    minZoom: 8,
+                    maxZoom: 19,
+                    maxBounds: paddedBounds,
+                    attributionControl: true,
+                });
+
+                dashboardVerifiedMap.addControl(new maplibregl.NavigationControl(), "top-right");
+
+                dashboardVerifiedMap.on("load", () => {
+                    dashboardVerifiedMapLoaded = true;
+                    dashboardVerifiedMap.addSource("dashboard-verified-clients", {
+                        type: "geojson",
+                        data: buildDashboardVerifiedMapGeoJson(),
+                        cluster: true,
+                        clusterMaxZoom: 14,
+                        clusterRadius: 50,
+                    });
+
+                    // Cluster circles
+                    dashboardVerifiedMap.addLayer({
+                        id: "dashboard-verified-clusters",
+                        type: "circle",
+                        source: "dashboard-verified-clients",
+                        filter: ["has", "point_count"],
+                        paint: {
+                            "circle-color": [
+                                "step", ["get", "point_count"],
+                                "#d9f99d",
+                                10, "#bef264",
+                                50, "#a3e635",
+                            ],
+                            "circle-radius": [
+                                "step", ["get", "point_count"],
+                                18,
+                                10, 24,
+                                50, 32,
+                            ],
+                            "circle-stroke-width": 3,
+                            "circle-stroke-color": "rgba(255,255,255,0.85)",
+                        },
+                    });
+
+                    // Cluster count labels
+                    dashboardVerifiedMap.addLayer({
+                        id: "dashboard-verified-cluster-count",
+                        type: "symbol",
+                        source: "dashboard-verified-clients",
+                        filter: ["has", "point_count"],
+                        layout: {
+                            "text-field": "{point_count_abbreviated}",
+                            "text-size": 13,
+                            "text-font": ["Open Sans Bold"],
+                        },
+                        paint: {
+                            "text-color": "#365314",
+                        },
+                    });
+
+                    // Individual point halo
+                    dashboardVerifiedMap.addLayer({
+                        id: "dashboard-verified-point-halo",
+                        type: "circle",
+                        source: "dashboard-verified-clients",
+                        filter: ["!", ["has", "point_count"]],
+                        paint: {
+                            "circle-color": "#d9f99d",
+                            "circle-radius": 14,
+                            "circle-opacity": 0.55,
+                        },
+                    });
+
+                    // Individual points
+                    dashboardVerifiedMap.addLayer({
+                        id: "dashboard-verified-point",
+                        type: "circle",
+                        source: "dashboard-verified-clients",
+                        filter: ["!", ["has", "point_count"]],
+                        paint: {
+                            "circle-color": "#84cc16",
+                            "circle-radius": 7,
+                            "circle-stroke-width": 2,
+                            "circle-stroke-color": "#ffffff",
+                        },
+                    });
+
+                    // Click cluster to zoom in
+                    dashboardVerifiedMap.on("click", "dashboard-verified-clusters", async (event) => {
+                        const features = dashboardVerifiedMap.queryRenderedFeatures(event.point, { layers: ["dashboard-verified-clusters"] });
+                        const clusterId = features[0].properties.cluster_id;
+                        const zoom = await dashboardVerifiedMap.getSource("dashboard-verified-clients").getClusterExpansionZoom(clusterId);
+                        dashboardVerifiedMap.easeTo({ center: features[0].geometry.coordinates, zoom });
+                    });
+
+                    // Click individual point to show popup
+                    dashboardVerifiedMap.on("click", "dashboard-verified-point", (event) => {
+                        const coordinates = event.features[0].geometry.coordinates.slice();
+                        const props = event.features[0].properties;
+
+                        new maplibregl.Popup({ offset: 12 })
+                            .setLngLat(coordinates)
+                            .setHTML(`
+                                <strong>${escapeHtml(props.name)}</strong>
+                                <span>${escapeHtml(props.client_id || "No client ID")}</span><br>
+                                <span>${escapeHtml(props.category || "No category")}</span><br>
+                                <span>${escapeHtml(props.latitude)}, ${escapeHtml(props.longitude)}</span><br>
+                                <span>Status: verified</span>
+                            `)
+                            .addTo(dashboardVerifiedMap);
+                    });
+
+                    // Cursor styles
+                    dashboardVerifiedMap.on("mouseenter", "dashboard-verified-clusters", () => {
+                        dashboardVerifiedMap.getCanvas().style.cursor = "pointer";
+                    });
+                    dashboardVerifiedMap.on("mouseleave", "dashboard-verified-clusters", () => {
+                        dashboardVerifiedMap.getCanvas().style.cursor = "";
+                    });
+                    dashboardVerifiedMap.on("mouseenter", "dashboard-verified-point", () => {
+                        dashboardVerifiedMap.getCanvas().style.cursor = "pointer";
+                    });
+                    dashboardVerifiedMap.on("mouseleave", "dashboard-verified-point", () => {
+                        dashboardVerifiedMap.getCanvas().style.cursor = "";
+                    });
+
+                    fetchDashboardVerifiedLocations({ fit: true });
+                });
+            }
+
+            async function fetchDashboardVerifiedLocations({ fit = false } = {}) {
+                try {
+                    const response = await fetch("{{ route('admin.verified-client-locations') }}?ts=" + Date.now(), {
+                        headers: { "Accept": "application/json" },
+                        cache: "no-store",
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+
+                    dashboardVerifiedMapPoints = await response.json();
+                    refreshDashboardVerifiedMapSource({ fit });
+                    console.log("[Dashboard Verified Map] Loaded", dashboardVerifiedMapPoints.length, "verified locations");
+                } catch (error) {
+                    console.error("Failed to load verified client locations:", error);
+                }
+            }
+
+            dashboardVerifiedMapRefreshBtn?.addEventListener("click", () => fetchDashboardVerifiedLocations({ fit: true }));
 
             function handleAction(type, name) {
                 businessNameSpan.textContent = name;
@@ -1908,6 +2159,12 @@
                     fetchVerificationClientLocations({ fit: true });
                 }
 
+                if (view === "dashboard") {
+                    initializeDashboardVerifiedMap();
+                    requestAnimationFrame(() => dashboardVerifiedMap?.resize());
+                    fetchDashboardVerifiedLocations({ fit: true });
+                }
+
                 window.location.hash = view;
             }
 
@@ -1925,8 +2182,16 @@
                 setAdminView(initialView);
             }
 
+            initializeDashboardVerifiedMap();
+            fetchDashboardVerifiedLocations({ fit: true });
             initializeSurveyorMap();
+            window.addEventListener("pageshow", () => {
+                fetchDashboardVerifiedLocations({ fit: true });
+            });
             setInterval(() => {
+                if (!window.location.hash || window.location.hash === "#dashboard") {
+                    fetchDashboardVerifiedLocations();
+                }
                 if (window.location.hash === "#surveyors") {
                     fetchSurveyorLocations();
                 }
