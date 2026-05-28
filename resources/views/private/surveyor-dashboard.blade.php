@@ -352,7 +352,7 @@
                             id="dashboard-heading"
                             class="text-headline-lg font-headline-lg text-primary"
                         >
-                            Registered Clients
+                            Surveyed Clients
                         </h1>
                     </div>
                 </div>
@@ -414,7 +414,24 @@
                         </div>
                         <span class="material-symbols-outlined text-primary">map</span>
                     </div>
-                    <div id="surveyor-clients-map" class="h-[420px] w-full overflow-hidden"></div>
+                    <div class="relative">
+                        <div id="surveyor-clients-map" class="h-[420px] w-full overflow-hidden"></div>
+                        <div class="absolute bottom-md left-md bg-white/90 backdrop-blur-sm p-md rounded-lg border border-outline-variant/15 space-y-xs">
+                            <p class="font-label-md text-label-md text-on-surface mb-xs">Status Legend</p>
+                            <div class="flex items-center gap-sm">
+                                <div class="h-3 w-3 rounded-full bg-[#D97706]"></div>
+                                <span class="text-[10px] text-on-surface-variant">Pending</span>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <div class="h-3 w-3 rounded-full bg-[#001E40]"></div>
+                                <span class="text-[10px] text-on-surface-variant">Returned</span>
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <div class="h-3 w-3 rounded-full bg-[#84cc16]"></div>
+                                <span class="text-[10px] text-on-surface-variant">Verified</span>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Filter and Search Bar -->
@@ -631,7 +648,12 @@
                             .map(c => ({
                                 type: 'Feature',
                                 geometry: { type: 'Point', coordinates: [c.longitude, c.latitude] },
-                                properties: { name: c.name || '', client_id: c.client_id || '' },
+                                properties: {
+                                    name: c.name || '',
+                                    client_id: c.client_id || '',
+                                    survey_status: c.survey_status || 'pending',
+                                    url: c.url || '',
+                                },
                             })),
                     };
 
@@ -685,14 +707,37 @@
                             },
                         });
 
-                        // ── Individual point markers ──
+                        // ── Individual point halo ──
+                        map.addLayer({
+                            id: 'unclustered-point-halo',
+                            type: 'circle',
+                            source: 'clients',
+                            filter: ['!', ['has', 'point_count']],
+                            paint: {
+                                'circle-color': [
+                                    'case',
+                                    ['==', ['get', 'survey_status'], 'verified'], '#d9f99d',
+                                    ['==', ['get', 'survey_status'], 'returned'], '#bfdbfe',
+                                    '#FEF3C7',
+                                ],
+                                'circle-radius': 14,
+                                'circle-opacity': 0.5,
+                            },
+                        });
+
+                        // ── Individual point markers (status-coloured) ──
                         map.addLayer({
                             id: 'unclustered-point',
                             type: 'circle',
                             source: 'clients',
                             filter: ['!', ['has', 'point_count']],
                             paint: {
-                                'circle-color': '#3a5f94',
+                                'circle-color': [
+                                    'case',
+                                    ['==', ['get', 'survey_status'], 'verified'], '#84cc16',
+                                    ['==', ['get', 'survey_status'], 'returned'], '#001E40',
+                                    '#D97706',
+                                ],
                                 'circle-radius': 7,
                                 'circle-stroke-width': 2,
                                 'circle-stroke-color': '#ffffff',
@@ -711,11 +756,18 @@
                         map.on('click', 'unclustered-point', (e) => {
                             const coords = e.features[0].geometry.coordinates.slice();
                             const props = e.features[0].properties;
+                            const statusLabel = {
+                                verified: '<span style="color:#84cc16;font-weight:700">● Verified</span>',
+                                returned: '<span style="color:#001E40;font-weight:700">● Returned</span>',
+                                pending: '<span style="color:#D97706;font-weight:700">● Pending</span>',
+                            }[props.survey_status] || '<span style="color:#D97706;font-weight:700">● Pending</span>';
+
                             new maplibregl.Popup({ offset: 12 })
                                 .setLngLat(coords)
                                 .setHTML(`
                                     <strong>${escapeHtml(props.name)}</strong>
-                                    <span>${escapeHtml(props.client_id || 'No client ID')}</span>
+                                    <span>${escapeHtml(props.client_id || 'No client ID')}</span><br>
+                                    ${statusLabel}
                                 `)
                                 .addTo(map);
                         });

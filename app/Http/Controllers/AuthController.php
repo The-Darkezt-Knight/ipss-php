@@ -214,10 +214,8 @@ class AuthController extends Controller
     private function adminClientMapPoints()
     {
         return Client::query()
-            ->where(function ($query) {
-                $query->where('survey_status', 'pending')
-                    ->orWhereNull('survey_status');
-            })
+            ->whereNotNull('surveyed_by')
+            ->whereIn('survey_status', ['pending', 'returned'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->get([

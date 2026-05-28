@@ -956,7 +956,7 @@
                                 <div class="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
                                     <div>
                                         <h3 class="font-headline-sm text-headline-sm text-primary">Client Location Map</h3>
-                                        <p class="text-body-sm text-on-surface-variant">Pins show pending clients with saved latitude and longitude.</p>
+                                        <p class="text-body-sm text-on-surface-variant">Pins show pending and returned clients with saved latitude and longitude.</p>
                                     </div>
                                     <button
                                         type="button"
@@ -975,8 +975,8 @@
                                     >
                                         <div>
                                             <span class="material-symbols-outlined text-[40px] text-primary mb-sm">location_off</span>
-                                            <p class="font-label-lg text-label-lg text-primary">No pending client locations</p>
-                                            <p class="text-body-sm">Pending clients appear here when their records have saved latitude and longitude.</p>
+                                            <p class="font-label-lg text-label-lg text-primary">No pending or returned client locations</p>
+                                            <p class="text-body-sm">Pending and returned clients appear here when their records have saved latitude and longitude.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1740,10 +1740,20 @@
                         source: "verification-clients",
                         filter: ["!", ["has", "point_count"]],
                         paint: {
-                            "circle-color": "#FEF3C7",
+                            "circle-color": [
+                                "case",
+                                ["==", ["get", "survey_status"], "returned"],
+                                "#001E40",
+                                "#FEF3C7",
+                            ],
                             "circle-radius": 7,
                             "circle-stroke-width": 2,
-                            "circle-stroke-color": "#D97706",
+                            "circle-stroke-color": [
+                                "case",
+                                ["==", ["get", "survey_status"], "returned"],
+                                "#ffffff",
+                                "#D97706",
+                            ],
                         },
                     });
 
@@ -1788,8 +1798,9 @@
 
             async function fetchVerificationClientLocations({ fit = false } = {}) {
                 try {
-                    const response = await fetch("{{ route('admin.client-locations') }}", {
+                    const response = await fetch("{{ route('admin.client-locations') }}?ts=" + Date.now(), {
                         headers: { "Accept": "application/json" },
+                        cache: "no-store",
                     });
 
                     if (!response.ok) {

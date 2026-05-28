@@ -18,12 +18,13 @@ class ClientController
         $clientMapPoints = $this->clientsAssignedToSurveyor($employee)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->get(['id', 'client_id', 'first_name', 'middle_name', 'last_name', 'suffix', 'latitude', 'longitude'])
+            ->get(['id', 'client_id', 'first_name', 'middle_name', 'last_name', 'suffix', 'survey_status', 'latitude', 'longitude'])
             ->filter(fn ($client) => is_numeric($client->latitude) && is_numeric($client->longitude))
             ->map(fn ($client) => [
                 'id' => $client->id,
                 'client_id' => $client->client_id,
                 'name' => $this->formatClientName($client),
+                'survey_status' => $client->survey_status ?? 'pending',
                 'latitude' => (float) $client->latitude,
                 'longitude' => (float) $client->longitude,
                 'url' => route('surveyor.clients.show', $client),
