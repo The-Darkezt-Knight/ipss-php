@@ -1,0 +1,1335 @@
+<!doctype html>
+<html class="light" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>Negros Occidental | MSME Client Analytics</title>
+        <!-- Fonts & Icons -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet"
+        />
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <!-- Chart.js -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            "surface-variant": "#e2e2e5",
+                            "surface-container": "#eeeef0",
+                            "on-surface": "#1a1c1e",
+                            "tertiary-fixed-dim": "#c1c7cb",
+                            tertiary: "#191f22",
+                            "tertiary-container": "#2e3437",
+                            "secondary-fixed-dim": "#b2c9e2",
+                            "on-secondary-fixed-variant": "#33495e",
+                            "on-background": "#1a1c1e",
+                            primary: "#001e40",
+                            "outline-variant": "#c3c6d1",
+                            "on-tertiary-fixed-variant": "#41484b",
+                            "on-primary-fixed": "#001b3c",
+                            "surface-bright": "#f9f9fc",
+                            "on-tertiary-container": "#969ca0",
+                            "primary-container": "#003366",
+                            outline: "#737780",
+                            "secondary-fixed": "#cee5ff",
+                            "on-error-container": "#93000a",
+                            "secondary-container": "#cbe2fc",
+                            "tertiary-fixed": "#dde3e7",
+                            secondary: "#4a6077",
+                            "on-error": "#ffffff",
+                            surface: "#f9f9fc",
+                            "on-primary-fixed-variant": "#1f477b",
+                            "on-primary": "#ffffff",
+                            "primary-fixed-dim": "#a7c8ff",
+                            "surface-dim": "#dadadc",
+                            "on-secondary-fixed": "#041d30",
+                            "surface-container-high": "#e8e8ea",
+                            "on-surface-variant": "#43474f",
+                            "on-secondary-container": "#4f657b",
+                            "surface-container-lowest": "#ffffff",
+                            "error-container": "#ffdad6",
+                            "surface-container-highest": "#e2e2e5",
+                            "inverse-primary": "#a7c8ff",
+                            error: "#ba1a1a",
+                            background: "#f9f9fc",
+                            "primary-fixed": "#d5e3ff",
+                            "inverse-on-surface": "#f0f0f3",
+                            "on-tertiary-fixed": "#161c1f",
+                            "inverse-surface": "#2f3133",
+                            "on-tertiary": "#ffffff",
+                            "on-secondary": "#ffffff",
+                            "surface-tint": "#3a5f94",
+                            "surface-container-low": "#f3f3f6",
+                            "on-primary-container": "#799dd6",
+                            "accent-orange": "#F97316",
+                        },
+                        borderRadius: {
+                            DEFAULT: "0.125rem",
+                            lg: "0.25rem",
+                            xl: "0.5rem",
+                            full: "0.75rem",
+                        },
+                        spacing: {
+                            gutter: "24px",
+                            xxl: "48px",
+                            xs: "4px",
+                            lg: "24px",
+                            unit: "4px",
+                            md: "16px",
+                            sm: "8px",
+                            xl: "32px",
+                            "margin-mobile": "16px",
+                            "container-max": "1280px",
+                        },
+                        fontFamily: {
+                            "label-md": ["Public Sans"],
+                            "headline-lg-mobile": ["Public Sans"],
+                            "body-lg": ["Public Sans"],
+                            "headline-lg": ["Public Sans"],
+                            "body-md": ["Public Sans"],
+                            "display-lg": ["Public Sans"],
+                            "headline-sm": ["Public Sans"],
+                            "body-sm": ["Public Sans"],
+                            "label-lg": ["Public Sans"],
+                            "headline-md": ["Public Sans"],
+                        },
+                        fontSize: {
+                            "label-md": [
+                                "12px",
+                                {
+                                    lineHeight: "16px",
+                                    letterSpacing: "0.02em",
+                                    fontWeight: "600",
+                                },
+                            ],
+                            "headline-lg-mobile": [
+                                "24px",
+                                { lineHeight: "32px", fontWeight: "700" },
+                            ],
+                            "body-lg": [
+                                "18px",
+                                { lineHeight: "28px", fontWeight: "400" },
+                            ],
+                            "headline-lg": [
+                                "32px",
+                                { lineHeight: "40px", fontWeight: "700" },
+                            ],
+                            "body-md": [
+                                "16px",
+                                { lineHeight: "24px", fontWeight: "400" },
+                            ],
+                            "display-lg": [
+                                "48px",
+                                {
+                                    lineHeight: "56px",
+                                    letterSpacing: "-0.02em",
+                                    fontWeight: "700",
+                                },
+                            ],
+                            "headline-sm": [
+                                "20px",
+                                { lineHeight: "28px", fontWeight: "600" },
+                            ],
+                            "body-sm": [
+                                "14px",
+                                { lineHeight: "20px", fontWeight: "400" },
+                            ],
+                            "label-lg": [
+                                "14px",
+                                {
+                                    lineHeight: "20px",
+                                    letterSpacing: "0.01em",
+                                    fontWeight: "600",
+                                },
+                            ],
+                            "headline-md": [
+                                "24px",
+                                { lineHeight: "32px", fontWeight: "600" },
+                            ],
+                        },
+                    },
+                },
+            };
+        </script>
+        <style>
+            body {
+                font-family: "Public Sans", sans-serif;
+            }
+            .material-symbols-outlined {
+                font-variation-settings:
+                    "FILL" 0,
+                    "wght" 400,
+                    "GRAD" 0,
+                    "opsz" 24;
+            }
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+            }
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #c3c6d1;
+                border-radius: 10px;
+            }
+            .map-bg {
+                background:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.9),
+                        rgba(255, 255, 255, 0.9)
+                    ),
+                    url("https://images.unsplash.com/photo-1518107616985-bd48230d3b20?auto=format&fit=crop&q=80&w=1000");
+                background-size: cover;
+                background-position: center;
+            }
+        </style>
+    </head>
+    <body
+        class="bg-background text-on-background flex h-screen overflow-hidden"
+    >
+        <!-- SideNavBar (Authority: JSON) -->
+        <aside
+            class="hidden md:flex flex-col h-full border-r border-outline-variant/15 py-md bg-surface w-64 flex-shrink-0"
+        >
+            <div class="px-lg mb-xl">
+                <div class="flex items-center gap-sm mb-xs">
+                    <img
+                        alt="City Seal"
+                        class="w-8 h-8 rounded-full"
+                        data-alt="A professional, high-resolution official municipal seal emblem featuring classic heraldic design elements. The seal is presented in deep navy blue and gold, set against a clean, minimalist white background to convey institutional authority and stability. The lighting is bright and even, reinforcing a corporate light-mode aesthetic for a government portal."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4DMSvbY3B5DtdGXEacwlxgdSF7uB75v4ojbSF9VTVWTzKYOPCVVE602C0GtiaMFimne9iJWt9ge_uPfqu4Lne9LVUhRKgaRE74XFs984VUMS85eu_sPyPB1D7xHA3CHpdQzluijMy8AGU0atk-H8QnBLytgkOwmlKWlzEFEndfPBjPpCK20xVaEcY008zoj5p1wuvvAQJiXBGTWkkbA8xSYXL6z1UIjRwHECTOJzir6Zjxq2mAdWBA_byuGKmidS6-j3w9n-8iOJt"
+                    />
+                    <h1
+                        class="font-headline-sm text-headline-sm font-bold text-primary"
+                    >
+                        Municipal Oversight
+                    </h1>
+                </div>
+                <p class="font-label-md text-label-md text-on-surface-variant">
+                    Governance Portal
+                </p>
+            </div>
+            <nav class="flex-1 space-y-1">
+                <!-- Active: Dashboard -->
+                <a
+                    class="flex items-center gap-md px-md py-3 bg-secondary-fixed text-on-secondary-fixed rounded-xl mx-2 my-1 transition-all translate-x-1 duration-200"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="font-label-lg text-label-lg">Dashboard</span>
+                </a>
+                <a
+                    class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl mx-2 my-1 transition-all"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="font-label-lg text-label-lg">Analytics</span>
+                </a>
+                <a
+                    class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl mx-2 my-1 transition-all"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">group</span>
+                    <span class="font-label-lg text-label-lg">Surveyors</span>
+                </a>
+                <a
+                    class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl mx-2 my-1 transition-all"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">fact_check</span>
+                    <span class="font-label-lg text-label-lg"
+                        >Verification Queue</span
+                    >
+                </a>
+            </nav>
+            <div class="mt-auto border-t border-outline-variant/15 pt-md">
+                <a
+                    class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl mx-2 transition-all"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">help</span>
+                    <span class="font-label-lg text-label-lg">Support</span>
+                </a>
+                <a
+                    class="flex items-center gap-md px-md py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl mx-2 transition-all"
+                    href="#"
+                >
+                    <span class="material-symbols-outlined">history</span>
+                    <span class="font-label-lg text-label-lg">Archive</span>
+                </a>
+            </div>
+        </aside>
+        <!-- Main Content Canvas -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- TopNavBar (Authority: JSON) -->
+            <header
+                class="flex justify-between items-center w-full px-lg h-16 sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/15"
+            >
+                <div class="flex items-center gap-md">
+                    <span
+                        class="font-headline-md text-headline-md font-bold text-primary"
+                        >CityGov Admin</span
+                    >
+                </div>
+                <div class="flex items-center gap-xl">
+                    <div class="relative hidden md:block">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                            >search</span
+                        >
+                        <input
+                            class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full w-64 focus:ring-2 focus:ring-primary/20 text-body-sm"
+                            placeholder="Search registry..."
+                            type="text"
+                        />
+                    </div>
+                    <div class="flex items-center gap-md">
+                        <button
+                            class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors"
+                        >
+                            notifications
+                        </button>
+                        <button
+                            class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors"
+                        >
+                            settings
+                        </button>
+                        <div
+                            class="h-8 w-8 rounded-full bg-primary-container overflow-hidden border border-outline-variant"
+                        >
+                            <img
+                                alt="Administrator Profile"
+                                data-alt="A professional headshot of a municipal administrator in formal business attire, looking confident and approachable. The background is a clean, neutral office setting with soft, diffused lighting. The overall image has a corporate and modern feel, consistent with high-level government administrative software."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz-WsFZhiC9Ug6B91T7UNMzGRxMOZdG1sjcyPOtfj0wJJDM0BNXeqSDTGMJ5Xp83PO5kccEzHBpA41b7U7yxRCwxKqurx-ixOMnRrOKPDe8Q_otA2JrXzr6N4Ouinn5zDDq78nDQxanoscfUv9BMh-2lXY7lsbs9HbbT98AGQ1k16ut5kVeyh69IXCZOBwtASPiJ4ggQdLR3uyDfvOuK-DirW2C3sGYyj-XfI3B3Mf7pU6HKLRFeIj6fjJWFJCk7D2N5tsvsAFK0zm"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- Dashboard Body -->
+            <div class="flex-1 overflow-y-auto p-lg space-y-lg">
+                <!-- Page Header -->
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2
+                            class="font-headline-lg text-headline-lg text-primary"
+                        >
+                            Negros Occidental MSME Registry
+                        </h2>
+                        <p
+                            class="font-body-md text-body-md text-on-surface-variant"
+                        >
+                            Provincial-level MSME registry data and demographic
+                            insights for Negros Occidental.
+                        </p>
+                    </div>
+                    <div class="flex gap-md">
+                        <button
+                            class="flex items-center gap-sm px-md py-2 border border-outline rounded-lg font-label-lg text-label-lg hover:bg-surface-container transition-colors"
+                        >
+                            <span class="material-symbols-outlined"
+                                >download</span
+                            >
+                            Export PDF
+                        </button>
+                        <button
+                            class="flex items-center gap-sm px-md py-2 bg-accent-orange text-white rounded-lg font-label-lg text-label-lg hover:brightness-110 transition-colors shadow-sm"
+                        >
+                            <span class="material-symbols-outlined"
+                                >filter_list</span
+                            >
+                            Advanced Filters
+                        </button>
+                    </div>
+                </div>
+                <!-- 1. Overview KPI Cards (Bento Style) -->
+                <div
+                    class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-md"
+                >
+                    <div
+                        class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30 flex flex-col justify-between"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                        >
+                            Total Clients
+                        </p>
+                        <h3
+                            class="font-display-lg text-display-lg text-primary mt-sm"
+                        >
+                            58.4k
+                        </h3>
+                        <div
+                            class="flex items-center text-emerald-600 font-label-md mt-xs"
+                        >
+                            <span class="material-symbols-outlined text-[16px]"
+                                >trending_up</span
+                            >
+                            +4.2%
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30 flex flex-col justify-between"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                        >
+                            Active Clients
+                        </p>
+                        <h3
+                            class="font-headline-lg text-headline-lg text-primary mt-sm"
+                        >
+                            42.2k
+                        </h3>
+                        <div
+                            class="w-full bg-surface-container-high h-1.5 rounded-full mt-md"
+                        >
+                            <div
+                                class="bg-primary h-1.5 rounded-full"
+                                style="width: 81%"
+                            ></div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                        >
+                            Senior Citizens
+                        </p>
+                        <h3
+                            class="font-headline-md text-headline-md text-primary mt-sm"
+                        >
+                            7.2k
+                        </h3>
+                        <p
+                            class="font-body-sm text-body-sm text-on-surface-variant"
+                        >
+                            12.5% of total
+                        </p>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                        >
+                            PWDs
+                        </p>
+                        <h3
+                            class="font-headline-md text-headline-md text-primary mt-sm"
+                        >
+                            2.1k
+                        </h3>
+                        <p
+                            class="font-body-sm text-body-sm text-on-surface-variant"
+                        >
+                            Inclusion Index: 3.8%
+                        </p>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                        >
+                            Indigenous
+                        </p>
+                        <h3
+                            class="font-headline-md text-headline-md text-primary mt-sm"
+                        >
+                            1.4k
+                        </h3>
+                        <p
+                            class="font-body-sm text-body-sm text-on-surface-variant"
+                        >
+                            IP Communities
+                        </p>
+                    </div>
+                    <div
+                        class="bg-primary p-md rounded-xl border border-primary text-white"
+                    >
+                        <p
+                            class="font-label-md text-label-md text-on-primary/70 uppercase tracking-wider"
+                        >
+                            MSME Count
+                        </p>
+                        <h3 class="font-headline-lg text-headline-lg mt-sm">
+                            53.1k
+                        </h3>
+                        <p class="font-body-sm text-body-sm mt-xs opacity-80">
+                            91% Compliance
+                        </p>
+                    </div>
+                </div>
+                <!-- 2. Demographics Panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                    <div
+                        class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                    >
+                        <h3
+                            class="font-headline-sm text-headline-sm text-primary mb-xl flex items-center gap-sm"
+                        >
+                            <span
+                                class="material-symbols-outlined text-accent-orange"
+                                >diversity_3</span
+                            >
+                            Demographics Analysis
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
+                            <div>
+                                <p
+                                    class="font-label-lg text-label-lg mb-md text-on-surface-variant"
+                                >
+                                    Age Groups Distribution
+                                </p>
+                                <div class="chart-container">
+                                    <canvas
+                                        id="ageChart"
+                                        width="340"
+                                        height="375"
+                                        style="
+                                            display: block;
+                                            box-sizing: border-box;
+                                            height: 300px;
+                                            width: 272.5px;
+                                        "
+                                    ></canvas>
+                                </div>
+                            </div>
+                            <div>
+                                <p
+                                    class="font-label-lg text-label-lg mb-md text-on-surface-variant"
+                                >
+                                    Civil Status Breakout
+                                </p>
+                                <div class="chart-container">
+                                    <canvas
+                                        id="civilStatusChart"
+                                        width="340"
+                                        height="375"
+                                        style="
+                                            display: block;
+                                            box-sizing: border-box;
+                                            height: 300px;
+                                            width: 272.5px;
+                                        "
+                                    ></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm flex flex-col items-center justify-center"
+                    >
+                        <p
+                            class="font-label-lg text-label-lg mb-xl text-on-surface-variant w-full text-left"
+                        >
+                            Sex Distribution
+                        </p>
+                        <div class="relative w-full max-w-[240px]">
+                            <canvas
+                                id="sexChart"
+                                width="300"
+                                height="375"
+                                style="
+                                    display: block;
+                                    box-sizing: border-box;
+                                    height: 300px;
+                                    width: 240px;
+                                "
+                            ></canvas>
+                            <div
+                                class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                            >
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >Gender</span
+                                >
+                                <span
+                                    class="font-label-md text-label-md text-on-surface-variant"
+                                    >Parity Ratio</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 3. MSME & Business Profile Panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                    <div
+                        class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                    >
+                        <h3
+                            class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                        >
+                            MSME Classification
+                        </h3>
+                        <div class="chart-container">
+                            <canvas
+                                id="msmeClassChart"
+                                width="304"
+                                height="375"
+                                style="
+                                    display: block;
+                                    box-sizing: border-box;
+                                    height: 300px;
+                                    width: 243.7px;
+                                "
+                            ></canvas>
+                        </div>
+                    </div>
+                    <div
+                        class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                    >
+                        <div class="flex justify-between mb-xl">
+                            <h3
+                                class="font-headline-sm text-headline-sm text-primary flex items-center gap-sm"
+                            >
+                                <span
+                                    class="material-symbols-outlined text-accent-orange"
+                                    >business_center</span
+                                >
+                                Sector &amp; Designation
+                            </h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
+                            <div class="chart-container">
+                                <canvas
+                                    id="sectorChart"
+                                    width="340"
+                                    height="375"
+                                    style="
+                                        display: block;
+                                        box-sizing: border-box;
+                                        height: 300px;
+                                        width: 272.5px;
+                                    "
+                                ></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas
+                                    id="designationChart"
+                                    width="340"
+                                    height="375"
+                                    style="
+                                        display: block;
+                                        box-sizing: border-box;
+                                        height: 300px;
+                                        width: 272.5px;
+                                    "
+                                ></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 4. Geographic Distribution Panel -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                    <div
+                        class="lg:col-span-5 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                    >
+                        <h3
+                            class="font-headline-sm text-headline-sm text-primary mb-xl"
+                        >
+                            Top Cities &amp; Municipalities
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr
+                                        class="border-b border-outline-variant/30"
+                                    >
+                                        <th
+                                            class="py-sm font-label-md text-label-md text-on-surface-variant uppercase"
+                                        >
+                                            City / Municipality
+                                        </th>
+                                        <th
+                                            class="py-sm font-label-md text-label-md text-on-surface-variant uppercase text-right"
+                                        >
+                                            Count
+                                        </th>
+                                        <th
+                                            class="py-sm font-label-md text-label-md text-on-surface-variant uppercase text-right"
+                                        >
+                                            Growth
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                    >
+                                        <td
+                                            class="py-md font-body-sm text-body-sm font-medium"
+                                        >
+                                            Bacolod City
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right"
+                                        >
+                                            18,200
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                        >
+                                            +4.2%
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                    >
+                                        <td
+                                            class="py-md font-body-sm text-body-sm font-medium"
+                                        >
+                                            Silay City
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right"
+                                        >
+                                            5,400
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                        >
+                                            +3.1%
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                    >
+                                        <td
+                                            class="py-md font-body-sm text-body-sm font-medium"
+                                        >
+                                            Talisay City
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right"
+                                        >
+                                            4,800
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                        >
+                                            +2.8%
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                    >
+                                        <td
+                                            class="py-md font-body-sm text-body-sm font-medium"
+                                        >
+                                            Bago City
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right"
+                                        >
+                                            4,100
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right text-accent-orange"
+                                        >
+                                            +0.5%
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        class="hover:bg-surface-container-low transition-colors"
+                                    >
+                                        <td
+                                            class="py-md font-body-sm text-body-sm font-medium"
+                                        >
+                                            Victorias City
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right"
+                                        >
+                                            3,200
+                                        </td>
+                                        <td
+                                            class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                        >
+                                            +1.9%
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div
+                        class="lg:col-span-7 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm map-bg min-h-[400px] flex items-center justify-center overflow-hidden relative"
+                        data-location="Negros Occidental, Philippines"
+                    >
+                        <div
+                            class="absolute inset-0 bg-primary/5 pointer-events-none"
+                        ></div>
+                        <div
+                            class="bg-surface-container-lowest/90 backdrop-blur-md p-md rounded-lg shadow-xl border border-white max-w-xs"
+                        >
+                            <h4
+                                class="font-headline-sm text-headline-sm text-primary mb-xs"
+                            >
+                                Provincial Density
+                            </h4>
+                            <p
+                                class="font-body-sm text-body-sm text-on-surface-variant"
+                            >
+                                Concentration of MSMEs by District across Negros
+                                Occidental.
+                            </p>
+                            <div class="mt-md space-y-2">
+                                <div
+                                    class="flex justify-between items-center text-body-sm"
+                                >
+                                    <span class="">District 1-3 (North)</span
+                                    ><span class="font-bold">48%</span>
+                                </div>
+                                <div
+                                    class="w-full bg-surface-container-high h-1 rounded-full"
+                                >
+                                    <div
+                                        class="bg-primary h-1 rounded-full"
+                                        style="width: 48%"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="flex justify-between items-center text-body-sm"
+                                >
+                                    <span class="">District 4-6 (South)</span
+                                    ><span class="font-bold">32%</span>
+                                </div>
+                                <div
+                                    class="w-full bg-surface-container-high h-1 rounded-full"
+                                >
+                                    <div
+                                        class="bg-accent-orange h-1 rounded-full"
+                                        style="width: 32%"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="flex justify-between items-center text-body-sm"
+                                >
+                                    <span class="">Bacolod (HUC)</span
+                                    ><span class="font-bold">20%</span>
+                                </div>
+                                <div
+                                    class="w-full bg-surface-container-high h-1 rounded-full"
+                                >
+                                    <div
+                                        class="bg-secondary h-1 rounded-full"
+                                        style="width: 20%"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 5. Digitalization Panel -->
+                <div class="space-y-lg">
+                    <h3
+                        class="font-headline-sm text-headline-sm text-primary flex items-center gap-sm"
+                    >
+                        <span
+                            class="material-symbols-outlined text-accent-orange"
+                            >bolt</span
+                        >
+                        Digitalization Readiness
+                    </h3>
+                    <div
+                        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-md"
+                    >
+                        <div
+                            class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                        >
+                            <p
+                                class="font-label-md text-label-md text-on-surface-variant"
+                            >
+                                Email
+                            </p>
+                            <div class="flex items-end justify-between mt-sm">
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >82%</span
+                                >
+                                <span
+                                    class="material-symbols-outlined text-primary/40"
+                                    >mail</span
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                        >
+                            <p
+                                class="font-label-md text-label-md text-on-surface-variant"
+                            >
+                                Mobile
+                            </p>
+                            <div class="flex items-end justify-between mt-sm">
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >95%</span
+                                >
+                                <span
+                                    class="material-symbols-outlined text-primary/40"
+                                    >smartphone</span
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                        >
+                            <p
+                                class="font-label-md text-label-md text-on-surface-variant"
+                            >
+                                Website
+                            </p>
+                            <div class="flex items-end justify-between mt-sm">
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >40%</span
+                                >
+                                <span
+                                    class="material-symbols-outlined text-primary/40"
+                                    >language</span
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                        >
+                            <p
+                                class="font-label-md text-label-md text-on-surface-variant"
+                            >
+                                Social Media
+                            </p>
+                            <div class="flex items-end justify-between mt-sm">
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >75%</span
+                                >
+                                <span
+                                    class="material-symbols-outlined text-primary/40"
+                                    >share</span
+                                >
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                        >
+                            <p
+                                class="font-label-md text-label-md text-on-surface-variant"
+                            >
+                                E-Commerce
+                            </p>
+                            <div class="flex items-end justify-between mt-sm">
+                                <span
+                                    class="font-headline-md text-headline-md text-primary"
+                                    >35%</span
+                                >
+                                <span
+                                    class="material-symbols-outlined text-primary/40"
+                                    >shopping_cart</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                        <div
+                            class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                        >
+                            <p
+                                class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                            >
+                                Digitalization Level
+                            </p>
+                            <div class="space-y-xl">
+                                <div>
+                                    <div
+                                        class="flex justify-between mb-xs text-body-sm"
+                                    >
+                                        <span class="">High Adoption</span>
+                                        <span class="font-bold">22%</span>
+                                    </div>
+                                    <div
+                                        class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                    >
+                                        <div
+                                            class="bg-emerald-600 h-full"
+                                            style="width: 22%"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div
+                                        class="flex justify-between mb-xs text-body-sm"
+                                    >
+                                        <span class="">Medium Adoption</span>
+                                        <span class="font-bold">48%</span>
+                                    </div>
+                                    <div
+                                        class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                    >
+                                        <div
+                                            class="bg-primary h-full"
+                                            style="width: 48%"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div
+                                        class="flex justify-between mb-xs text-body-sm"
+                                    >
+                                        <span class="">Low Adoption</span>
+                                        <span class="font-bold">30%</span>
+                                    </div>
+                                    <div
+                                        class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                    >
+                                        <div
+                                            class="bg-accent-orange h-full"
+                                            style="width: 30%"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                        >
+                            <p
+                                class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                            >
+                                Digital Tool Adoption Rate
+                            </p>
+                            <div class="chart-container">
+                                <canvas
+                                    id="digitalToolChart"
+                                    width="721"
+                                    height="375"
+                                    style="
+                                        display: block;
+                                        box-sizing: border-box;
+                                        height: 300px;
+                                        width: 577.1px;
+                                    "
+                                ></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 6. Client Growth Over Time -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                    <div
+                        class="lg:col-span-12 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                    >
+                        <h3
+                            class="font-headline-sm text-headline-sm text-primary mb-xl flex items-center gap-sm"
+                        >
+                            <span
+                                class="material-symbols-outlined text-accent-orange"
+                                >timeline</span
+                            >
+                            Registration &amp; Activity Trends
+                        </h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+                            <div class="chart-container">
+                                <canvas
+                                    id="growthChart"
+                                    width="549"
+                                    height="375"
+                                    style="
+                                        display: block;
+                                        box-sizing: border-box;
+                                        height: 300px;
+                                        width: 439.2px;
+                                    "
+                                ></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas
+                                    id="activityChart"
+                                    width="549"
+                                    height="375"
+                                    style="
+                                        display: block;
+                                        box-sizing: border-box;
+                                        height: 300px;
+                                        width: 439.2px;
+                                    "
+                                ></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <script>
+            // Common styles for Charts
+            const fontSettings = { family: "Public Sans", size: 12 };
+            const primaryColor = "#001e40";
+            const accentOrange = "#F97316";
+            const secondaryColor = "#4a6077";
+            const lightGray = "#e2e2e5";
+
+            // Age Chart
+            new Chart(document.getElementById("ageChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Below 18", "18–35", "36–60", "60+"],
+                    datasets: [
+                        {
+                            label: "Clients",
+                            data: [12000, 480000, 560000, 150000],
+                            backgroundColor: [
+                                lightGray,
+                                primaryColor,
+                                secondaryColor,
+                                accentOrange,
+                            ],
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                },
+            });
+
+            // Civil Status Chart
+            new Chart(document.getElementById("civilStatusChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Single", "Married", "Widowed", "Separated"],
+                    datasets: [
+                        {
+                            label: "Percentage",
+                            data: [35, 52, 8, 5],
+                            backgroundColor: primaryColor,
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    indexAxis: "y",
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                },
+            });
+
+            // Sex Donut Chart
+            new Chart(document.getElementById("sexChart"), {
+                type: "doughnut",
+                data: {
+                    labels: ["Male", "Female"],
+                    datasets: [
+                        {
+                            data: [42, 58],
+                            backgroundColor: [primaryColor, accentOrange],
+                            borderWidth: 0,
+                            hoverOffset: 10,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "80%",
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: { boxWidth: 12, font: fontSettings },
+                        },
+                    },
+                },
+            });
+
+            // MSME Classification Chart
+            new Chart(document.getElementById("msmeClassChart"), {
+                type: "doughnut",
+                data: {
+                    labels: ["Micro", "Small", "Medium", "Large"],
+                    datasets: [
+                        {
+                            data: [88, 8, 3, 1],
+                            backgroundColor: [
+                                primaryColor,
+                                accentOrange,
+                                secondaryColor,
+                                lightGray,
+                            ],
+                            borderWidth: 0,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: { boxWidth: 12 },
+                        },
+                    },
+                },
+            });
+
+            // Sector Chart
+            new Chart(document.getElementById("sectorChart"), {
+                type: "bar",
+                data: {
+                    labels: [
+                        "Agriculture",
+                        "Retail",
+                        "Service",
+                        "Manufacturing",
+                    ],
+                    datasets: [
+                        {
+                            label: "Industry Sectors",
+                            data: [15, 45, 30, 10],
+                            backgroundColor: primaryColor,
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                },
+            });
+
+            // Designation Chart
+            new Chart(document.getElementById("designationChart"), {
+                type: "bar",
+                data: {
+                    labels: ["Owner", "Manager", "Representative"],
+                    datasets: [
+                        {
+                            label: "Roles",
+                            data: [72, 18, 10],
+                            backgroundColor: accentOrange,
+                            borderRadius: 4,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                },
+            });
+
+            // Digital Tool Adoption
+            new Chart(document.getElementById("digitalToolChart"), {
+                type: "bar",
+                data: {
+                    labels: [
+                        "POS System",
+                        "Social Media Marketing",
+                        "Cloud Storage",
+                        "E-Payment Solutions",
+                    ],
+                    datasets: [
+                        {
+                            label: "Adoption Rate (%)",
+                            data: [28, 75, 12, 58],
+                            backgroundColor: primaryColor,
+                            borderRadius: 6,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                },
+            });
+
+            // Growth Chart (Line)
+            new Chart(document.getElementById("growthChart"), {
+                type: "line",
+                data: {
+                    labels: [
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "May",
+                        "Jun",
+                        "Jul",
+                        "Aug",
+                        "Sep",
+                        "Oct",
+                        "Nov",
+                        "Dec",
+                    ],
+                    datasets: [
+                        {
+                            label: "New Registrations",
+                            data: [
+                                1200, 1500, 1100, 2400, 3200, 4100, 3800, 4500,
+                                5200, 6100, 6800, 7500,
+                            ],
+                            borderColor: primaryColor,
+                            tension: 0.4,
+                            fill: false,
+                            pointRadius: 4,
+                            pointBackgroundColor: accentOrange,
+                        },
+                    ],
+                },
+                options: { responsive: true, maintainAspectRatio: false },
+            });
+
+            // Activity Area Chart
+            new Chart(document.getElementById("activityChart"), {
+                type: "line",
+                data: {
+                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                    datasets: [
+                        {
+                            label: "Active",
+                            data: [900, 920, 940, 960, 975, 980],
+                            borderColor: primaryColor,
+                            backgroundColor: "rgba(0, 30, 64, 0.1)",
+                            fill: true,
+                            tension: 0.4,
+                        },
+                        {
+                            label: "Inactive",
+                            data: [200, 180, 210, 220, 215, 220],
+                            borderColor: accentOrange,
+                            backgroundColor: "rgba(249, 115, 22, 0.1)",
+                            fill: true,
+                            tension: 0.4,
+                        },
+                    ],
+                },
+                options: { responsive: true, maintainAspectRatio: false },
+            });
+        </script>
+    </body>
+</html>

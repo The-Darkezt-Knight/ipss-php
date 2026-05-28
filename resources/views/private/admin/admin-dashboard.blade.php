@@ -6,6 +6,7 @@
         <meta content="width=device-width, initial-scale=1.0" name="viewport" />
         <title>IPSS Admin Dashboard</title>
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link
             href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&amp;display=swap"
             rel="stylesheet"
@@ -47,6 +48,21 @@
             .custom-scrollbar::-webkit-scrollbar-thumb {
                 background: #c3c6d1;
                 border-radius: 10px;
+            }
+            .chart-container {
+                position: relative;
+                height: 300px;
+                width: 100%;
+            }
+            .analytics-map-bg {
+                background:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.9),
+                        rgba(255, 255, 255, 0.9)
+                    ),
+                    url("https://images.unsplash.com/photo-1518107616985-bd48230d3b20?auto=format&fit=crop&q=80&w=1000");
+                background-size: cover;
+                background-position: center;
             }
         </style>
         <script id="tailwind-config">
@@ -102,6 +118,7 @@
                             "on-surface-variant": "#43474f",
                             "on-secondary-fixed-variant": "#33495e",
                             "primary-fixed-dim": "#a7c8ff",
+                            "accent-orange": "#F97316",
                         },
                         borderRadius: {
                             DEFAULT: "0.125rem",
@@ -235,9 +252,10 @@
                             >Dashboard</span
                         >
                     </button>
-                    <a
-                        class="flex items-center px-lg py-md text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-surface-container rounded-xl mx-2 my-1 transition-all"
-                        href="#"
+                    <button
+                        class="admin-nav-link flex w-[calc(100%-16px)] items-center px-lg py-md text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-surface-container rounded-xl mx-2 my-1 transition-all"
+                        type="button"
+                        data-admin-view="analytics"
                     >
                         <span
                             class="material-symbols-outlined mr-md"
@@ -247,7 +265,7 @@
                         <span class="font-label-lg text-label-lg"
                             >Analytics</span
                         >
-                    </a>
+                    </button>
                     <button
                         class="admin-nav-link flex w-[calc(100%-16px)] items-center px-lg py-md text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-surface-container rounded-xl mx-2 my-1 transition-all"
                         type="button"
@@ -719,6 +737,768 @@
                                 </table>
                             </div>
                         </div>
+                    </section>
+                    <section
+                        id="admin-analytics-panel"
+                        data-admin-panel="analytics"
+                        class="admin-panel hidden"
+                    >
+                                    <div class="flex-1 overflow-y-auto p-lg space-y-lg">
+                                        <!-- Page Header -->
+                                        <div class="flex justify-between items-end">
+                                            <div>
+                                                <h2
+                                                    class="font-headline-lg text-headline-lg text-primary"
+                                                >
+                                                    Negros Occidental MSME Registry
+                                                </h2>
+                                                <p
+                                                    class="font-body-md text-body-md text-on-surface-variant"
+                                                >
+                                                    Provincial-level MSME registry data and demographic
+                                                    insights for Negros Occidental.
+                                                </p>
+                                            </div>
+                                            <div class="flex gap-md">
+                                                <button
+                                                    class="flex items-center gap-sm px-md py-2 border border-outline rounded-lg font-label-lg text-label-lg hover:bg-surface-container transition-colors"
+                                                >
+                                                    <span class="material-symbols-outlined"
+                                                        >download</span
+                                                    >
+                                                    Export PDF
+                                                </button>
+                                                <button
+                                                    class="flex items-center gap-sm px-md py-2 bg-accent-orange text-white rounded-lg font-label-lg text-label-lg hover:brightness-110 transition-colors shadow-sm"
+                                                >
+                                                    <span class="material-symbols-outlined"
+                                                        >filter_list</span
+                                                    >
+                                                    Advanced Filters
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- 1. Overview KPI Cards (Bento Style) -->
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-md"
+                                        >
+                                            <div
+                                                class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30 flex flex-col justify-between"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                                                >
+                                                    Total Clients
+                                                </p>
+                                                <h3
+                                                    class="font-display-lg text-display-lg text-primary mt-sm"
+                                                >
+                                                    58.4k
+                                                </h3>
+                                                <div
+                                                    class="flex items-center text-emerald-600 font-label-md mt-xs"
+                                                >
+                                                    <span class="material-symbols-outlined text-[16px]"
+                                                        >trending_up</span
+                                                    >
+                                                    +4.2%
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30 flex flex-col justify-between"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                                                >
+                                                    Active Clients
+                                                </p>
+                                                <h3
+                                                    class="font-headline-lg text-headline-lg text-primary mt-sm"
+                                                >
+                                                    42.2k
+                                                </h3>
+                                                <div
+                                                    class="w-full bg-surface-container-high h-1.5 rounded-full mt-md"
+                                                >
+                                                    <div
+                                                        class="bg-primary h-1.5 rounded-full"
+                                                        style="width: 81%"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                                                >
+                                                    Senior Citizens
+                                                </p>
+                                                <h3
+                                                    class="font-headline-md text-headline-md text-primary mt-sm"
+                                                >
+                                                    7.2k
+                                                </h3>
+                                                <p
+                                                    class="font-body-sm text-body-sm text-on-surface-variant"
+                                                >
+                                                    12.5% of total
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                                                >
+                                                    PWDs
+                                                </p>
+                                                <h3
+                                                    class="font-headline-md text-headline-md text-primary mt-sm"
+                                                >
+                                                    2.1k
+                                                </h3>
+                                                <p
+                                                    class="font-body-sm text-body-sm text-on-surface-variant"
+                                                >
+                                                    Inclusion Index: 3.8%
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant/30"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider"
+                                                >
+                                                    Indigenous
+                                                </p>
+                                                <h3
+                                                    class="font-headline-md text-headline-md text-primary mt-sm"
+                                                >
+                                                    1.4k
+                                                </h3>
+                                                <p
+                                                    class="font-body-sm text-body-sm text-on-surface-variant"
+                                                >
+                                                    IP Communities
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="bg-primary p-md rounded-xl border border-primary text-white"
+                                            >
+                                                <p
+                                                    class="font-label-md text-label-md text-on-primary/70 uppercase tracking-wider"
+                                                >
+                                                    MSME Count
+                                                </p>
+                                                <h3 class="font-headline-lg text-headline-lg mt-sm">
+                                                    53.1k
+                                                </h3>
+                                                <p class="font-body-sm text-body-sm mt-xs opacity-80">
+                                                    91% Compliance
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <!-- 2. Demographics Panel -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                                            <div
+                                                class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                            >
+                                                <h3
+                                                    class="font-headline-sm text-headline-sm text-primary mb-xl flex items-center gap-sm"
+                                                >
+                                                    <span
+                                                        class="material-symbols-outlined text-accent-orange"
+                                                        >diversity_3</span
+                                                    >
+                                                    Demographics Analysis
+                                                </h3>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
+                                                    <div>
+                                                        <p
+                                                            class="font-label-lg text-label-lg mb-md text-on-surface-variant"
+                                                        >
+                                                            Age Groups Distribution
+                                                        </p>
+                                                        <div class="chart-container">
+                                                            <canvas
+                                                                id="ageChart"
+                                                                width="340"
+                                                                height="375"
+                                                                style="
+                                                                    display: block;
+                                                                    box-sizing: border-box;
+                                                                    height: 300px;
+                                                                    width: 272.5px;
+                                                                "
+                                                            ></canvas>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p
+                                                            class="font-label-lg text-label-lg mb-md text-on-surface-variant"
+                                                        >
+                                                            Civil Status Breakout
+                                                        </p>
+                                                        <div class="chart-container">
+                                                            <canvas
+                                                                id="civilStatusChart"
+                                                                width="340"
+                                                                height="375"
+                                                                style="
+                                                                    display: block;
+                                                                    box-sizing: border-box;
+                                                                    height: 300px;
+                                                                    width: 272.5px;
+                                                                "
+                                                            ></canvas>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm flex flex-col items-center justify-center"
+                                            >
+                                                <p
+                                                    class="font-label-lg text-label-lg mb-xl text-on-surface-variant w-full text-left"
+                                                >
+                                                    Sex Distribution
+                                                </p>
+                                                <div class="relative w-full max-w-[240px]">
+                                                    <canvas
+                                                        id="sexChart"
+                                                        width="300"
+                                                        height="375"
+                                                        style="
+                                                            display: block;
+                                                            box-sizing: border-box;
+                                                            height: 300px;
+                                                            width: 240px;
+                                                        "
+                                                    ></canvas>
+                                                    <div
+                                                        class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                                                    >
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >Gender</span
+                                                        >
+                                                        <span
+                                                            class="font-label-md text-label-md text-on-surface-variant"
+                                                            >Parity Ratio</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 3. MSME & Business Profile Panel -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                                            <div
+                                                class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                            >
+                                                <h3
+                                                    class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                                                >
+                                                    MSME Classification
+                                                </h3>
+                                                <div class="chart-container">
+                                                    <canvas
+                                                        id="msmeClassChart"
+                                                        width="304"
+                                                        height="375"
+                                                        style="
+                                                            display: block;
+                                                            box-sizing: border-box;
+                                                            height: 300px;
+                                                            width: 243.7px;
+                                                        "
+                                                    ></canvas>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                            >
+                                                <div class="flex justify-between mb-xl">
+                                                    <h3
+                                                        class="font-headline-sm text-headline-sm text-primary flex items-center gap-sm"
+                                                    >
+                                                        <span
+                                                            class="material-symbols-outlined text-accent-orange"
+                                                            >business_center</span
+                                                        >
+                                                        Sector &amp; Designation
+                                                    </h3>
+                                                </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-xl">
+                                                    <div class="chart-container">
+                                                        <canvas
+                                                            id="sectorChart"
+                                                            width="340"
+                                                            height="375"
+                                                            style="
+                                                                display: block;
+                                                                box-sizing: border-box;
+                                                                height: 300px;
+                                                                width: 272.5px;
+                                                            "
+                                                        ></canvas>
+                                                    </div>
+                                                    <div class="chart-container">
+                                                        <canvas
+                                                            id="designationChart"
+                                                            width="340"
+                                                            height="375"
+                                                            style="
+                                                                display: block;
+                                                                box-sizing: border-box;
+                                                                height: 300px;
+                                                                width: 272.5px;
+                                                            "
+                                                        ></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 4. Geographic Distribution Panel -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                                            <div
+                                                class="lg:col-span-5 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                            >
+                                                <h3
+                                                    class="font-headline-sm text-headline-sm text-primary mb-xl"
+                                                >
+                                                    Top Cities &amp; Municipalities
+                                                </h3>
+                                                <div class="overflow-x-auto">
+                                                    <table class="w-full text-left border-collapse">
+                                                        <thead>
+                                                            <tr
+                                                                class="border-b border-outline-variant/30"
+                                                            >
+                                                                <th
+                                                                    class="py-sm font-label-md text-label-md text-on-surface-variant uppercase"
+                                                                >
+                                                                    City / Municipality
+                                                                </th>
+                                                                <th
+                                                                    class="py-sm font-label-md text-label-md text-on-surface-variant uppercase text-right"
+                                                                >
+                                                                    Count
+                                                                </th>
+                                                                <th
+                                                                    class="py-sm font-label-md text-label-md text-on-surface-variant uppercase text-right"
+                                                                >
+                                                                    Growth
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr
+                                                                class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                                            >
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm font-medium"
+                                                                >
+                                                                    Bacolod City
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right"
+                                                                >
+                                                                    18,200
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                                                >
+                                                                    +4.2%
+                                                                </td>
+                                                            </tr>
+                                                            <tr
+                                                                class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                                            >
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm font-medium"
+                                                                >
+                                                                    Silay City
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right"
+                                                                >
+                                                                    5,400
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                                                >
+                                                                    +3.1%
+                                                                </td>
+                                                            </tr>
+                                                            <tr
+                                                                class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                                            >
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm font-medium"
+                                                                >
+                                                                    Talisay City
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right"
+                                                                >
+                                                                    4,800
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                                                >
+                                                                    +2.8%
+                                                                </td>
+                                                            </tr>
+                                                            <tr
+                                                                class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+                                                            >
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm font-medium"
+                                                                >
+                                                                    Bago City
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right"
+                                                                >
+                                                                    4,100
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right text-accent-orange"
+                                                                >
+                                                                    +0.5%
+                                                                </td>
+                                                            </tr>
+                                                            <tr
+                                                                class="hover:bg-surface-container-low transition-colors"
+                                                            >
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm font-medium"
+                                                                >
+                                                                    Victorias City
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right"
+                                                                >
+                                                                    3,200
+                                                                </td>
+                                                                <td
+                                                                    class="py-md font-body-sm text-body-sm text-right text-emerald-600"
+                                                                >
+                                                                    +1.9%
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="lg:col-span-7 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm analytics-map-bg min-h-[400px] flex items-center justify-center overflow-hidden relative"
+                                                data-location="Negros Occidental, Philippines"
+                                            >
+                                                <div
+                                                    class="absolute inset-0 bg-primary/5 pointer-events-none"
+                                                ></div>
+                                                <div
+                                                    class="bg-surface-container-lowest/90 backdrop-blur-md p-md rounded-lg shadow-xl border border-white max-w-xs"
+                                                >
+                                                    <h4
+                                                        class="font-headline-sm text-headline-sm text-primary mb-xs"
+                                                    >
+                                                        Provincial Density
+                                                    </h4>
+                                                    <p
+                                                        class="font-body-sm text-body-sm text-on-surface-variant"
+                                                    >
+                                                        Concentration of MSMEs by District across Negros
+                                                        Occidental.
+                                                    </p>
+                                                    <div class="mt-md space-y-2">
+                                                        <div
+                                                            class="flex justify-between items-center text-body-sm"
+                                                        >
+                                                            <span class="">District 1-3 (North)</span
+                                                            ><span class="font-bold">48%</span>
+                                                        </div>
+                                                        <div
+                                                            class="w-full bg-surface-container-high h-1 rounded-full"
+                                                        >
+                                                            <div
+                                                                class="bg-primary h-1 rounded-full"
+                                                                style="width: 48%"
+                                                            ></div>
+                                                        </div>
+                                                        <div
+                                                            class="flex justify-between items-center text-body-sm"
+                                                        >
+                                                            <span class="">District 4-6 (South)</span
+                                                            ><span class="font-bold">32%</span>
+                                                        </div>
+                                                        <div
+                                                            class="w-full bg-surface-container-high h-1 rounded-full"
+                                                        >
+                                                            <div
+                                                                class="bg-accent-orange h-1 rounded-full"
+                                                                style="width: 32%"
+                                                            ></div>
+                                                        </div>
+                                                        <div
+                                                            class="flex justify-between items-center text-body-sm"
+                                                        >
+                                                            <span class="">Bacolod (HUC)</span
+                                                            ><span class="font-bold">20%</span>
+                                                        </div>
+                                                        <div
+                                                            class="w-full bg-surface-container-high h-1 rounded-full"
+                                                        >
+                                                            <div
+                                                                class="bg-secondary h-1 rounded-full"
+                                                                style="width: 20%"
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 5. Digitalization Panel -->
+                                        <div class="space-y-lg">
+                                            <h3
+                                                class="font-headline-sm text-headline-sm text-primary flex items-center gap-sm"
+                                            >
+                                                <span
+                                                    class="material-symbols-outlined text-accent-orange"
+                                                    >bolt</span
+                                                >
+                                                Digitalization Readiness
+                                            </h3>
+                                            <div
+                                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-md"
+                                            >
+                                                <div
+                                                    class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                                                >
+                                                    <p
+                                                        class="font-label-md text-label-md text-on-surface-variant"
+                                                    >
+                                                        Email
+                                                    </p>
+                                                    <div class="flex items-end justify-between mt-sm">
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >82%</span
+                                                        >
+                                                        <span
+                                                            class="material-symbols-outlined text-primary/40"
+                                                            >mail</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                                                >
+                                                    <p
+                                                        class="font-label-md text-label-md text-on-surface-variant"
+                                                    >
+                                                        Mobile
+                                                    </p>
+                                                    <div class="flex items-end justify-between mt-sm">
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >95%</span
+                                                        >
+                                                        <span
+                                                            class="material-symbols-outlined text-primary/40"
+                                                            >smartphone</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                                                >
+                                                    <p
+                                                        class="font-label-md text-label-md text-on-surface-variant"
+                                                    >
+                                                        Website
+                                                    </p>
+                                                    <div class="flex items-end justify-between mt-sm">
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >40%</span
+                                                        >
+                                                        <span
+                                                            class="material-symbols-outlined text-primary/40"
+                                                            >language</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                                                >
+                                                    <p
+                                                        class="font-label-md text-label-md text-on-surface-variant"
+                                                    >
+                                                        Social Media
+                                                    </p>
+                                                    <div class="flex items-end justify-between mt-sm">
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >75%</span
+                                                        >
+                                                        <span
+                                                            class="material-symbols-outlined text-primary/40"
+                                                            >share</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="bg-surface-container p-md rounded-xl border border-outline-variant/20"
+                                                >
+                                                    <p
+                                                        class="font-label-md text-label-md text-on-surface-variant"
+                                                    >
+                                                        E-Commerce
+                                                    </p>
+                                                    <div class="flex items-end justify-between mt-sm">
+                                                        <span
+                                                            class="font-headline-md text-headline-md text-primary"
+                                                            >35%</span
+                                                        >
+                                                        <span
+                                                            class="material-symbols-outlined text-primary/40"
+                                                            >shopping_cart</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                                                <div
+                                                    class="lg:col-span-4 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                                >
+                                                    <p
+                                                        class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                                                    >
+                                                        Digitalization Level
+                                                    </p>
+                                                    <div class="space-y-xl">
+                                                        <div>
+                                                            <div
+                                                                class="flex justify-between mb-xs text-body-sm"
+                                                            >
+                                                                <span class="">High Adoption</span>
+                                                                <span class="font-bold">22%</span>
+                                                            </div>
+                                                            <div
+                                                                class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                                            >
+                                                                <div
+                                                                    class="bg-emerald-600 h-full"
+                                                                    style="width: 22%"
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div
+                                                                class="flex justify-between mb-xs text-body-sm"
+                                                            >
+                                                                <span class="">Medium Adoption</span>
+                                                                <span class="font-bold">48%</span>
+                                                            </div>
+                                                            <div
+                                                                class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                                            >
+                                                                <div
+                                                                    class="bg-primary h-full"
+                                                                    style="width: 48%"
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div
+                                                                class="flex justify-between mb-xs text-body-sm"
+                                                            >
+                                                                <span class="">Low Adoption</span>
+                                                                <span class="font-bold">30%</span>
+                                                            </div>
+                                                            <div
+                                                                class="w-full bg-surface-container-high h-3 rounded-full overflow-hidden"
+                                                            >
+                                                                <div
+                                                                    class="bg-accent-orange h-full"
+                                                                    style="width: 30%"
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="lg:col-span-8 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                                >
+                                                    <p
+                                                        class="font-label-lg text-label-lg mb-xl text-on-surface-variant"
+                                                    >
+                                                        Digital Tool Adoption Rate
+                                                    </p>
+                                                    <div class="chart-container">
+                                                        <canvas
+                                                            id="digitalToolChart"
+                                                            width="721"
+                                                            height="375"
+                                                            style="
+                                                                display: block;
+                                                                box-sizing: border-box;
+                                                                height: 300px;
+                                                                width: 577.1px;
+                                                            "
+                                                        ></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 6. Client Growth Over Time -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+                                            <div
+                                                class="lg:col-span-12 bg-surface-container-lowest p-xl rounded-xl border border-outline-variant/30 shadow-sm"
+                                            >
+                                                <h3
+                                                    class="font-headline-sm text-headline-sm text-primary mb-xl flex items-center gap-sm"
+                                                >
+                                                    <span
+                                                        class="material-symbols-outlined text-accent-orange"
+                                                        >timeline</span
+                                                    >
+                                                    Registration &amp; Activity Trends
+                                                </h3>
+                                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+                                                    <div class="chart-container">
+                                                        <canvas
+                                                            id="growthChart"
+                                                            width="549"
+                                                            height="375"
+                                                            style="
+                                                                display: block;
+                                                                box-sizing: border-box;
+                                                                height: 300px;
+                                                                width: 439.2px;
+                                                            "
+                                                        ></canvas>
+                                                    </div>
+                                                    <div class="chart-container">
+                                                        <canvas
+                                                            id="activityChart"
+                                                            width="549"
+                                                            height="375"
+                                                            style="
+                                                                display: block;
+                                                                box-sizing: border-box;
+                                                                height: 300px;
+                                                                width: 439.2px;
+                                                            "
+                                                        ></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                     </section>
                     <section
                         id="surveyor-management-panel"
@@ -1292,8 +2072,8 @@
                             <div
                                 class="grid grid-cols-1 lg:grid-cols-3 gap-lg mt-xl"
                             >
-            
-                                
+
+
                             </div>
                         </div>
                     </section>
@@ -1376,15 +2156,16 @@
                 >
                 <span class="text-[10px] font-label-md">Home</span>
             </button>
-            <a
-                class="flex flex-col items-center gap-xs text-on-surface-variant"
-                href="#"
+            <button
+                class="admin-nav-link flex flex-col items-center gap-xs text-on-surface-variant"
+                type="button"
+                data-admin-view="analytics"
             >
                 <span class="material-symbols-outlined" data-icon="analytics"
                     >analytics</span
                 >
                 <span class="text-[10px] font-label-md">Data</span>
-            </a>
+            </button>
             <button
                 class="admin-nav-link flex flex-col items-center gap-xs text-on-surface-variant"
                 type="button"
@@ -2094,6 +2875,262 @@
                 });
             });
 
+            let adminAnalyticsChartsInitialized = false;
+            function initializeAnalyticsCharts() {
+                if (adminAnalyticsChartsInitialized || typeof Chart === "undefined") {
+                    return;
+                }
+                if (!document.getElementById("ageChart")) {
+                    return;
+                }
+                adminAnalyticsChartsInitialized = true;
+                const fontSettings = { family: "Public Sans", size: 12 };
+                const primaryColor = "#001e40";
+                const accentOrange = "#F97316";
+                const secondaryColor = "#4a6077";
+                const lightGray = "#e2e2e5";
+
+                // Age Chart
+                new Chart(document.getElementById("ageChart"), {
+                    type: "bar",
+                    data: {
+                        labels: ["Below 18", "18–35", "36–60", "60+"],
+                        datasets: [
+                            {
+                                label: "Clients",
+                                data: [12000, 480000, 560000, 150000],
+                                backgroundColor: [
+                                    lightGray,
+                                    primaryColor,
+                                    secondaryColor,
+                                    accentOrange,
+                                ],
+                                borderRadius: 4,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+
+                // Civil Status Chart
+                new Chart(document.getElementById("civilStatusChart"), {
+                    type: "bar",
+                    data: {
+                        labels: ["Single", "Married", "Widowed", "Separated"],
+                        datasets: [
+                            {
+                                label: "Percentage",
+                                data: [35, 52, 8, 5],
+                                backgroundColor: primaryColor,
+                                borderRadius: 4,
+                            },
+                        ],
+                    },
+                    options: {
+                        indexAxis: "y",
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+
+                // Sex Donut Chart
+                new Chart(document.getElementById("sexChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Male", "Female"],
+                        datasets: [
+                            {
+                                data: [42, 58],
+                                backgroundColor: [primaryColor, accentOrange],
+                                borderWidth: 0,
+                                hoverOffset: 10,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: "80%",
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: { boxWidth: 12, font: fontSettings },
+                            },
+                        },
+                    },
+                });
+
+                // MSME Classification Chart
+                new Chart(document.getElementById("msmeClassChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Micro", "Small", "Medium", "Large"],
+                        datasets: [
+                            {
+                                data: [88, 8, 3, 1],
+                                backgroundColor: [
+                                    primaryColor,
+                                    accentOrange,
+                                    secondaryColor,
+                                    lightGray,
+                                ],
+                                borderWidth: 0,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: { boxWidth: 12 },
+                            },
+                        },
+                    },
+                });
+
+                // Sector Chart
+                new Chart(document.getElementById("sectorChart"), {
+                    type: "bar",
+                    data: {
+                        labels: [
+                            "Agriculture",
+                            "Retail",
+                            "Service",
+                            "Manufacturing",
+                        ],
+                        datasets: [
+                            {
+                                label: "Industry Sectors",
+                                data: [15, 45, 30, 10],
+                                backgroundColor: primaryColor,
+                                borderRadius: 4,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+
+                // Designation Chart
+                new Chart(document.getElementById("designationChart"), {
+                    type: "bar",
+                    data: {
+                        labels: ["Owner", "Manager", "Representative"],
+                        datasets: [
+                            {
+                                label: "Roles",
+                                data: [72, 18, 10],
+                                backgroundColor: accentOrange,
+                                borderRadius: 4,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+
+                // Digital Tool Adoption
+                new Chart(document.getElementById("digitalToolChart"), {
+                    type: "bar",
+                    data: {
+                        labels: [
+                            "POS System",
+                            "Social Media Marketing",
+                            "Cloud Storage",
+                            "E-Payment Solutions",
+                        ],
+                        datasets: [
+                            {
+                                label: "Adoption Rate (%)",
+                                data: [28, 75, 12, 58],
+                                backgroundColor: primaryColor,
+                                borderRadius: 6,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                    },
+                });
+
+                // Growth Chart (Line)
+                new Chart(document.getElementById("growthChart"), {
+                    type: "line",
+                    data: {
+                        labels: [
+                            "Jan",
+                            "Feb",
+                            "Mar",
+                            "Apr",
+                            "May",
+                            "Jun",
+                            "Jul",
+                            "Aug",
+                            "Sep",
+                            "Oct",
+                            "Nov",
+                            "Dec",
+                        ],
+                        datasets: [
+                            {
+                                label: "New Registrations",
+                                data: [
+                                    1200, 1500, 1100, 2400, 3200, 4100, 3800, 4500,
+                                    5200, 6100, 6800, 7500,
+                                ],
+                                borderColor: primaryColor,
+                                tension: 0.4,
+                                fill: false,
+                                pointRadius: 4,
+                                pointBackgroundColor: accentOrange,
+                            },
+                        ],
+                    },
+                    options: { responsive: true, maintainAspectRatio: false },
+                });
+
+                // Activity Area Chart
+                new Chart(document.getElementById("activityChart"), {
+                    type: "line",
+                    data: {
+                        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                        datasets: [
+                            {
+                                label: "Active",
+                                data: [900, 920, 940, 960, 975, 980],
+                                borderColor: primaryColor,
+                                backgroundColor: "rgba(0, 30, 64, 0.1)",
+                                fill: true,
+                                tension: 0.4,
+                            },
+                            {
+                                label: "Inactive",
+                                data: [200, 180, 210, 220, 215, 220],
+                                borderColor: accentOrange,
+                                backgroundColor: "rgba(249, 115, 22, 0.1)",
+                                fill: true,
+                                tension: 0.4,
+                            },
+                        ],
+                    },
+                    options: { responsive: true, maintainAspectRatio: false },
+                });
+            }
             const panels = document.querySelectorAll("[data-admin-panel]");
             const navLinks = document.querySelectorAll("[data-admin-view]");
             const activeNavClasses = [
@@ -2158,6 +3195,10 @@
                     closeModal();
                 }
 
+                if (view === "analytics") {
+                    initializeAnalyticsCharts();
+                }
+
                 if (view === "surveyors") {
                     initializeSurveyorMap();
                     requestAnimationFrame(() => adminSurveyorMap?.resize());
@@ -2188,7 +3229,7 @@
 
             const initialView = window.location.hash.replace("#", "");
             if (
-                ["dashboard", "surveyors", "verification"].includes(initialView)
+                ["dashboard", "analytics", "surveyors", "verification"].includes(initialView)
             ) {
                 setAdminView(initialView);
             }
