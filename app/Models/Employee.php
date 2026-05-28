@@ -23,6 +23,9 @@ class Employee extends Authenticatable
         'region',
         'district',
         'district_code',
+        'current_latitude',
+        'current_longitude',
+        'current_location_updated_at',
         'sex',
         'password',
         'is_active',
@@ -31,5 +34,9 @@ class Employee extends Authenticatable
 
     protected $hidden = [
         'password'
+    ];
+
+    protected $casts = [
+        'current_location_updated_at' => 'datetime',
     ];
 }

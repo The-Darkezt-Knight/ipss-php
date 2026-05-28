@@ -15,6 +15,14 @@
             rel="stylesheet"
         />
         <link
+            href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+            rel="stylesheet"
+        />
+        <link
+            href="{{ asset('css/maplibre-map.css') }}"
+            rel="stylesheet"
+        />
+        <link
             href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
             rel="stylesheet"
         />
@@ -716,45 +724,35 @@
                                             <p
                                                 class="font-body-sm text-body-sm text-on-surface-variant"
                                             >
-                                                Determin
+                                                Current positions from the latest submitted client surveys.
                                             </p>
                                         </div>
                                         <button
+                                            type="button"
+                                            id="surveyor-map-refresh"
                                             class="p-2 bg-surface-container-lowest border border-outline-variant/20 rounded-lg"
+                                            title="Refresh surveyor locations"
                                         >
                                             <span
                                                 class="material-symbols-outlined"
-                                                data-icon="fullscreen"
-                                                >fullscreen</span
+                                                data-icon="refresh"
+                                                >refresh</span
                                             >
                                         </button>
                                     </div>
                                     <div
-                                        class="aspect-[21/9] w-full bg-surface-container-highest rounded-lg overflow-hidden relative group"
+                                        class="aspect-[21/9] min-h-[360px] w-full bg-surface-container-highest rounded-lg overflow-hidden relative"
                                     >
-                                        <img
-                                            alt="Municipal Map"
-                                            class="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 transition-all duration-700"
-                                            data-location="Chicago"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWdGD7ZDna6t4C-jdO8_CH45PuV4GZoWEuJub55G_AnGESb_M6JMzOs7fjl3wbYKJgfJPukXIlwcAC2R6fO2pW3YHhSmcCdAyDo-NmpqCScUQxsBtUtxbCmBjOmlZqFB6uztIytjjhGR-ZnqNdsVys5yPpwA3CcfudSI1TXhHOB7G9y136K5fSv4F7h2zXrkb8obP7mEjW4oZXVDPzpCr0wMCN_78yExys92eoXR-7A5lndjduB2Y_yhhwqSI9OzqjK68VxclcIsSj"
-                                        />
+                                        <div id="admin-surveyor-map" class="h-full w-full"></div>
                                         <div
-                                            class="absolute inset-0 bg-primary/10 mix-blend-overlay"
-                                        ></div>
-                                        <!-- Mock Data Visualization Overlay -->
-                                        <div
-                                            class="absolute top-1/4 left-1/3 w-8 h-8 bg-primary/30 border-2 border-primary rounded-full animate-pulse flex items-center justify-center"
+                                            id="admin-surveyor-map-empty"
+                                            class="absolute inset-0 hidden items-center justify-center bg-surface-container-highest/90 p-lg text-center text-on-surface-variant"
                                         >
-                                            <div
-                                                class="w-2 h-2 bg-primary rounded-full"
-                                            ></div>
-                                        </div>
-                                        <div
-                                            class="absolute bottom-1/3 right-1/4 w-12 h-12 bg-secondary/30 border-2 border-secondary rounded-full flex items-center justify-center"
-                                        >
-                                            <div
-                                                class="w-3 h-3 bg-secondary rounded-full"
-                                            ></div>
+                                            <div>
+                                                <span class="material-symbols-outlined text-[40px] text-primary mb-sm">location_off</span>
+                                                <p class="font-label-lg text-label-lg text-primary">No active surveyor locations</p>
+                                                <p class="text-body-sm">Surveyors appear here after submitting a client survey and disappear when they log out.</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -888,6 +886,10 @@
                                         <span class="text-body-sm font-semibold">{{ $verificationStatusCounts['returned'] ?? 0 }} Returned</span>
                                     </div>
                                     <div class="bg-surface-container rounded-xl px-md py-2 border border-outline-variant/10 flex items-center gap-sm">
+                                        <span class="material-symbols-outlined text-green-700 text-[20px]">verified</span>
+                                        <span class="text-body-sm font-semibold">{{ $verificationStatusCounts['verified'] ?? 0 }} Verified</span>
+                                    </div>
+                                    <div class="bg-surface-container rounded-xl px-md py-2 border border-outline-variant/10 flex items-center gap-sm">
                                         <span class="material-symbols-outlined text-error text-[20px]">cancel</span>
                                         <span class="text-body-sm font-semibold">{{ $verificationStatusCounts['rejected'] ?? 0 }} Rejected</span>
                                     </div>
@@ -928,6 +930,35 @@
                                         >
                                         Export
                                     </button>
+                                </div>
+                            </div>
+                            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
+                                <div class="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-headline-sm text-headline-sm text-primary">Client Location Map</h3>
+                                        <p class="text-body-sm text-on-surface-variant">Pins show all clients with saved latitude and longitude.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        id="verification-client-map-refresh"
+                                        class="p-2 bg-surface-container-low border border-outline-variant/20 rounded-lg"
+                                        title="Refresh client locations"
+                                    >
+                                        <span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                                    </button>
+                                </div>
+                                <div class="relative h-[420px] bg-surface-container-highest">
+                                    <div id="verification-client-map" class="h-full w-full"></div>
+                                    <div
+                                        id="verification-client-map-empty"
+                                        class="absolute inset-0 hidden items-center justify-center bg-surface-container-highest/90 p-lg text-center text-on-surface-variant"
+                                    >
+                                        <div>
+                                            <span class="material-symbols-outlined text-[40px] text-primary mb-sm">location_off</span>
+                                            <p class="font-label-lg text-label-lg text-primary">No client locations</p>
+                                            <p class="text-body-sm">Clients appear here when their records have saved latitude and longitude.</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <!-- Pending Client Queue -->
@@ -1000,6 +1031,7 @@
                                                     ]))) ?: 'Unnamed Client';
                                                     $surveyorName = $surveyorNames[$client->surveyed_by] ?? 'Unknown Surveyor';
                                                     $statusClass = match ($status) {
+                                                        'verified' => 'bg-green-100 text-green-800',
                                                         'rejected' => 'bg-error-container text-error',
                                                         'returned' => 'bg-secondary-container text-primary',
                                                         default => 'bg-amber-100 text-amber-800',
@@ -1056,6 +1088,14 @@
                                                                         </button>
                                                                     </form>
                                                                 @else
+                                                                    <form method="POST" action="{{ route('admin.clients.survey-status', $client) }}">
+                                                                        @csrf
+                                                                        @method('PATCH')
+                                                                        <input type="hidden" name="survey_status" value="verified" />
+                                                                        <button class="p-1.5 text-green-700 hover:bg-green-100 rounded transition-colors" title="Verify client" type="submit">
+                                                                            <span class="material-symbols-outlined text-green-700">verified</span>
+                                                                        </button>
+                                                                    </form>
                                                                     <form method="POST" action="{{ route('admin.clients.survey-status', $client) }}">
                                                                         @csrf
                                                                         @method('PATCH')
@@ -1346,12 +1386,398 @@
                 <span class="text-[10px] font-label-md">Queue</span>
             </button>
         </div>
+        <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
         <script>
+            let surveyorLocationPoints = @json($surveyorLocations ?? []);
+            let adminSurveyorMap = null;
+            let adminSurveyorMapLoaded = false;
+            let verificationClientMapPoints = @json($adminClientMapPoints ?? []);
+            let verificationClientMap = null;
+            let verificationClientMapLoaded = false;
+
             const modal = document.getElementById("actionModal");
             const modalTitle = document.getElementById("modalTitle");
             const modalIcon = document.getElementById("modalIcon");
             const confirmBtn = document.getElementById("confirmBtn");
             const businessNameSpan = document.getElementById("businessName");
+            const surveyorMapEl = document.getElementById("admin-surveyor-map");
+            const surveyorMapEmptyEl = document.getElementById("admin-surveyor-map-empty");
+            const surveyorMapRefreshBtn = document.getElementById("surveyor-map-refresh");
+            const verificationClientMapEl = document.getElementById("verification-client-map");
+            const verificationClientMapEmptyEl = document.getElementById("verification-client-map-empty");
+            const verificationClientMapRefreshBtn = document.getElementById("verification-client-map-refresh");
+
+            function escapeHtml(value) {
+                return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;",
+                })[character]);
+            }
+
+            function formatSurveyorUpdatedAt(value) {
+                if (!value) return "Just submitted";
+
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return "Just submitted";
+
+                return date.toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            }
+
+            function buildSurveyorLocationGeoJson() {
+                return {
+                    type: "FeatureCollection",
+                    features: surveyorLocationPoints
+                        .filter((surveyor) => Number.isFinite(Number(surveyor.latitude)) && Number.isFinite(Number(surveyor.longitude)))
+                        .map((surveyor) => ({
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [Number(surveyor.longitude), Number(surveyor.latitude)],
+                            },
+                            properties: {
+                                id: surveyor.id,
+                                name: surveyor.name || "Unnamed Surveyor",
+                                govt_id: surveyor.govt_id || "",
+                                district: surveyor.district || "",
+                                updated_at: surveyor.updated_at || "",
+                            },
+                        })),
+                };
+            }
+
+            function setSurveyorMapEmptyState(isEmpty) {
+                if (!surveyorMapEmptyEl) return;
+                surveyorMapEmptyEl.classList.toggle("hidden", !isEmpty);
+                surveyorMapEmptyEl.classList.toggle("flex", isEmpty);
+            }
+
+            function fitSurveyorMapToData(geojson) {
+                if (!adminSurveyorMap || geojson.features.length === 0) return;
+
+                const bounds = new maplibregl.LngLatBounds();
+                geojson.features.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+                adminSurveyorMap.fitBounds(bounds, { padding: 56, maxZoom: 16 });
+            }
+
+            function refreshSurveyorMapSource({ fit = false } = {}) {
+                if (!adminSurveyorMapLoaded) return;
+
+                const geojson = buildSurveyorLocationGeoJson();
+                const source = adminSurveyorMap.getSource("surveyors");
+                if (source) {
+                    source.setData(geojson);
+                }
+
+                setSurveyorMapEmptyState(geojson.features.length === 0);
+
+                if (fit) {
+                    fitSurveyorMapToData(geojson);
+                }
+            }
+
+            function initializeSurveyorMap() {
+                if (!surveyorMapEl || adminSurveyorMap || typeof maplibregl === "undefined") return;
+
+                const negrosBounds = [122.25, 9.0, 123.55, 11.1];
+                const lngPad = (negrosBounds[2] - negrosBounds[0]) * 0.08;
+                const latPad = (negrosBounds[3] - negrosBounds[1]) * 0.08;
+                const paddedBounds = [
+                    [negrosBounds[0] - lngPad, negrosBounds[1] - latPad],
+                    [negrosBounds[2] + lngPad, negrosBounds[3] + latPad],
+                ];
+
+                adminSurveyorMap = new maplibregl.Map({
+                    container: surveyorMapEl,
+                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    center: [122.9509, 10.6765],
+                    zoom: 9,
+                    minZoom: 8,
+                    maxZoom: 19,
+                    maxBounds: paddedBounds,
+                    attributionControl: true,
+                });
+
+                adminSurveyorMap.addControl(new maplibregl.NavigationControl(), "top-right");
+
+                adminSurveyorMap.on("load", () => {
+                    adminSurveyorMapLoaded = true;
+                    adminSurveyorMap.addSource("surveyors", {
+                        type: "geojson",
+                        data: buildSurveyorLocationGeoJson(),
+                    });
+
+                    adminSurveyorMap.addLayer({
+                        id: "surveyor-presence-halo",
+                        type: "circle",
+                        source: "surveyors",
+                        paint: {
+                            "circle-color": "#a7c8ff",
+                            "circle-radius": 18,
+                            "circle-opacity": 0.35,
+                            "circle-stroke-width": 1,
+                            "circle-stroke-color": "#ffffff",
+                        },
+                    });
+
+                    adminSurveyorMap.addLayer({
+                        id: "surveyor-presence-point",
+                        type: "circle",
+                        source: "surveyors",
+                        paint: {
+                            "circle-color": "#001e40",
+                            "circle-radius": 8,
+                            "circle-stroke-width": 3,
+                            "circle-stroke-color": "#ffffff",
+                        },
+                    });
+
+                    adminSurveyorMap.on("click", "surveyor-presence-point", (event) => {
+                        const coordinates = event.features[0].geometry.coordinates.slice();
+                        const props = event.features[0].properties;
+
+                        new maplibregl.Popup({ offset: 12 })
+                            .setLngLat(coordinates)
+                            .setHTML(`
+                                <strong>${escapeHtml(props.name)}</strong>
+                                <span>${escapeHtml(props.govt_id ? `ID: ${props.govt_id}` : "No government ID")}</span><br>
+                                <span>${escapeHtml(props.district || "No district")}</span><br>
+                                <span>Last survey: ${escapeHtml(formatSurveyorUpdatedAt(props.updated_at))}</span>
+                            `)
+                            .addTo(adminSurveyorMap);
+                    });
+
+                    adminSurveyorMap.on("mouseenter", "surveyor-presence-point", () => {
+                        adminSurveyorMap.getCanvas().style.cursor = "pointer";
+                    });
+                    adminSurveyorMap.on("mouseleave", "surveyor-presence-point", () => {
+                        adminSurveyorMap.getCanvas().style.cursor = "";
+                    });
+
+                    refreshSurveyorMapSource({ fit: true });
+                });
+            }
+
+            async function fetchSurveyorLocations({ fit = false } = {}) {
+                try {
+                    const response = await fetch("{{ route('admin.surveyor-locations') }}", {
+                        headers: { "Accept": "application/json" },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+
+                    surveyorLocationPoints = await response.json();
+                    refreshSurveyorMapSource({ fit });
+                } catch (error) {
+                    console.error("Failed to load surveyor locations:", error);
+                }
+            }
+
+            surveyorMapRefreshBtn?.addEventListener("click", () => fetchSurveyorLocations({ fit: true }));
+
+            function buildVerificationClientMapGeoJson() {
+                return {
+                    type: "FeatureCollection",
+                    features: verificationClientMapPoints
+                        .filter((client) => Number.isFinite(Number(client.latitude)) && Number.isFinite(Number(client.longitude)))
+                        .map((client) => ({
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [Number(client.longitude), Number(client.latitude)],
+                            },
+                            properties: {
+                                id: client.id,
+                                name: client.name || "Unnamed Client",
+                                client_id: client.client_id || "",
+                                category: client.category || "",
+                                survey_status: client.survey_status || "pending",
+                            },
+                        })),
+                };
+            }
+
+            function setVerificationClientMapEmptyState(isEmpty) {
+                if (!verificationClientMapEmptyEl) return;
+                verificationClientMapEmptyEl.classList.toggle("hidden", !isEmpty);
+                verificationClientMapEmptyEl.classList.toggle("flex", isEmpty);
+            }
+
+            function fitVerificationClientMapToData(geojson) {
+                if (!verificationClientMap || geojson.features.length === 0) return;
+
+                const bounds = new maplibregl.LngLatBounds();
+                geojson.features.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+                verificationClientMap.fitBounds(bounds, { padding: 56, maxZoom: 16 });
+            }
+
+            function refreshVerificationClientMapSource({ fit = false } = {}) {
+                if (!verificationClientMapLoaded) return;
+
+                const geojson = buildVerificationClientMapGeoJson();
+                const source = verificationClientMap.getSource("verification-clients");
+                if (source) {
+                    source.setData(geojson);
+                }
+
+                setVerificationClientMapEmptyState(geojson.features.length === 0);
+
+                if (fit) {
+                    fitVerificationClientMapToData(geojson);
+                }
+            }
+
+            function initializeVerificationClientMap() {
+                if (!verificationClientMapEl || verificationClientMap || typeof maplibregl === "undefined") return;
+
+                const negrosBounds = [122.25, 9.0, 123.55, 11.1];
+                const lngPad = (negrosBounds[2] - negrosBounds[0]) * 0.08;
+                const latPad = (negrosBounds[3] - negrosBounds[1]) * 0.08;
+                const paddedBounds = [
+                    [negrosBounds[0] - lngPad, negrosBounds[1] - latPad],
+                    [negrosBounds[2] + lngPad, negrosBounds[3] + latPad],
+                ];
+
+                verificationClientMap = new maplibregl.Map({
+                    container: verificationClientMapEl,
+                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    center: [122.9509, 10.6765],
+                    zoom: 9,
+                    minZoom: 8,
+                    maxZoom: 19,
+                    maxBounds: paddedBounds,
+                    attributionControl: true,
+                });
+
+                verificationClientMap.addControl(new maplibregl.NavigationControl(), "top-right");
+
+                verificationClientMap.on("load", () => {
+                    verificationClientMapLoaded = true;
+                    verificationClientMap.addSource("verification-clients", {
+                        type: "geojson",
+                        data: buildVerificationClientMapGeoJson(),
+                        cluster: true,
+                        clusterMaxZoom: 14,
+                        clusterRadius: 50,
+                    });
+
+                    verificationClientMap.addLayer({
+                        id: "verification-client-clusters",
+                        type: "circle",
+                        source: "verification-clients",
+                        filter: ["has", "point_count"],
+                        paint: {
+                            "circle-color": [
+                                "step", ["get", "point_count"],
+                                "#3a5f94",
+                                20, "#1f477b",
+                                100, "#001e40",
+                            ],
+                            "circle-radius": [
+                                "step", ["get", "point_count"],
+                                18,
+                                20, 24,
+                                100, 32,
+                            ],
+                            "circle-stroke-width": 3,
+                            "circle-stroke-color": "rgba(255,255,255,0.85)",
+                        },
+                    });
+
+                    verificationClientMap.addLayer({
+                        id: "verification-client-cluster-count",
+                        type: "symbol",
+                        source: "verification-clients",
+                        filter: ["has", "point_count"],
+                        layout: {
+                            "text-field": "{point_count_abbreviated}",
+                            "text-size": 13,
+                            "text-font": ["Open Sans Bold"],
+                        },
+                        paint: {
+                            "text-color": "#ffffff",
+                        },
+                    });
+
+                    verificationClientMap.addLayer({
+                        id: "verification-client-point",
+                        type: "circle",
+                        source: "verification-clients",
+                        filter: ["!", ["has", "point_count"]],
+                        paint: {
+                            "circle-color": "#001e40",
+                            "circle-radius": 7,
+                            "circle-stroke-width": 2,
+                            "circle-stroke-color": "#ffffff",
+                        },
+                    });
+
+                    verificationClientMap.on("click", "verification-client-clusters", async (event) => {
+                        const features = verificationClientMap.queryRenderedFeatures(event.point, { layers: ["verification-client-clusters"] });
+                        const clusterId = features[0].properties.cluster_id;
+                        const zoom = await verificationClientMap.getSource("verification-clients").getClusterExpansionZoom(clusterId);
+                        verificationClientMap.easeTo({ center: features[0].geometry.coordinates, zoom });
+                    });
+
+                    verificationClientMap.on("click", "verification-client-point", (event) => {
+                        const coordinates = event.features[0].geometry.coordinates.slice();
+                        const props = event.features[0].properties;
+
+                        new maplibregl.Popup({ offset: 12 })
+                            .setLngLat(coordinates)
+                            .setHTML(`
+                                <strong>${escapeHtml(props.name)}</strong>
+                                <span>${escapeHtml(props.client_id || "No client ID")}</span><br>
+                                <span>${escapeHtml(props.category || "No category")}</span><br>
+                                <span>Status: ${escapeHtml(props.survey_status || "pending")}</span>
+                            `)
+                            .addTo(verificationClientMap);
+                    });
+
+                    verificationClientMap.on("mouseenter", "verification-client-clusters", () => {
+                        verificationClientMap.getCanvas().style.cursor = "pointer";
+                    });
+                    verificationClientMap.on("mouseleave", "verification-client-clusters", () => {
+                        verificationClientMap.getCanvas().style.cursor = "";
+                    });
+                    verificationClientMap.on("mouseenter", "verification-client-point", () => {
+                        verificationClientMap.getCanvas().style.cursor = "pointer";
+                    });
+                    verificationClientMap.on("mouseleave", "verification-client-point", () => {
+                        verificationClientMap.getCanvas().style.cursor = "";
+                    });
+
+                    refreshVerificationClientMapSource({ fit: true });
+                });
+            }
+
+            async function fetchVerificationClientLocations({ fit = false } = {}) {
+                try {
+                    const response = await fetch("{{ route('admin.client-locations') }}", {
+                        headers: { "Accept": "application/json" },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+
+                    verificationClientMapPoints = await response.json();
+                    refreshVerificationClientMapSource({ fit });
+                } catch (error) {
+                    console.error("Failed to load client locations:", error);
+                }
+            }
+
+            verificationClientMapRefreshBtn?.addEventListener("click", () => fetchVerificationClientLocations({ fit: true }));
 
             function handleAction(type, name) {
                 businessNameSpan.textContent = name;
@@ -1470,6 +1896,18 @@
                     closeModal();
                 }
 
+                if (view === "surveyors") {
+                    initializeSurveyorMap();
+                    requestAnimationFrame(() => adminSurveyorMap?.resize());
+                    fetchSurveyorLocations({ fit: true });
+                }
+
+                if (view === "verification") {
+                    initializeVerificationClientMap();
+                    requestAnimationFrame(() => verificationClientMap?.resize());
+                    fetchVerificationClientLocations({ fit: true });
+                }
+
                 window.location.hash = view;
             }
 
@@ -1486,6 +1924,16 @@
             ) {
                 setAdminView(initialView);
             }
+
+            initializeSurveyorMap();
+            setInterval(() => {
+                if (window.location.hash === "#surveyors") {
+                    fetchSurveyorLocations();
+                }
+                if (window.location.hash === "#verification") {
+                    fetchVerificationClientLocations();
+                }
+            }, 15000);
 
             // Micro-interactions and UI Logic
             document.querySelectorAll("button, a").forEach((el) => {

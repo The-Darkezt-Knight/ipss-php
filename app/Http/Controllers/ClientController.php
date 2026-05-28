@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Models\Employee;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -192,6 +193,8 @@ class ClientController
             "address"                          => "nullable",
             "latitude"                         => "nullable",
             "longitude"                        => "nullable",
+            "locationAccuracy"                 => "nullable",
+            "locationCapturedAt"               => "nullable",
             "mobileNumber"                     => "nullable",
             "emailAddress"                     => "nullable",
             "landlineNumber"                   => "nullable",
@@ -258,6 +261,20 @@ class ClientController
             'surveyed_by'                      => $validated['surveyed_by'] ?? null,
         ]);
 
+        if (
+            is_numeric($validated['latitude'] ?? null) &&
+            is_numeric($validated['longitude'] ?? null) &&
+            !empty($validated['surveyed_by'])
+        ) {
+            Employee::whereKey($validated['surveyed_by'])
+                ->where('role', 'ROLE_SURVEYOR')
+                ->update([
+                    'current_latitude' => $validated['latitude'],
+                    'current_longitude' => $validated['longitude'],
+                    'current_location_updated_at' => now(),
+                ]);
+        }
+
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Client data synced successfully']);
         }
@@ -268,11 +285,12 @@ class ClientController
     public function updateSurveyStatus(Request $request, Client $client)
     {
         $validated = $request->validate([
-            'survey_status' => 'required|in:pending,rejected,returned',
+            'survey_status' => 'required|in:pending,verified,rejected,returned',
         ]);
 
         $client->update([
             'survey_status' => $validated['survey_status'],
+            'updated_at' => now(),
         ]);
 
         return redirect()

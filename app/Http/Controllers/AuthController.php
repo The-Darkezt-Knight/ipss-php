@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use  Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
+use App\Models\Client;
+use App\Models\Employee;
+
 class AuthController extends Controller
 {
     //returns the index page
@@ -85,17 +88,33 @@ class AuthController extends Controller
         $verificationStatusSource = (clone $verificationBaseQuery)->get();
         $verificationStatusCounts = [
             'pending' => $verificationStatusSource->filter(fn ($client) => ($client->survey_status ?? 'pending') === 'pending')->count(),
+            'verified' => $verificationStatusSource->where('survey_status', 'verified')->count(),
             'returned' => $verificationStatusSource->where('survey_status', 'returned')->count(),
             'rejected' => $verificationStatusSource->where('survey_status', 'rejected')->count(),
         ];
+
+        $surveyorLocations = $this->surveyorLocations();
+        $adminClientMapPoints = $this->adminClientMapPoints();
 
         return view('private.admin.admin-dashboard', compact(
             'employee',
             'verificationClients',
             'returnedClients',
             'surveyorNames',
-            'verificationStatusCounts'
+            'verificationStatusCounts',
+            'surveyorLocations',
+            'adminClientMapPoints'
         ));
+    }
+
+    public function surveyorLocationsApi()
+    {
+        return response()->json($this->surveyorLocations());
+    }
+
+    public function clientLocationsApi()
+    {
+        return response()->json($this->adminClientMapPoints());
     }
 
     public function superadmin() {
@@ -119,9 +138,89 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request) {
+        $employee = Auth::user();
+
+        if ($employee?->role === 'ROLE_SURVEYOR') {
+            Employee::whereKey($employee->id)->update([
+                'current_latitude' => null,
+                'current_longitude' => null,
+                'current_location_updated_at' => null,
+            ]);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('index');
     }
+
+    private function surveyorLocations()
+    {
+        return Employee::query()
+            ->where('role', 'ROLE_SURVEYOR')
+            ->whereNotNull('current_latitude')
+            ->whereNotNull('current_longitude')
+            ->get([
+                'id',
+                'govt_id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'district',
+                'current_latitude',
+                'current_longitude',
+                'current_location_updated_at',
+            ])
+            ->filter(fn ($surveyor) => is_numeric($surveyor->current_latitude) && is_numeric($surveyor->current_longitude))
+            ->map(fn ($surveyor) => [
+                'id' => $surveyor->id,
+                'govt_id' => $surveyor->govt_id,
+                'name' => trim(implode(' ', array_filter([
+                    $surveyor->first_name,
+                    $surveyor->middle_name,
+                    $surveyor->last_name,
+                ]))) ?: 'Unnamed Surveyor',
+                'district' => $surveyor->district,
+                'latitude' => (float) $surveyor->current_latitude,
+                'longitude' => (float) $surveyor->current_longitude,
+                'updated_at' => optional($surveyor->current_location_updated_at)->toIso8601String(),
+            ])
+            ->values();
+    }
+
+    private function adminClientMapPoints()
+    {
+        return Client::query()
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get([
+                'id',
+                'client_id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'suffix',
+                'category_of_client',
+                'survey_status',
+                'latitude',
+                'longitude',
+            ])
+            ->filter(fn ($client) => is_numeric($client->latitude) && is_numeric($client->longitude))
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'name' => trim(implode(' ', array_filter([
+                    $client->first_name,
+                    $client->middle_name,
+                    $client->last_name,
+                    $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+                ]))) ?: 'Unnamed Client',
+                'category' => $client->category_of_client,
+                'survey_status' => $client->survey_status ?? 'pending',
+                'latitude' => (float) $client->latitude,
+                'longitude' => (float) $client->longitude,
+            ])
+            ->values();
+    }
+
 }

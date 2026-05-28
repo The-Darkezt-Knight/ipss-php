@@ -14,6 +14,8 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin', [AuthController::class, 'admin'])->name('admin');
+    Route::get('/admin/surveyor-locations', [AuthController::class, 'surveyorLocationsApi'])->name('admin.surveyor-locations');
+    Route::get('/admin/client-locations', [AuthController::class, 'clientLocationsApi'])->name('admin.client-locations');
     Route::get('/private/superadmin', [AuthController::class, 'superadmin'])->name('private.superadmin');
     Route::post('/employee/create', [EmployeeController::class, 'store'])->name('employee/create');
     Route::put('/employee/{employee}', [EmployeeController::class, 'update'])->name('employee.update');
