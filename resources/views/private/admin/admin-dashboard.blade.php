@@ -307,17 +307,20 @@
                         >
                         <span class="font-label-lg text-label-lg">Support</span>
                     </a>
-                    <a
-                        class="flex items-center px-lg py-md text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-surface-container rounded-xl mx-2 my-1 transition-all"
-                        href="#"
-                    >
-                        <span
-                            class="material-symbols-outlined mr-md"
-                            data-icon="history"
-                            >history</span
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            class="flex w-[calc(100%-16px)] items-center px-lg py-md text-on-surface-variant dark:text-on-tertiary-container hover:bg-surface-container-high dark:hover:bg-surface-container rounded-xl mx-2 my-1 transition-all"
+                            type="submit"
                         >
-                        <span class="font-label-lg text-label-lg">Archive</span>
-                    </a>
+                            <span
+                                class="material-symbols-outlined mr-md"
+                                data-icon="logout"
+                                >logout</span
+                            >
+                            <span class="font-label-lg text-label-lg">Log out</span>
+                        </button>
+                    </form>
                 </div>
             </aside>
             <!-- Main Content Area -->
@@ -2374,8 +2377,9 @@
 
             async function fetchSurveyorLocations({ fit = false } = {}) {
                 try {
-                    const response = await fetch("{{ route('admin.surveyor-locations') }}", {
+                    const response = await fetch("{{ route('admin.surveyor-locations') }}?ts=" + Date.now(), {
                         headers: { "Accept": "application/json" },
+                        cache: "no-store",
                     });
 
                     if (!response.ok) {

@@ -389,6 +389,20 @@ class ClientController
             'updated_at' => now(),
         ]);
 
+        // Update surveyor location on the map, same as the new-survey flow
+        if (
+            is_numeric($validated['latitude'] ?? null) &&
+            is_numeric($validated['longitude'] ?? null)
+        ) {
+            Employee::where('id', $employee->id)
+                ->where('role', 'ROLE_SURVEYOR')
+                ->update([
+                    'current_latitude' => $validated['latitude'],
+                    'current_longitude' => $validated['longitude'],
+                    'current_location_updated_at' => now(),
+                ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Returned client record updated.',

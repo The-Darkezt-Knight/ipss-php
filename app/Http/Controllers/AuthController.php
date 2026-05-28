@@ -163,8 +163,8 @@ class AuthController extends Controller
     public function logout(Request $request) {
         $employee = Auth::user();
 
-        if ($employee?->role === 'ROLE_SURVEYOR') {
-            Employee::whereKey($employee->id)->update([
+        if ($employee && $employee->role === 'ROLE_SURVEYOR') {
+            Employee::where('id', $employee->id)->update([
                 'current_latitude' => null,
                 'current_longitude' => null,
                 'current_location_updated_at' => null,
@@ -183,6 +183,7 @@ class AuthController extends Controller
             ->where('role', 'ROLE_SURVEYOR')
             ->whereNotNull('current_latitude')
             ->whereNotNull('current_longitude')
+            ->where('current_location_updated_at', '>=', now()->subHours(24))
             ->get([
                 'id',
                 'govt_id',

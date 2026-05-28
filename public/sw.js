@@ -1,5 +1,5 @@
 // IPSS Offline-First Service Worker
-const CACHE_VERSION = 'ipss-v3';
+const CACHE_VERSION = 'ipss-v4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
@@ -86,6 +86,12 @@ self.addEventListener('fetch', (event) => {
     // Navigation requests → Network-first, fallback to smart offline routing
     if (request.mode === 'navigate') {
         event.respondWith(networkFirstWithSmartFallback(request));
+        return;
+    }
+
+    // Admin map data endpoints → Network-first (dynamic JSON, must not serve stale)
+    if (url.pathname.startsWith('/admin/') && url.pathname.includes('-locations')) {
+        event.respondWith(networkFirst(request, API_CACHE));
         return;
     }
 

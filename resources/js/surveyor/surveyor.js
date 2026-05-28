@@ -238,6 +238,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeEditModalControls();
 
+    // ─── Geolocation Helper ─────────────────────────────────────────────────
+    function getCurrentPosition(timeoutMs = 10000) {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                console.warn('[Geo] Geolocation API not available');
+                resolve(null);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    });
+                },
+                (error) => {
+                    console.warn('[Geo] Could not get position:', error.message);
+                    resolve(null);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: timeoutMs,
+                    maximumAge: 60000,
+                }
+            );
+        });
+    }
+
     // All editable field keys (must match the form field name attributes used in form.blade.php)
     const EDITABLE_FIELDS = [
         'statusOfClient', 'categoryOfClient', 'msmeClassification', 'clientDesignation',
@@ -454,6 +483,22 @@ document.addEventListener('DOMContentLoaded', () => {
         editModalSave.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Saving…`;
 
         try {
+            // Capture geolocation so the surveyor's position is updated on the admin map
+            try {
+                const coords = await getCurrentPosition();
+                if (coords) {
+                    updatedData.latitude = coords.latitude.toFixed(6);
+                    updatedData.longitude = coords.longitude.toFixed(6);
+
+                    const latEl = document.getElementById('edit-latitude');
+                    const lngEl = document.getElementById('edit-longitude');
+                    if (latEl) latEl.value = updatedData.latitude;
+                    if (lngEl) lngEl.value = updatedData.longitude;
+                }
+            } catch (geoErr) {
+                console.warn('[Geo] Geolocation failed, continuing without coordinates:', geoErr);
+            }
+
             if (activeEditRecord?.source === 'returned') {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 const response = await fetch(activeEditRecord.updateUrl, {
