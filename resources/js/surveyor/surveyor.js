@@ -1161,6 +1161,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     showStatusToast('Sync all cancelled. Name-match warnings need confirmation.', 'info');
                     return;
                 }
+
+                warnings.forEach(({ record }) => {
+                    record.data._duplicateNameConfirmed = true;
+                });
             }
 
             if (syncable.length === 0) {

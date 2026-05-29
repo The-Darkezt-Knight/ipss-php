@@ -358,10 +358,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ─── Send to Server ─────────────────────────────────────────────────────
     async function sendToServer(data, options = {}) {
-        await assertSurveyCanSync(data, {
-            confirmNameWarning: options.confirmNameWarning,
-            requireConfirmation: options.requireConfirmation,
-        });
+        if (!options.skipDuplicatePreflight) {
+            await assertSurveyCanSync(data, {
+                confirmNameWarning: options.confirmNameWarning,
+                requireConfirmation: options.requireConfirmation,
+            });
+        }
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -377,11 +379,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (response.status === 409) {
             const payload = await response.json().catch(() => ({}));
-            throw new DuplicateSyncError(payload.duplicate || {
+            const duplicate = payload.duplicate || {
                 status: 'philsys_block',
                 canSync: false,
                 message: payload.message || 'Duplicate client record detected.',
-            });
+            };
+
+            if (duplicate.status === 'name_warning' && options.confirmNameWarning) {
+                const confirmed = confirm(`${duplicate.message}\n\nDo you still want to sync this survey?`);
+                if (!confirmed) {
+                    throw new DuplicateWarningCancelledError(duplicate);
+                }
+
+                data._duplicateNameConfirmed = true;
+                return sendToServer(data, {
+                    ...options,
+                    confirmNameWarning: false,
+                    skipDuplicatePreflight: true,
+                });
+            }
+
+            throw new DuplicateSyncError(duplicate);
         }
 
         if (!response.ok) {

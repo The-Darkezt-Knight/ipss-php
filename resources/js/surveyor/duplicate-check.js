@@ -201,9 +201,11 @@ export async function assertSurveyCanSync(data = {}, options = {}) {
         if (!confirmed) {
             throw new DuplicateWarningCancelledError(decision);
         }
+
+        data._duplicateNameConfirmed = true;
     }
 
-    if (decision.status === 'name_warning' && options.requireConfirmation && !options.confirmNameWarning) {
+    if (decision.status === 'name_warning' && options.requireConfirmation && data._duplicateNameConfirmed !== true) {
         throw new DuplicateWarningCancelledError(decision);
     }
 

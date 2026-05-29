@@ -214,7 +214,8 @@ class ClientController
             "socialMedia"                      => "nullable",
             "website"                          => "nullable",
             "eCommercePlatform"                => "nullable",
-            "surveyed_by"                      => "nullable"
+            "surveyed_by"                      => "nullable",
+            "_duplicateNameConfirmed"          => "nullable|boolean",
         ]);
 
         $duplicateDecision = $this->surveyDuplicateDecision($validated);
@@ -223,6 +224,19 @@ class ClientController
                 'success' => false,
                 'duplicate' => $duplicateDecision,
                 'message' => $duplicateDecision['message'],
+            ], 409);
+        }
+
+        if (
+            $duplicateDecision['status'] === 'name_warning' &&
+            !$request->boolean('_duplicateNameConfirmed')
+        ) {
+            return response()->json([
+                'success' => false,
+                'duplicate' => array_merge($duplicateDecision, [
+                    'requires_confirmation' => true,
+                ]),
+                'message' => 'Name match confirmation is required before this survey can be synced.',
             ], 409);
         }
 
