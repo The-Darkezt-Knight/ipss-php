@@ -685,6 +685,64 @@
                                     {{ number_format($dashboardClientCounts['verified'] ?? 0) }}
                                 </span>
                             </div>
+                            @php
+                                $dashboardVerifiedCategories = $dashboardVerifiedClients
+                                    ->pluck('category_of_client')
+                                    ->filter()
+                                    ->unique()
+                                    ->sort()
+                                    ->values();
+                                $dashboardVerifiedSurveyors = $dashboardVerifiedClients
+                                    ->pluck('surveyed_by')
+                                    ->filter()
+                                    ->unique()
+                                    ->mapWithKeys(fn ($surveyorId) => [$surveyorId => $surveyorNames[$surveyorId] ?? 'Unknown Surveyor'])
+                                    ->sort()
+                                    ->all();
+                            @endphp
+                            <div
+                                id="admin-dashboard-filter-bar"
+                                class="px-lg py-md border-b border-outline-variant/15 bg-surface-container-low flex flex-wrap items-end gap-md"
+                            >
+                                <div class="flex-1 min-w-[240px]">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="admin-dashboard-search">Search</label>
+                                    <div class="flex items-center border border-outline-variant rounded-lg px-md bg-surface-container-lowest focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+                                        <input
+                                            id="admin-dashboard-search"
+                                            type="text"
+                                            class="w-full py-2 px-sm border-none bg-transparent focus:ring-0 text-body-sm"
+                                            placeholder="Name, client ID, surveyor, or category"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="w-56">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="admin-dashboard-category-filter">Category</label>
+                                    <select id="admin-dashboard-category-filter" class="w-full border border-outline-variant rounded-lg px-md py-2 text-body-sm bg-surface-container-lowest focus:ring-primary focus:border-primary">
+                                        <option value="">All Categories</option>
+                                        @foreach ($dashboardVerifiedCategories as $category)
+                                            <option value="{{ $category }}">{{ $category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="w-56">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="admin-dashboard-surveyor-filter">Surveyor</label>
+                                    <select id="admin-dashboard-surveyor-filter" class="w-full border border-outline-variant rounded-lg px-md py-2 text-body-sm bg-surface-container-lowest focus:ring-primary focus:border-primary">
+                                        <option value="">All Surveyors</option>
+                                        @foreach ($dashboardVerifiedSurveyors as $surveyorId => $surveyorName)
+                                            <option value="{{ $surveyorId }}">{{ $surveyorName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="w-48">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="admin-dashboard-sort">Sort</label>
+                                    <select id="admin-dashboard-sort" class="w-full border border-outline-variant rounded-lg px-md py-2 text-body-sm bg-surface-container-lowest focus:ring-primary focus:border-primary">
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                    </select>
+                                </div>
+                                <span id="admin-dashboard-filter-count" class="text-body-sm text-on-surface-variant ml-auto py-2"></span>
+                            </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full border-collapse text-left">
                                     <thead class="bg-surface-container-low border-b border-outline-variant/20">
@@ -710,7 +768,13 @@
                                             <tr class="zebra-stripe hover:bg-surface-container transition-colors cursor-pointer"
                                                 data-admin-client-id="{{ $client->id }}"
                                                 data-admin-client-mode="edit"
-                                                data-admin-client-url="{{ route('admin.clients.show', $client) }}">
+                                                data-admin-client-url="{{ route('admin.clients.show', $client) }}"
+                                                data-admin-filter-row="dashboard"
+                                                data-filter-search="{{ $clientName }} {{ $client->client_id }} {{ $surveyorName }} {{ $client->category_of_client }} verified"
+                                                data-filter-category="{{ $client->category_of_client }}"
+                                                data-filter-status="verified"
+                                                data-filter-surveyor="{{ $client->surveyed_by }}"
+                                                data-filter-date="{{ optional($client->updated_at)->timestamp ?? 0 }}">
                                                 <td class="px-md py-4">
                                                     <div class="flex items-center gap-md">
                                                         <div class="w-10 h-10 rounded bg-green-100 flex items-center justify-center shrink-0">
@@ -740,6 +804,11 @@
                                                 </td>
                                             </tr>
                                         @endforelse
+                                        <tr class="hidden" data-admin-filter-empty="dashboard">
+                                            <td class="px-lg py-xxl text-center text-on-surface-variant" colspan="5">
+                                                No verified clients match the selected filters.
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1711,24 +1780,87 @@
                                 <div class="rounded-xl border border-red-200 bg-red-50 px-md py-sm text-body-sm text-red-800">
                                     {{ $errors->first() }}
                                 </div>
-                            @endif                            <!-- Filter Bar -->
+                            @endif
+                            @php
+                                $verificationFilterClients = $verificationClients->getCollection()->merge($returnedClients->getCollection());
+                                $verificationCategories = $verificationFilterClients
+                                    ->pluck('category_of_client')
+                                    ->filter()
+                                    ->unique()
+                                    ->sort()
+                                    ->values();
+                                $verificationSurveyors = $verificationFilterClients
+                                    ->pluck('surveyed_by')
+                                    ->filter()
+                                    ->unique()
+                                    ->mapWithKeys(fn ($surveyorId) => [$surveyorId => $surveyorNames[$surveyorId] ?? 'Unknown Surveyor'])
+                                    ->sort()
+                                    ->all();
+                            @endphp
+                            <!-- Filter Bar -->
                             <div
                                 class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-md flex flex-wrap gap-md items-center"
                             >
-                                <div class="flex items-center gap-sm flex-grow">
-                                    <span
-                                        class="text-label-lg font-label-lg text-on-surface-variant"
-                                        >Filter by:</span
-                                    >
+                                <div class="flex-1 min-w-[260px]">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="verification-search-filter">Search</label>
+                                    <div class="flex items-center border border-outline-variant rounded-lg px-md bg-surface-container-low focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+                                        <input
+                                            id="verification-search-filter"
+                                            type="text"
+                                            class="w-full py-2 px-sm border-none bg-transparent focus:ring-0 text-body-sm"
+                                            placeholder="Name, client ID, surveyor, category, or status"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="w-44">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="verification-status-filter">Status</label>
                                     <select
-                                        class="bg-surface-container-low border border-outline-variant rounded-lg px-md py-1.5 text-body-sm focus:ring-2 focus:ring-primary/20"
+                                        id="verification-status-filter"
+                                        class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-sm focus:ring-2 focus:ring-primary/20"
                                     >
-                                        <option>Date: Newest First</option>
-                                        <option>Date: Oldest First</option>
+                                        <option value="">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="returned">Returned</option>
+                                    </select>
+                                </div>
+                                <div class="w-56">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="verification-category-filter">Category</label>
+                                    <select
+                                        id="verification-category-filter"
+                                        class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-sm focus:ring-2 focus:ring-primary/20"
+                                    >
+                                        <option value="">All Categories</option>
+                                        @foreach ($verificationCategories as $category)
+                                            <option value="{{ $category }}">{{ $category }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="w-56">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="verification-surveyor-filter">Surveyor</label>
+                                    <select
+                                        id="verification-surveyor-filter"
+                                        class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-sm focus:ring-2 focus:ring-primary/20"
+                                    >
+                                        <option value="">All Surveyors</option>
+                                        @foreach ($verificationSurveyors as $surveyorId => $surveyorName)
+                                            <option value="{{ $surveyorId }}">{{ $surveyorName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="w-44">
+                                    <label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="verification-date-sort">Sort</label>
+                                    <select
+                                        id="verification-date-sort"
+                                        class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-sm focus:ring-2 focus:ring-primary/20"
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
                                     </select>
                                 </div>
                                 <div class="flex items-center gap-sm">
                                     <button
+                                        type="button"
                                         class="flex items-center gap-xs px-md py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container-low transition-all text-label-lg font-label-lg"
                                     >
                                         <span
@@ -1738,6 +1870,7 @@
                                         Export
                                     </button>
                                 </div>
+                                <span id="verification-filter-count" class="text-body-sm text-on-surface-variant ml-auto"></span>
                             </div>
                             <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
                                 <div class="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
@@ -1802,11 +1935,6 @@
                                                 <th
                                                     class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
                                                 >
-                                                    Owner
-                                                </th>
-                                                <th
-                                                    class="px-md py-3 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider"
-                                                >
                                                     Surveyor
                                                 </th>
                                                 <th
@@ -1847,7 +1975,13 @@
                                                 <tr class="zebra-stripe hover:bg-surface-container transition-colors group cursor-pointer"
                                                     data-admin-client-id="{{ $client->id }}"
                                                     data-admin-client-mode="view"
-                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}">
+                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}"
+                                                    data-admin-filter-row="verification"
+                                                    data-filter-search="{{ $clientName }} {{ $client->client_id }} {{ $surveyorName }} {{ $client->category_of_client }} {{ $status }}"
+                                                    data-filter-category="{{ $client->category_of_client }}"
+                                                    data-filter-status="{{ $status }}"
+                                                    data-filter-surveyor="{{ $client->surveyed_by }}"
+                                                    data-filter-date="{{ optional($client->created_at)->timestamp ?? 0 }}">
                                                     <td class="px-md py-4">
                                                         <input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
                                                     </td>
@@ -1934,6 +2068,11 @@
                                                     </td>
                                                 </tr>
                                             @endforelse
+                                            <tr class="hidden" data-admin-filter-empty="verification">
+                                                <td class="px-lg py-xxl text-center text-on-surface-variant" colspan="7">
+                                                    No pending clients match the selected filters.
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -2010,7 +2149,13 @@
                                                 <tr class="zebra-stripe hover:bg-surface-container transition-colors group cursor-pointer"
                                                     data-admin-client-id="{{ $client->id }}"
                                                     data-admin-client-mode="view"
-                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}">
+                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}"
+                                                    data-admin-filter-row="verification"
+                                                    data-filter-search="{{ $clientName }} {{ $client->client_id }} {{ $surveyorName }} {{ $client->category_of_client }} returned"
+                                                    data-filter-category="{{ $client->category_of_client }}"
+                                                    data-filter-status="returned"
+                                                    data-filter-surveyor="{{ $client->surveyed_by }}"
+                                                    data-filter-date="{{ optional($client->updated_at)->timestamp ?? 0 }}">
                                                     <td class="px-md py-4">
                                                         <div class="flex items-center gap-md">
                                                             <div class="w-10 h-10 rounded bg-secondary-container flex items-center justify-center shrink-0">
@@ -2045,6 +2190,11 @@
                                                     </td>
                                                 </tr>
                                             @endforelse
+                                            <tr class="hidden" data-admin-filter-empty="verification">
+                                                <td class="px-lg py-xxl text-center text-on-surface-variant" colspan="5">
+                                                    No returned clients match the selected filters.
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -2272,6 +2422,113 @@
                     '"': "&quot;",
                     "'": "&#039;",
                 })[character]);
+            }
+
+            function normalizeAdminFilterText(value) {
+                return String(value ?? "").trim().toLowerCase();
+            }
+
+            function bindAdminClientTableFilters() {
+                const configs = [
+                    {
+                        scope: "dashboard",
+                        search: document.getElementById("admin-dashboard-search"),
+                        category: document.getElementById("admin-dashboard-category-filter"),
+                        surveyor: document.getElementById("admin-dashboard-surveyor-filter"),
+                        sort: document.getElementById("admin-dashboard-sort"),
+                        count: document.getElementById("admin-dashboard-filter-count"),
+                        label: "verified clients",
+                    },
+                    {
+                        scope: "verification",
+                        search: document.getElementById("verification-search-filter"),
+                        category: document.getElementById("verification-category-filter"),
+                        status: document.getElementById("verification-status-filter"),
+                        surveyor: document.getElementById("verification-surveyor-filter"),
+                        sort: document.getElementById("verification-date-sort"),
+                        count: document.getElementById("verification-filter-count"),
+                        label: "submissions",
+                    },
+                ];
+
+                const rowsForScope = (scope) => Array.from(document.querySelectorAll(`[data-admin-filter-row="${scope}"]`));
+
+                function sortRows(rows, direction) {
+                    const groupedRows = new Map();
+                    rows.forEach((row) => {
+                        const tbody = row.parentElement;
+                        if (!tbody) return;
+                        if (!groupedRows.has(tbody)) groupedRows.set(tbody, []);
+                        groupedRows.get(tbody).push(row);
+                    });
+
+                    groupedRows.forEach((tbodyRows, tbody) => {
+                        tbodyRows
+                            .sort((a, b) => {
+                                const aDate = Number(a.dataset.filterDate || 0);
+                                const bDate = Number(b.dataset.filterDate || 0);
+                                return direction === "oldest" ? aDate - bDate : bDate - aDate;
+                            })
+                            .forEach((row) => tbody.appendChild(row));
+                    });
+                }
+
+                function rowMatches(row, config) {
+                    const searchTerm = normalizeAdminFilterText(config.search?.value);
+                    const category = normalizeAdminFilterText(config.category?.value);
+                    const status = normalizeAdminFilterText(config.status?.value);
+                    const surveyor = normalizeAdminFilterText(config.surveyor?.value);
+
+                    if (searchTerm && !normalizeAdminFilterText(row.dataset.filterSearch).includes(searchTerm)) return false;
+                    if (category && normalizeAdminFilterText(row.dataset.filterCategory) !== category) return false;
+                    if (status && normalizeAdminFilterText(row.dataset.filterStatus) !== status) return false;
+                    if (surveyor && normalizeAdminFilterText(row.dataset.filterSurveyor) !== surveyor) return false;
+
+                    return true;
+                }
+
+                function updateEmptyRows(rows, config) {
+                    const tbodies = [...new Set(rows.map((row) => row.parentElement).filter(Boolean))];
+                    tbodies.forEach((tbody) => {
+                        const bodyRows = rows.filter((row) => row.parentElement === tbody);
+                        const visibleRows = bodyRows.filter((row) => !row.classList.contains("hidden"));
+                        const emptyRow = tbody.querySelector(`[data-admin-filter-empty="${config.scope}"]`);
+                        emptyRow?.classList.toggle("hidden", !(bodyRows.length > 0 && visibleRows.length === 0));
+                    });
+                }
+
+                function applyFilters(config) {
+                    const rows = rowsForScope(config.scope);
+                    const sortDirection = config.sort?.value || "newest";
+                    let visibleCount = 0;
+
+                    sortRows(rows, sortDirection);
+
+                    rows.forEach((row) => {
+                        const matches = rowMatches(row, config);
+                        row.classList.toggle("hidden", !matches);
+                        if (matches) visibleCount += 1;
+                    });
+
+                    updateEmptyRows(rows, config);
+
+                    if (config.count) {
+                        config.count.textContent = `Showing ${visibleCount.toLocaleString()} of ${rows.length.toLocaleString()} ${config.label}`;
+                    }
+                }
+
+                configs.forEach((config) => {
+                    if (!config.search && !config.category && !config.status && !config.surveyor && !config.sort) return;
+
+                    [config.search, config.category, config.status, config.surveyor, config.sort]
+                        .filter(Boolean)
+                        .forEach((control) => {
+                            const eventName = control.tagName === "INPUT" ? "input" : "change";
+                            control.addEventListener(eventName, () => applyFilters(config));
+                        });
+
+                    applyFilters(config);
+                });
             }
 
             const fallbackMapStyle = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -3742,6 +3999,7 @@
                 setAdminView(initialView);
             }
 
+            bindAdminClientTableFilters();
             initializeDashboardVerifiedMap();
             fetchDashboardVerifiedLocations({ fit: true });
             initializeSurveyorMap();

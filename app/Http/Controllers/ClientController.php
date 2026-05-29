@@ -15,6 +15,70 @@ class ClientController
     {
         $employee = Auth::user();
 
+        $dashboardClientRecords = $this->clientsAssignedToSurveyor($employee)
+            ->orderBy('created_at', 'desc')
+            ->get([
+                'id',
+                'client_id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'suffix',
+                'category_of_client',
+                'msme_classification',
+                'status_of_client',
+                'survey_status',
+                'region',
+                'province',
+                'city_municipality',
+                'barangay',
+                'created_at',
+            ]);
+
+        $regionCodes = $dashboardClientRecords->pluck('region')->unique()->filter();
+        $provinceCodes = $dashboardClientRecords->pluck('province')->unique()->filter();
+        $cityCodes = $dashboardClientRecords->pluck('city_municipality')->unique()->filter();
+        $barangayCodes = $dashboardClientRecords->pluck('barangay')->unique()->filter();
+
+        $regionNames = $regionCodes->isNotEmpty()
+            ? DB::table('region')->whereIn('code', $regionCodes)->pluck('name', 'code')
+            : collect();
+        $provinceNames = $provinceCodes->isNotEmpty()
+            ? DB::table('province')->whereIn('code', $provinceCodes)->pluck('name', 'code')
+            : collect();
+        $cityNames = $cityCodes->isNotEmpty()
+            ? DB::table('city_municipality')->whereIn('code', $cityCodes)->pluck('name', 'code')
+            : collect();
+        $barangayNames = $barangayCodes->isNotEmpty()
+            ? DB::table('barangay')->whereIn('code', $barangayCodes)->pluck('name', 'code')
+            : collect();
+
+        $dashboardClients = $dashboardClientRecords
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'first_name' => $client->first_name,
+                'middle_name' => $client->middle_name,
+                'last_name' => $client->last_name,
+                'suffix' => $client->suffix,
+                'name' => $this->formatClientName($client),
+                'category_of_client' => $client->category_of_client,
+                'msme_classification' => $client->msme_classification,
+                'status_of_client' => $client->status_of_client,
+                'survey_status' => $client->survey_status ?? 'pending',
+                'region' => $client->region,
+                'province' => $client->province,
+                'city_municipality' => $client->city_municipality,
+                'barangay' => $client->barangay,
+                'created_at' => optional($client->created_at)->toIso8601String(),
+                'show_url' => route('surveyor.clients.show', $client),
+                'region_name' => $regionNames[$client->region] ?? $client->region,
+                'province_name' => $provinceNames[$client->province] ?? $client->province,
+                'city_name' => $cityNames[$client->city_municipality] ?? $client->city_municipality,
+                'barangay_name' => $barangayNames[$client->barangay] ?? $client->barangay,
+            ])
+            ->values();
+
         $clientMapPoints = $this->clientsAssignedToSurveyor($employee)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
@@ -31,7 +95,7 @@ class ClientController
             ])
             ->values();
 
-        return view('private.surveyor', compact('employee', 'clientMapPoints'));
+        return view('private.surveyor', compact('employee', 'clientMapPoints', 'dashboardClients'));
     }
 
     public function showForSurveyor(Client $client)

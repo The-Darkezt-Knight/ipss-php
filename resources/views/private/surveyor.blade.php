@@ -474,8 +474,9 @@
                                     >search</span
                                 >
                                 <input
+                                    id="client-search-filter"
                                     class="w-full py-md px-sm border-none focus:ring-0 text-body-md"
-                                    placeholder="Search by name, owner or business ID..."
+                                    placeholder="Search by name, client ID, category, or location..."
                                     type="text"
                                 />
                             </div>
@@ -486,28 +487,10 @@
                                 >Category</label
                             >
                             <select
+                                id="category-filter"
                                 class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
                             >
-                                <option>All Categories</option>
-                                <option>Agriculture</option>
-                                <option>Retail</option>
-                                <option>Service</option>
-                                <option>Manufacturing</option>
-                            </select>
-                        </div>
-                        <div class="w-48">
-                            <label
-                                class="block text-label-md font-label-md text-on-surface-variant mb-xs"
-                                >MSME Level</label
-                            >
-                            <select
-                                class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
-                            >
-                                <option>All Levels</option>
-                                <option>Micro</option>
-                                <option>Small</option>
-                                <option>Medium</option>
-                                <option>Large</option>
+                                <option value="">All Categories</option>
                             </select>
                         </div>
                         <div class="w-48">
@@ -516,12 +499,14 @@
                                 >Status</label
                             >
                             <select
+                                id="status-filter"
                                 class="w-full border border-outline rounded-lg p-md text-body-sm bg-white focus:ring-primary focus:border-primary"
                             >
-                                <option>All Statuses</option>
-                                <option>Active</option>
-                                <option>Inactive</option>
-                                <option>Pending</option>
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="returned">Returned</option>
+                                <option value="verified">Verified</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                     </div>
@@ -612,10 +597,14 @@
         <script src="{{ asset('js/map-style-control.js') }}?v=20260529-2"></script>
         <script>
             const surveyorClientMapPoints = @json($clientMapPoints ?? []);
+            const surveyorDashboardClients = @json($dashboardClients ?? []);
 
             document.addEventListener('DOMContentLoaded', function () {
                 const citySelect = document.getElementById('geo-city');
                 const barangaySelect = document.getElementById('geo-barangay');
+                const searchInput = document.getElementById('client-search-filter');
+                const categoryFilter = document.getElementById('category-filter');
+                const statusFilter = document.getElementById('status-filter');
                 const tbody = document.getElementById('clients-tbody');
                 const heading = document.getElementById('dashboard-heading');
                 const totalCount = document.getElementById('total-count');
@@ -915,18 +904,6 @@
                     });
                 }
 
-                function showLoading() {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="px-lg py-xxl text-center">
-                                <div class="flex flex-col items-center gap-md text-on-surface-variant">
-                                    <span class="material-symbols-outlined text-[36px] text-primary animate-spin">progress_activity</span>
-                                    <p class="text-body-md">Loading clients...</p>
-                                </div>
-                            </td>
-                        </tr>`;
-                }
-
                 function showEmpty(msg) {
                     tbody.innerHTML = `
                         <tr>
@@ -934,7 +911,7 @@
                                 <div class="flex flex-col items-center gap-md text-on-surface-variant">
                                     <span class="material-symbols-outlined text-[48px] text-outline">folder_open</span>
                                     <p class="text-body-md font-bold">No clients found</p>
-                                    <p class="text-body-sm">${msg}</p>
+                                    <p class="text-body-sm">${escapeHtml(msg)}</p>
                                 </div>
                             </td>
                         </tr>`;
@@ -947,7 +924,7 @@
                                 <div class="flex flex-col items-center gap-md text-on-surface-variant">
                                     <span class="material-symbols-outlined text-[48px] text-outline">location_on</span>
                                     <p class="text-body-md font-bold">Select a location</p>
-                                    <p class="text-body-sm">Choose a City and Barangay above to load registered clients.</p>
+                                    <p class="text-body-sm">Choose a City, then optionally narrow by Barangay.</p>
                                 </div>
                             </td>
                         </tr>`;
@@ -977,6 +954,155 @@
                     if (c.last_name) name += ' ' + c.last_name;
                     if (c.suffix && c.suffix !== '--N/A--') name += ' ' + c.suffix;
                     return name.trim() || '—';
+                }
+
+                function normalize(value) {
+                    return String(value ?? '').trim().toLowerCase();
+                }
+
+                function titleCase(value) {
+                    return String(value ?? '')
+                        .replace(/[_-]+/g, ' ')
+                        .replace(/\w\S*/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+                }
+
+                function statusMeta(status) {
+                    const normalized = normalize(status) || 'pending';
+                    const meta = {
+                        pending: { label: 'Pending', dot: 'bg-[#D97706]', text: 'text-[#92400E]', badge: 'bg-[#FEF3C7]' },
+                        returned: { label: 'Returned', dot: 'bg-[#001E40]', text: 'text-primary', badge: 'bg-secondary-fixed' },
+                        verified: { label: 'Verified', dot: 'bg-[#84cc16]', text: 'text-[#3F6212]', badge: 'bg-[#ECFCCB]' },
+                        rejected: { label: 'Rejected', dot: 'bg-error', text: 'text-error', badge: 'bg-error-container' },
+                    };
+
+                    return meta[normalized] || { label: titleCase(normalized), dot: 'bg-outline', text: 'text-on-surface', badge: 'bg-surface-container-high' };
+                }
+
+                function populateCategoryFilter() {
+                    if (!categoryFilter) return;
+
+                    const selected = categoryFilter.value;
+                    const categories = [...new Set(surveyorDashboardClients
+                        .map(client => client.category_of_client)
+                        .filter(Boolean))]
+                        .sort((a, b) => a.localeCompare(b));
+
+                    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryFilter.appendChild(option);
+                    });
+
+                    if (selected && categories.includes(selected)) {
+                        categoryFilter.value = selected;
+                    }
+                }
+
+                function matchesSearch(client, term) {
+                    if (!term) return true;
+
+                    return [
+                        client.name,
+                        buildFullName(client),
+                        client.client_id,
+                        client.category_of_client,
+                        client.msme_classification,
+                        client.status_of_client,
+                        client.survey_status,
+                        client.city_name,
+                        client.barangay_name,
+                    ].some(value => normalize(value).includes(term));
+                }
+
+                function filteredClients() {
+                    const cityCode = citySelect.value;
+                    const barangayCode = barangaySelect.value;
+                    const category = categoryFilter?.value || '';
+                    const status = statusFilter?.value || '';
+                    const term = normalize(searchInput?.value);
+
+                    return surveyorDashboardClients.filter(client => {
+                        if (cityCode && client.city_municipality !== cityCode) return false;
+                        if (barangayCode && client.barangay !== barangayCode) return false;
+                        if (category && client.category_of_client !== category) return false;
+                        if (status && normalize(client.survey_status || 'pending') !== status) return false;
+                        return matchesSearch(client, term);
+                    });
+                }
+
+                function updateDashboardSummary(clients) {
+                    const selectedCity = citySelect.value ? citySelect.options[citySelect.selectedIndex]?.text : '';
+                    const selectedBarangay = barangaySelect.value ? barangaySelect.options[barangaySelect.selectedIndex]?.text : '';
+
+                    if (selectedBarangay) {
+                        heading.textContent = `Registered Clients - ${selectedBarangay}`;
+                    } else if (selectedCity) {
+                        heading.textContent = `Registered Clients - ${selectedCity}`;
+                    } else {
+                        heading.textContent = 'Registered Clients';
+                    }
+
+                    totalCount.textContent = surveyorDashboardClients.length.toLocaleString();
+                    entryCount.textContent = `Showing ${clients.length.toLocaleString()} of ${surveyorDashboardClients.length.toLocaleString()} entries`;
+                }
+
+                function renderClients() {
+                    const clients = filteredClients();
+                    updateDashboardSummary(clients);
+
+                    if (surveyorDashboardClients.length === 0) {
+                        showEmpty('No assigned clients are available yet.');
+                        return;
+                    }
+
+                    if (clients.length === 0) {
+                        showEmpty('No clients match the selected filters.');
+                        return;
+                    }
+
+                    tbody.innerHTML = '';
+                    clients.forEach((c, i) => {
+                        const zebraClass = i % 2 === 1 ? 'bg-tertiary-container/5' : '';
+                        const tr = document.createElement('tr');
+                        const status = statusMeta(c.survey_status || 'pending');
+                        tr.className = `${zebraClass} hover:bg-surface-container transition-colors group`;
+                        tr.innerHTML = `
+                            <td class="px-lg py-lg">
+                                <div class="flex flex-col">
+                                    <span class="text-body-md font-semibold text-primary">${escapeHtml(c.name || buildFullName(c))}</span>
+                                    <span class="text-body-sm text-on-surface-variant">${escapeHtml(c.barangay_name || 'No barangay')} ${c.city_name ? `- ${escapeHtml(c.city_name)}` : ''}</span>
+                                </div>
+                            </td>
+                            <td class="px-lg py-lg text-body-sm">
+                                ${escapeHtml(c.client_id || '—')}
+                            </td>
+                            <td class="px-lg py-lg">
+                                <span class="px-md py-xs bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-label-md">${escapeHtml(c.category_of_client || '—')}</span>
+                            </td>
+                            <td class="px-lg py-lg text-body-sm">
+                                ${escapeHtml(msmeShort(c.msme_classification))}
+                            </td>
+                            <td class="px-lg py-lg text-body-sm">
+                                ${escapeHtml(formatDate(c.created_at))}
+                            </td>
+                            <td class="px-lg py-lg">
+                                <span class="inline-flex items-center gap-xs px-sm py-xs rounded-full ${status.badge} ${status.text} text-label-md">
+                                    <span class="h-2 w-2 rounded-full ${status.dot}"></span>
+                                    ${escapeHtml(status.label)}
+                                </span>
+                            </td>
+                            <td class="px-lg py-lg text-right">
+                                <div class="flex justify-end gap-sm">
+                                    <a href="${escapeHtml(c.show_url)}" class="inline-flex items-center gap-xs px-md py-xs text-primary border border-primary rounded text-label-md font-bold hover:bg-primary hover:text-on-primary transition-all">
+                                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                        View
+                                    </a>
+                                </div>
+                            </td>`;
+                        tbody.appendChild(tr);
+                    });
                 }
 
                 async function cacheClientIdentities(barangayCode) {
@@ -1009,68 +1135,6 @@
                     addLink.href = qs ? baseFormUrl + '?' + qs : baseFormUrl;
                 }
 
-                // ── Load Clients by Barangay ─────────────────────────
-                async function loadClients(barangayCode) {
-                    showLoading();
-                    try {
-                        cacheClientIdentities(barangayCode);
-
-                        const res = await fetch(`/api/clients?barangay_code=${barangayCode}`);
-                        const clients = await res.json();
-
-                        // Update heading
-                        const brgyName = barangaySelect.options[barangaySelect.selectedIndex]?.text || '';
-                        heading.textContent = `Registered Clients — ${brgyName}`;
-                        totalCount.textContent = clients.length.toLocaleString();
-                        entryCount.textContent = `Showing ${clients.length} entries`;
-
-                        if (clients.length === 0) {
-                            showEmpty('No registered clients in this barangay yet. Use the + button to add one.');
-                            return;
-                        }
-
-                        tbody.innerHTML = '';
-                        clients.forEach((c, i) => {
-                            const zebraClass = i % 2 === 1 ? 'bg-tertiary-container/5' : '';
-                            const tr = document.createElement('tr');
-                            tr.className = `${zebraClass} hover:bg-surface-container transition-colors group`;
-                            tr.innerHTML = `
-                                <td class="px-lg py-lg">
-                                    <div class="flex flex-col">
-                                        <span class="text-body-md font-semibold text-primary">${buildFullName(c)}</span>
-                                    </div>
-                                </td>
-                                <td class="px-lg py-lg text-body-sm">
-                                    ${c.client_id || '—'}
-                                </td>
-                                <td class="px-lg py-lg">
-                                    <span class="px-md py-xs bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-label-md">${c.category_of_client || '—'}</span>
-                                </td>
-                                <td class="px-lg py-lg text-body-sm">
-                                    ${msmeShort(c.msme_classification)}
-                                </td>
-                                <td class="px-lg py-lg text-body-sm">
-                                    ${formatDate(c.created_at)}
-                                </td>
-                                <td class="px-lg py-lg">
-                                    <span class="flex items-center gap-xs text-on-surface text-label-md">
-                                        <span class="h-2 w-2 rounded-full bg-green-600"></span>
-                                        ${c.status_of_client || 'Registered'}
-                                    </span>
-                                </td>
-                                <td class="px-lg py-lg text-right">
-                                    <div class="flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <a href="${c.show_url}" class="px-md py-xs text-primary border border-primary rounded text-label-md font-bold hover:bg-primary hover:text-on-primary transition-all">View</a>
-                                    </div>
-                                </td>`;
-                            tbody.appendChild(tr);
-                        });
-                    } catch (err) {
-                        console.error('Error loading clients:', err);
-                        showEmpty('Failed to load clients. Please try again.');
-                    }
-                }
-
                 // ── Load Cities by District ──────────────────────────
                 async function loadCitiesByDistrict() {
                     if (!districtCode) {
@@ -1090,10 +1154,6 @@
                 // ── Cascading: City → Barangay ──────────────────────
                 citySelect.addEventListener('change', async function () {
                     resetSelect(barangaySelect, 'Select Barangay');
-                    heading.textContent = 'Registered Clients';
-                    totalCount.textContent = '—';
-                    entryCount.textContent = '';
-                    showInitial();
                     updateAddLink();
 
                     // Persist selection
@@ -1109,6 +1169,8 @@
                             console.error('Error loading barangays:', err);
                         }
                     }
+
+                    renderClients();
                 });
 
                 barangaySelect.addEventListener('change', function () {
@@ -1117,17 +1179,19 @@
                     localStorage.setItem('ipss-selectedBarangay', this.value);
 
                     if (this.value) {
-                        loadClients(this.value);
-                    } else {
-                        heading.textContent = 'Registered Clients';
-                        totalCount.textContent = '—';
-                        entryCount.textContent = '';
-                        showInitial();
+                        cacheClientIdentities(this.value);
                     }
+
+                    renderClients();
                 });
+
+                searchInput?.addEventListener('input', renderClients);
+                categoryFilter?.addEventListener('change', renderClients);
+                statusFilter?.addEventListener('change', renderClients);
 
                 // ── Init ─────────────────────────────────────────────
                 async function initDashboard() {
+                    populateCategoryFilter();
                     await loadCitiesByDistrict();
 
                     // Restore persisted city selection
@@ -1147,13 +1211,15 @@
                                 if (savedBarangay && Array.from(barangaySelect.options).some(o => o.value === savedBarangay)) {
                                     barangaySelect.value = savedBarangay;
                                     updateAddLink();
-                                    loadClients(savedBarangay);
+                                    cacheClientIdentities(savedBarangay);
                                 }
                             } catch (err) {
                                 console.error('Error restoring barangays:', err);
                             }
                         }
                     }
+
+                    renderClients();
                 }
 
                 initDashboard();
