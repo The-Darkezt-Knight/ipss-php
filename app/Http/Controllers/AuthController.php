@@ -177,7 +177,10 @@ class AuthController extends Controller
 
     public function surveyorDashboard() {
         $employee = Auth::user();
-        return view('private.surveyor-dashboard', compact('employee'));
+        return view('private.surveyor', [
+            'employee' => $employee,
+            'surveyorPage' => 'dashboard',
+        ]);
     }
 
 

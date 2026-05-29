@@ -184,7 +184,7 @@
       <button id="manual-sync-btn" class="relative p-sm hover:bg-surface-container-high transition-colors rounded-full" title="Sync pending surveys">
         <span id="sync-indicator-icon" class="material-symbols-outlined" data-icon="sync">sync</span>
         <!-- Pending Count Badge -->
-        <div id="pending-count-badge" class="hidden absolute -top-1 -right-1 h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1">
+        <div id="pending-count-badge" class="hidden absolute -top-1 -right-1 h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1">
           <span id="pending-count" class="text-[10px] font-bold text-white leading-none">0</span>
         </div>
       </button>

@@ -31,7 +31,7 @@ class ClientController
             ])
             ->values();
 
-        return view('private.surveyor-dashboard', compact('employee', 'clientMapPoints'));
+        return view('private.surveyor', compact('employee', 'clientMapPoints'));
     }
 
     public function showForSurveyor(Client $client)
