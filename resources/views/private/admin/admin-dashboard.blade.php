@@ -2456,7 +2456,7 @@
                     button.type = "button";
                     button.className = `inline-flex items-center gap-xs px-md py-sm ${colorClass} text-white rounded-lg font-bold hover:opacity-90`;
                     button.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icon}</span>${label}`;
-                    button.addEventListener("click", () => updateAdminClientStatus(client, statusValue));
+                    button.addEventListener("click", () => updateAdminClientStatus(client, statusValue, button));
                     adminClientStatusActions.appendChild(button);
                 });
             }
@@ -2545,9 +2545,20 @@
                 }
             }
 
-            async function updateAdminClientStatus(client, statusValue) {
+            async function updateAdminClientStatus(client, statusValue, button = null) {
                 if (!client?.urls?.status) return;
                 if (!confirm(`Set this client to ${statusValue}?`)) return;
+
+                const buttons = Array.from(adminClientStatusActions.querySelectorAll("button"));
+                const originalLabel = button?.innerHTML;
+                buttons.forEach((actionButton) => {
+                    actionButton.disabled = true;
+                    actionButton.classList.add("opacity-60", "cursor-not-allowed");
+                });
+                if (button) {
+                    button.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>Saving`;
+                }
+                setAdminClientModalStatus("");
 
                 try {
                     const response = await fetch(client.urls.status, {
@@ -2559,12 +2570,31 @@
                         },
                         body: JSON.stringify({ survey_status: statusValue }),
                     });
-                    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-                    window.location.href = "{{ route('admin') }}#verification";
-                    window.location.reload();
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(payload.message || `Server responded with ${response.status}`);
+
+                    activeAdminClient = payload.client || activeAdminClient;
+                    setAdminClientModalStatus(payload.message || "Verification status updated.", "success");
+                    renderAdminClientStatusActions(activeAdminClient, activeAdminClientMode);
+
+                    setTimeout(() => {
+                        const verificationUrl = "{{ route('admin') }}#verification";
+                        if (window.location.href === verificationUrl) {
+                            window.location.reload();
+                        } else {
+                            window.location.href = verificationUrl;
+                        }
+                    }, 350);
                 } catch (error) {
                     console.error("Failed to update client status:", error);
-                    setAdminClientModalStatus("Unable to update verification status.", "error");
+                    setAdminClientModalStatus(error.message || "Unable to update verification status.", "error");
+                    buttons.forEach((actionButton) => {
+                        actionButton.disabled = false;
+                        actionButton.classList.remove("opacity-60", "cursor-not-allowed");
+                    });
+                    if (button && originalLabel) {
+                        button.innerHTML = originalLabel;
+                    }
                 }
             }
 

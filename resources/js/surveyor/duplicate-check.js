@@ -8,6 +8,8 @@ export class DuplicateSyncError extends Error {
     }
 }
 
+
+
 export class DuplicateWarningCancelledError extends Error {
     constructor(decision) {
         super('Name match warning was not confirmed.');
@@ -16,17 +18,25 @@ export class DuplicateWarningCancelledError extends Error {
     }
 }
 
+
+
 export function normalizeNamePart(value) {
     return String(value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 }
+
+
 
 export function normalizePhilSys(value) {
     return String(value ?? '').trim().replace(/[\s-]+/g, '').toLocaleLowerCase();
 }
 
+
+
 export function getSurveyBarangayCode(data = {}) {
     return data.barangayCode || data.baranggayCode || localStorage.getItem('ipss-selectedBarangay') || '';
 }
+
+
 
 export function cacheClientIdentityList(barangayCode, identities = []) {
     if (!barangayCode) return;
@@ -41,6 +51,8 @@ export function cacheClientIdentityList(barangayCode, identities = []) {
     );
 }
 
+
+
 export function getCachedClientIdentityList(barangayCode) {
     if (!barangayCode) return [];
 
@@ -52,6 +64,8 @@ export function getCachedClientIdentityList(barangayCode) {
         return [];
     }
 }
+
+
 
 export async function fetchAndCacheClientIdentityList(barangayCode) {
     if (!barangayCode) return [];
@@ -71,6 +85,8 @@ export async function fetchAndCacheClientIdentityList(barangayCode) {
     return identities;
 }
 
+
+
 export async function getClientIdentityListForBarangay(barangayCode) {
     if (!barangayCode) return { identities: [], source: 'missing-barangay' };
 
@@ -88,6 +104,8 @@ export async function getClientIdentityListForBarangay(barangayCode) {
         source: 'cache',
     };
 }
+
+
 
 export function evaluateSurveyDuplicate(data = {}, identities = [], source = 'cache') {
     const survey = {
@@ -183,11 +201,15 @@ export function evaluateSurveyDuplicate(data = {}, identities = [], source = 'ca
     };
 }
 
+
+
 export async function checkSurveyDuplicate(data = {}) {
     const barangayCode = getSurveyBarangayCode(data);
     const { identities, source } = await getClientIdentityListForBarangay(barangayCode);
     return evaluateSurveyDuplicate(data, identities, source);
 }
+
+
 
 export async function assertSurveyCanSync(data = {}, options = {}) {
     const decision = await checkSurveyDuplicate(data);
@@ -201,11 +223,9 @@ export async function assertSurveyCanSync(data = {}, options = {}) {
         if (!confirmed) {
             throw new DuplicateWarningCancelledError(decision);
         }
-
-        data._duplicateNameConfirmed = true;
     }
 
-    if (decision.status === 'name_warning' && options.requireConfirmation && data._duplicateNameConfirmed !== true) {
+    if (decision.status === 'name_warning' && options.requireConfirmation && !options.confirmNameWarning) {
         throw new DuplicateWarningCancelledError(decision);
     }
 

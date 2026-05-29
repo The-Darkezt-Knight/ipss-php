@@ -626,6 +626,14 @@ class ClientController
             'updated_at' => now(),
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Client verification status updated.',
+                'client' => $this->adminClientPayload($client->fresh()),
+            ]);
+        }
+
         return redirect()
             ->to(route('admin') . '#verification')
             ->with('success', 'Client verification status updated.');
