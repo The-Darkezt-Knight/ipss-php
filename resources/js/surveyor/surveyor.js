@@ -6,6 +6,12 @@ import {
     getCachedCitiesByDistrict,
     getCachedBarangays,
 } from './offline-db.js';
+import {
+    DuplicateSyncError,
+    DuplicateWarningCancelledError,
+    assertSurveyCanSync,
+    checkSurveyDuplicate,
+} from './duplicate-check.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('pending-surveys-tbody');
@@ -534,6 +540,173 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ─── Render a Single Row ────────────────────────────────────────────────
+    function duplicateStatusMarkup(decision) {
+        if (!decision || decision.status === 'clear') {
+            return `
+                <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
+                </span>
+            `;
+        }
+
+        if (decision.status === 'full_block') {
+            return `
+                <span class="flex items-center gap-xs text-error font-bold" title="${decision.message}">
+                    <span class="material-symbols-outlined text-[16px]">block</span> Duplicate
+                </span>
+            `;
+        }
+
+        if (decision.status === 'philsys_block') {
+            return `
+                <span class="flex items-center gap-xs text-error font-bold" title="${decision.message}">
+                    <span class="material-symbols-outlined text-[16px]">badge</span> PhilSys exists
+                </span>
+            `;
+        }
+
+        if (decision.status === 'name_warning') {
+            return `
+                <span class="flex items-center gap-xs text-amber-700 font-bold" title="${decision.message}">
+                    <span class="material-symbols-outlined text-[16px]">warning</span> Name match
+                </span>
+            `;
+        }
+
+        return `
+            <span class="flex items-center gap-xs text-blue-700 font-bold" title="${decision.message}">
+                <span class="material-symbols-outlined text-[16px]">info</span> Unchecked
+            </span>
+        `;
+    }
+
+    function applyDuplicateDecision(row, decision) {
+        if (!row || !decision) return;
+
+        row.dataset.duplicateStatus = decision.status;
+        row.classList.remove('bg-red-50', 'bg-amber-50', 'bg-blue-50', 'border-l-4', 'border-red-600', 'border-amber-500', 'border-blue-500');
+
+        const statusCell = row.querySelector('[data-sync-status]');
+        if (statusCell) {
+            statusCell.innerHTML = duplicateStatusMarkup(decision);
+        }
+
+        const syncButton = row.querySelector('.sync-single-btn');
+        if (!syncButton) return;
+
+        syncButton.disabled = false;
+        syncButton.classList.remove('opacity-50', 'cursor-not-allowed', 'text-amber-700');
+        syncButton.textContent = 'Sync Now';
+        syncButton.title = '';
+
+        if (decision.status === 'full_block' || decision.status === 'philsys_block') {
+            row.classList.add('bg-red-50', 'border-l-4', 'border-red-600');
+            syncButton.disabled = true;
+            syncButton.textContent = 'Blocked';
+            syncButton.title = decision.message;
+            syncButton.classList.add('opacity-50', 'cursor-not-allowed');
+            return;
+        }
+
+        if (decision.status === 'name_warning') {
+            row.classList.add('bg-amber-50', 'border-l-4', 'border-amber-500');
+            syncButton.textContent = 'Review & Sync';
+            syncButton.title = decision.message;
+            syncButton.classList.add('text-amber-700');
+            return;
+        }
+
+        if (decision.status === 'unchecked') {
+            row.classList.add('bg-blue-50', 'border-l-4', 'border-blue-500');
+            syncButton.title = decision.message;
+        }
+    }
+
+    async function syncSurveyRecord(record, row, button, options = {}) {
+        const btn = button || row?.querySelector('.sync-single-btn');
+        const originalText = btn?.textContent || 'Sync Now';
+
+        if (!navigator.onLine) {
+            showStatusToast('Cannot sync — you are offline.', 'error');
+            return false;
+        }
+
+        if (btn) {
+            btn.textContent = 'Checking…';
+            btn.disabled = true;
+        }
+
+        try {
+            const decision = await assertSurveyCanSync(record.data, {
+                confirmNameWarning: options.confirmNameWarning,
+                requireConfirmation: options.requireConfirmation,
+            });
+            applyDuplicateDecision(row, decision);
+
+            if (btn) btn.textContent = 'Syncing…';
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/surveyor/merge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(record.data),
+            });
+
+            if (response.status === 409) {
+                const payload = await response.json().catch(() => ({}));
+                throw new DuplicateSyncError(payload.duplicate || {
+                    status: 'philsys_block',
+                    canSync: false,
+                    message: payload.message || 'Duplicate client record detected.',
+                });
+            }
+
+            if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+            await deleteSurvey(record.id);
+
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    row.remove();
+                    refreshCounts();
+                }, 300);
+            }
+
+            return true;
+        } catch (err) {
+            if (err instanceof DuplicateSyncError || err instanceof DuplicateWarningCancelledError) {
+                applyDuplicateDecision(row, err.decision);
+                showStatusToast(err.decision.message, err instanceof DuplicateSyncError ? 'error' : 'info');
+                return false;
+            }
+
+            console.error('Sync failed:', err);
+
+            const statusCell = row?.querySelector('[data-sync-status]');
+            if (statusCell) {
+                statusCell.innerHTML = `
+                    <span class="flex items-center gap-xs text-error font-bold">
+                        <span class="material-symbols-outlined text-[16px]" data-icon="error_outline">error_outline</span> Failed
+                    </span>
+                `;
+            }
+
+            showStatusToast('Sync failed. Please try again.', 'error');
+            return false;
+        } finally {
+            if (btn && document.body.contains(btn) && row?.dataset.duplicateStatus !== 'full_block' && row?.dataset.duplicateStatus !== 'philsys_block') {
+                btn.disabled = false;
+                btn.textContent = row?.dataset.duplicateStatus === 'name_warning' ? 'Review & Sync' : originalText;
+            }
+        }
+    }
+
     function createRow(record) {
         const tr = document.createElement('tr');
         tr.setAttribute('data-record-id', record.id);
@@ -543,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="px-lg py-md font-bold text-primary">${getClientName(record)}</td>
             <td class="px-lg py-md">${formatDate(record.timestamp)}</td>
             <td class="px-lg py-md">${getSurveyType(record)}</td>
-            <td class="px-lg py-md">
+            <td class="px-lg py-md" data-sync-status>
                 <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
                     <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
                 </span>
@@ -569,57 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.querySelector('.sync-single-btn').addEventListener('click', async (e) => {
             e.preventDefault();
             const btn = e.currentTarget;
-            const id = btn.dataset.id;
-
-            if (!navigator.onLine) {
-                showStatusToast('Cannot sync — you are offline.', 'error');
-                return;
-            }
-
-            btn.textContent = 'Syncing…';
-            btn.disabled = true;
-
-            try {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                const response = await fetch('/surveyor/merge', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                    },
-                    body: JSON.stringify(record.data),
-                });
-
-                if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-
-                await deleteSurvey(id);
-
-                // Animate row removal
-                tr.style.opacity = '0';
-                tr.style.transform = 'translateX(20px)';
-                setTimeout(() => {
-                    tr.remove();
-                    refreshCounts();
-                }, 300);
-
-                showStatusToast('Survey synced successfully!', 'success');
-            } catch (err) {
-                console.error('Sync failed:', err);
-                btn.textContent = 'Retry';
-                btn.disabled = false;
-
-                // Show failed status on this row
-                const statusCell = tr.querySelector('td:nth-child(4) span');
-                if (statusCell) {
-                    statusCell.innerHTML = `
-                        <span class="material-symbols-outlined text-[16px]" data-icon="error_outline">error_outline</span> Failed
-                    `;
-                    statusCell.className = 'flex items-center gap-xs text-error font-bold';
-                }
-
-                showStatusToast('Sync failed. Please try again.', 'error');
-            }
+            const synced = await syncSurveyRecord(record, tr, btn, { confirmNameWarning: true });
+            if (synced) showStatusToast('Survey synced successfully!', 'success');
         });
 
         // Delete single record
@@ -860,6 +984,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.style.opacity = '0';
                 row.style.transform = 'translateY(8px)';
                 tableBody.appendChild(row);
+                checkSurveyDuplicate(record.data)
+                    .then((decision) => applyDuplicateDecision(row, decision))
+                    .catch((err) => console.warn('[Duplicate Check] Failed to evaluate pending row:', err));
 
                 setTimeout(() => {
                     row.style.opacity = '1';
@@ -887,39 +1014,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const duplicateResults = [];
+            for (const record of surveys) {
+                const decision = await checkSurveyDuplicate(record.data);
+                const row = document.querySelector(`[data-record-id="${CSS.escape(String(record.id))}"]`);
+                applyDuplicateDecision(row, decision);
+                duplicateResults.push({ record, decision, row });
+            }
+
+            const blocked = duplicateResults.filter(({ decision }) => !decision.canSync);
+            const warnings = duplicateResults.filter(({ decision }) => decision.status === 'name_warning');
+            const syncable = duplicateResults.filter(({ decision }) => decision.canSync);
+
+            if (blocked.length > 0) {
+                showStatusToast(`${blocked.length} duplicate survey${blocked.length > 1 ? 's were' : ' was'} blocked.`, 'error');
+            }
+
+            if (warnings.length > 0) {
+                const confirmed = confirm(`${warnings.length} survey${warnings.length > 1 ? 's have' : ' has'} matching client names in this barangay.\n\nSync these warning records anyway?`);
+                if (!confirmed) {
+                    showStatusToast('Sync all cancelled. Name-match warnings need confirmation.', 'info');
+                    return;
+                }
+            }
+
+            if (syncable.length === 0) {
+                showStatusToast('No syncable surveys after duplicate checks.', 'error');
+                return;
+            }
+
             syncAllBtn.disabled = true;
-            const originalContent = syncAllBtn.innerHTML;
+            const syncAllOriginalContent = syncAllBtn.innerHTML;
             syncAllBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">progress_activity</span> Syncing…`;
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            let synced = 0;
-            let failed = 0;
+            let syncAllSynced = 0;
+            let syncAllFailed = 0;
 
-            for (const record of surveys) {
-                try {
-                    const response = await fetch('/surveyor/merge', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: JSON.stringify(record.data),
-                    });
-                    if (!response.ok) throw new Error(`Status ${response.status}`);
-                    await deleteSurvey(record.id);
-                    synced++;
-                } catch (err) {
-                    console.error(`Failed to sync ${record.id}:`, err);
-                    failed++;
+            for (const { record, row } of syncable) {
+                const didSync = await syncSurveyRecord(record, row, null, { confirmNameWarning: false });
+                if (didSync) {
+                    syncAllSynced++;
+                } else {
+                    syncAllFailed++;
                 }
             }
 
             syncAllBtn.disabled = false;
-            syncAllBtn.innerHTML = originalContent;
+            syncAllBtn.innerHTML = syncAllOriginalContent;
 
-            if (synced > 0) showStatusToast(`${synced} survey${synced > 1 ? 's' : ''} synced!`, 'success');
-            if (failed > 0) showStatusToast(`${failed} survey${failed > 1 ? 's' : ''} failed. Will retry later.`, 'error');
+            if (syncAllSynced > 0) showStatusToast(`${syncAllSynced} survey${syncAllSynced > 1 ? 's' : ''} synced!`, 'success');
+            if (syncAllFailed > 0) showStatusToast(`${syncAllFailed} survey${syncAllFailed > 1 ? 's' : ''} failed or were skipped.`, 'error');
 
             await loadPendingSurveys();
         });

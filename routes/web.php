@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('admin/clients/{client}/rejected', [ClientController::class, 'destroyRejected'])->name('admin.clients.destroy-rejected');
     Route::get('surveyor/dashboard', [ClientController::class, 'surveyorDashboard'])->name('private.surveyor-dashboard');
     Route::get('surveyor/clients/{client}', [ClientController::class, 'showForSurveyor'])->name('surveyor.clients.show');
+    Route::get('/api/clients/identity-list', [ClientController::class, 'identityListByBarangay']);
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 

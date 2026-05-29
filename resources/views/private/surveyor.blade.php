@@ -892,6 +892,26 @@
                     return name.trim() || '—';
                 }
 
+                async function cacheClientIdentities(barangayCode) {
+                    if (!barangayCode || !navigator.onLine) return;
+
+                    try {
+                        const response = await fetch(`/api/clients/identity-list?barangay_code=${barangayCode}`, {
+                            headers: { 'Accept': 'application/json' },
+                        });
+                        if (!response.ok) throw new Error(`Status ${response.status}`);
+
+                        const identities = await response.json();
+                        localStorage.setItem(`ipss-client-identities:${barangayCode}`, JSON.stringify({
+                            barangayCode,
+                            cachedAt: new Date().toISOString(),
+                            identities,
+                        }));
+                    } catch (err) {
+                        console.warn('[Duplicate Check] Failed to cache client identities:', err);
+                    }
+                }
+
                 // ── Update "Add New" link with geo params ────────────
                 function updateAddLink() {
                     if (!addLink) return;
@@ -906,6 +926,8 @@
                 async function loadClients(barangayCode) {
                     showLoading();
                     try {
+                        cacheClientIdentities(barangayCode);
+
                         const res = await fetch(`/api/clients?barangay_code=${barangayCode}`);
                         const clients = await res.json();
 

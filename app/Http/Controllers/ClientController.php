@@ -159,6 +159,16 @@ class ClientController
         return response()->json($result);
     }
 
+    public function identityListByBarangay(Request $request)
+    {
+        $barangayCode = $request->query('barangay_code');
+        if (!$barangayCode) {
+            return response()->json([]);
+        }
+
+        return response()->json($this->clientIdentityListForBarangay($barangayCode));
+    }
+
 
     //Creates client record
     public function mergeToCentralDatabase(Request $request) {
@@ -206,6 +216,15 @@ class ClientController
             "eCommercePlatform"                => "nullable",
             "surveyed_by"                      => "nullable"
         ]);
+
+        $duplicateDecision = $this->surveyDuplicateDecision($validated);
+        if (in_array($duplicateDecision['status'], ['full_block', 'philsys_block'], true)) {
+            return response()->json([
+                'success' => false,
+                'duplicate' => $duplicateDecision,
+                'message' => $duplicateDecision['message'],
+            ], 409);
+        }
 
         $client = Client::create([
             // Client Classification
@@ -285,6 +304,119 @@ class ClientController
         }
 
         return redirect() -> back() -> with('success', 'Client data successfully sent to the central database');
+    }
+
+    private function clientIdentityListForBarangay(string $barangayCode)
+    {
+        return Client::query()
+            ->where('barangay', $barangayCode)
+            ->get([
+                'id',
+                'client_id',
+                'philippine_identification_system',
+                'first_name',
+                'middle_name',
+                'last_name',
+            ])
+            ->map(fn ($client) => [
+                'id' => $client->id,
+                'client_id' => $client->client_id,
+                'philippine_identification_system' => $client->philippine_identification_system,
+                'first_name' => $client->first_name,
+                'middle_name' => $client->middle_name,
+                'last_name' => $client->last_name,
+            ])
+            ->values();
+    }
+
+    private function surveyDuplicateDecision(array $data): array
+    {
+        $barangayCode = $data['barangayCode'] ?? null;
+        if (!$barangayCode) {
+            return [
+                'status' => 'unchecked',
+                'can_sync' => true,
+                'message' => 'Duplicate check skipped because this survey has no barangay.',
+                'match' => null,
+            ];
+        }
+
+        $survey = [
+            'philippine_identification_system' => $this->normalizePhilSys($data['philippineIdentificationSystem'] ?? null),
+            'first_name' => $this->normalizeNamePart($data['firstName'] ?? null),
+            'middle_name' => $this->normalizeNamePart($data['middleName'] ?? null),
+            'last_name' => $this->normalizeNamePart($data['lastName'] ?? null),
+        ];
+
+        $philSysMatch = null;
+        $nameMatch = null;
+
+        foreach ($this->clientIdentityListForBarangay($barangayCode) as $client) {
+            $normalizedClient = [
+                'philippine_identification_system' => $this->normalizePhilSys($client['philippine_identification_system'] ?? null),
+                'first_name' => $this->normalizeNamePart($client['first_name'] ?? null),
+                'middle_name' => $this->normalizeNamePart($client['middle_name'] ?? null),
+                'last_name' => $this->normalizeNamePart($client['last_name'] ?? null),
+            ];
+
+            $philSysMatches = $survey['philippine_identification_system'] === $normalizedClient['philippine_identification_system'];
+            $nameMatches =
+                $survey['first_name'] === $normalizedClient['first_name'] &&
+                $survey['middle_name'] === $normalizedClient['middle_name'] &&
+                $survey['last_name'] === $normalizedClient['last_name'];
+
+            if ($philSysMatches && $nameMatches) {
+                return [
+                    'status' => 'full_block',
+                    'can_sync' => false,
+                    'message' => 'Duplicate blocked: PhilSys and full name already match an existing client in this barangay.',
+                    'match' => $client,
+                ];
+            }
+
+            if ($philSysMatches && !$philSysMatch) {
+                $philSysMatch = $client;
+            }
+
+            if ($nameMatches && !$nameMatch) {
+                $nameMatch = $client;
+            }
+        }
+
+        if ($philSysMatch) {
+            return [
+                'status' => 'philsys_block',
+                'can_sync' => false,
+                'message' => 'Duplicate blocked: PhilSys already exists in this barangay.',
+                'match' => $philSysMatch,
+            ];
+        }
+
+        if ($nameMatch) {
+            return [
+                'status' => 'name_warning',
+                'can_sync' => true,
+                'message' => 'Possible duplicate: first, middle, and last name match an existing client in this barangay.',
+                'match' => $nameMatch,
+            ];
+        }
+
+        return [
+            'status' => 'clear',
+            'can_sync' => true,
+            'message' => 'No duplicate match found.',
+            'match' => null,
+        ];
+    }
+
+    private function normalizeNamePart($value): string
+    {
+        return mb_strtolower(preg_replace('/\s+/', ' ', trim((string) ($value ?? ''))));
+    }
+
+    private function normalizePhilSys($value): string
+    {
+        return mb_strtolower(preg_replace('/[\s-]+/', '', trim((string) ($value ?? ''))));
     }
 
 

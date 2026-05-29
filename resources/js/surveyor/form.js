@@ -7,6 +7,11 @@ import {
     startCamera, stopCamera, captureImage, preprocessImage, runOcr,
     parsePhilippineNationalIdText, fillSurveyFormFields
 } from './national-id-ocr.js';
+import {
+    DuplicateSyncError,
+    DuplicateWarningCancelledError,
+    assertSurveyCanSync,
+} from './duplicate-check.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('survey-form');
@@ -352,7 +357,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ─── Send to Server ─────────────────────────────────────────────────────
-    async function sendToServer(data) {
+    async function sendToServer(data, options = {}) {
+        await assertSurveyCanSync(data, {
+            confirmNameWarning: options.confirmNameWarning,
+            requireConfirmation: options.requireConfirmation,
+        });
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         const response = await fetch('/surveyor/merge', {
@@ -364,6 +374,15 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify(data),
         });
+
+        if (response.status === 409) {
+            const payload = await response.json().catch(() => ({}));
+            throw new DuplicateSyncError(payload.duplicate || {
+                status: 'philsys_block',
+                canSync: false,
+                message: payload.message || 'Duplicate client record detected.',
+            });
+        }
 
         if (!response.ok) {
             throw new Error(`Server responded with ${response.status}`);
@@ -388,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             for (const record of pending) {
                 try {
-                    await sendToServer(record.data);
+                    await sendToServer(record.data, { requireConfirmation: true });
                     await deleteSurvey(record.id);
                     synced++;
                 } catch (err) {
@@ -500,12 +519,26 @@ document.addEventListener('DOMContentLoaded', function () {
         if (navigator.onLine) {
             // ONLINE: Try sending directly
             try {
-                await sendToServer(data);
+                await sendToServer(data, { confirmNameWarning: true });
                 showToast('Survey submitted successfully!', 'success');
                 form.reset();
                 await restoreLocationSelections();
             } catch (err) {
                 // Network failed even though navigator.onLine — save locally
+                if (err instanceof DuplicateSyncError) {
+                    showToast(err.decision.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                    return;
+                }
+
+                if (err instanceof DuplicateWarningCancelledError) {
+                    showToast('Submission cancelled. Please review the possible duplicate.', 'info');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                    return;
+                }
+
                 console.warn('Online send failed, saving locally:', err);
                 try {
                     await saveSurvey(data);
