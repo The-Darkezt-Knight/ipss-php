@@ -11,6 +11,7 @@ const DB_NAME = 'ipss-offline';
 const DB_VERSION = 3; // Bumped to v3 for district-scoped locations
 const SURVEYS_STORE = 'pendingSurveys';
 const LOCATIONS_STORE = 'locations';
+export const MAX_PENDING_SURVEYS = 50;
 
 /**
  * Opens (or creates/upgrades) the IndexedDB database.
@@ -68,15 +69,26 @@ export async function saveSurvey(formData) {
         const tx = db.transaction(SURVEYS_STORE, 'readwrite');
         const store = tx.objectStore(SURVEYS_STORE);
 
-        const record = {
-            id: generateUUID(),
-            data: formData,
-            timestamp: new Date().toISOString(),
-        };
+        const countRequest = store.count();
+        countRequest.onsuccess = () => {
+            if (countRequest.result >= MAX_PENDING_SURVEYS) {
+                const error = new Error(`Offline sync queue is full. Sync or delete pending surveys before saving more than ${MAX_PENDING_SURVEYS}.`);
+                error.code = 'OFFLINE_SURVEY_LIMIT_REACHED';
+                reject(error);
+                return;
+            }
 
-        const request = store.add(record);
-        request.onsuccess = () => resolve(record.id);
-        request.onerror = () => reject(request.error);
+            const record = {
+                id: generateUUID(),
+                data: formData,
+                timestamp: new Date().toISOString(),
+            };
+
+            const request = store.add(record);
+            request.onsuccess = () => resolve(record.id);
+            request.onerror = () => reject(request.error);
+        };
+        countRequest.onerror = () => reject(countRequest.error);
 
         tx.oncomplete = () => db.close();
     });

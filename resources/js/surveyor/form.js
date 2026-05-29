@@ -1,5 +1,6 @@
 import {
     saveSurvey, getAllPendingSurveys, deleteSurvey, getPendingCount,
+    MAX_PENDING_SURVEYS,
     getCachedCitiesByDistrict, getCachedBarangays,
     hasLocationCache, prefetchLocationsByDistrict
 } from './offline-db.js';
@@ -93,6 +94,14 @@ document.addEventListener('DOMContentLoaded', function () {
             toast.classList.add('translate-x-full', 'opacity-0');
             setTimeout(() => toast.remove(), 500);
         }, 4000);
+    }
+
+    function isOfflineSurveyLimitError(error) {
+        return error?.code === 'OFFLINE_SURVEY_LIMIT_REACHED';
+    }
+
+    function showOfflineSurveyLimitToast() {
+        showToast(`Offline sync is limited to ${MAX_PENDING_SURVEYS} surveys. Sync or delete pending surveys before saving another.`, 'error');
     }
 
     // National ID OCR scanning stays client-side. The captured image is not uploaded
@@ -565,8 +574,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     form.reset();
                     await restoreLocationSelections();
                 } catch (dbErr) {
-                    showToast('Failed to save survey. Please try again.', 'error');
-                    console.error('IndexedDB save error:', dbErr);
+                    if (isOfflineSurveyLimitError(dbErr)) {
+                        showOfflineSurveyLimitToast();
+                    } else {
+                        showToast('Failed to save survey. Please try again.', 'error');
+                        console.error('IndexedDB save error:', dbErr);
+                    }
                 }
             }
         } else {
@@ -578,8 +591,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.reset();
                 await restoreLocationSelections();
             } catch (dbErr) {
-                showToast('Failed to save survey locally. Please try again.', 'error');
-                console.error('IndexedDB save error:', dbErr);
+                if (isOfflineSurveyLimitError(dbErr)) {
+                    showOfflineSurveyLimitToast();
+                } else {
+                    showToast('Failed to save survey locally. Please try again.', 'error');
+                    console.error('IndexedDB save error:', dbErr);
+                }
             }
         }
 
@@ -603,6 +620,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.reset();
                 await restoreLocationSelections();
             } catch (err) {
+                if (isOfflineSurveyLimitError(err)) {
+                    showOfflineSurveyLimitToast();
+                    return;
+                }
+
                 showToast('Failed to save survey. Please try again.', 'error');
                 console.error('Save for sync error:', err);
             }
