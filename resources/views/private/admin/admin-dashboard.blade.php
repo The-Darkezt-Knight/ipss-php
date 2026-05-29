@@ -5,6 +5,7 @@
         <meta charset="utf-8" />
         <meta content="width=device-width, initial-scale=1.0" name="viewport" />
         <title>IPSS Admin Dashboard</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link
@@ -706,7 +707,10 @@
                                                 ]))) ?: 'Unnamed Client';
                                                 $surveyorName = $surveyorNames[$client->surveyed_by] ?? 'Unknown Surveyor';
                                             @endphp
-                                            <tr class="zebra-stripe hover:bg-surface-container transition-colors">
+                                            <tr class="zebra-stripe hover:bg-surface-container transition-colors cursor-pointer"
+                                                data-admin-client-id="{{ $client->id }}"
+                                                data-admin-client-mode="edit"
+                                                data-admin-client-url="{{ route('admin.clients.show', $client) }}">
                                                 <td class="px-md py-4">
                                                     <div class="flex items-center gap-md">
                                                         <div class="w-10 h-10 rounded bg-green-100 flex items-center justify-center shrink-0">
@@ -1840,7 +1844,10 @@
                                                         default => 'bg-amber-100 text-amber-800',
                                                     };
                                                 @endphp
-                                                <tr class="zebra-stripe hover:bg-surface-container transition-colors group">
+                                                <tr class="zebra-stripe hover:bg-surface-container transition-colors group cursor-pointer"
+                                                    data-admin-client-id="{{ $client->id }}"
+                                                    data-admin-client-mode="view"
+                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}">
                                                     <td class="px-md py-4">
                                                         <input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
                                                     </td>
@@ -2000,7 +2007,10 @@
                                                     ]))) ?: 'Unnamed Client';
                                                     $surveyorName = $surveyorNames[$client->surveyed_by] ?? 'Unknown Surveyor';
                                                 @endphp
-                                                <tr class="zebra-stripe hover:bg-surface-container transition-colors group">
+                                                <tr class="zebra-stripe hover:bg-surface-container transition-colors group cursor-pointer"
+                                                    data-admin-client-id="{{ $client->id }}"
+                                                    data-admin-client-mode="view"
+                                                    data-admin-client-url="{{ route('admin.clients.show', $client) }}">
                                                     <td class="px-md py-4">
                                                         <div class="flex items-center gap-md">
                                                             <div class="w-10 h-10 rounded bg-secondary-container flex items-center justify-center shrink-0">
@@ -2081,6 +2091,42 @@
                         </div>
                     </section>
                 </main>
+            </div>
+        </div>
+        <!-- Reusable Client Details Modal -->
+        <div
+            id="admin-client-modal"
+            class="fixed inset-0 bg-on-background/50 backdrop-blur-sm z-[110] hidden items-center justify-center p-md"
+        >
+            <div class="bg-surface-container-lowest rounded-xl w-full max-w-5xl max-h-[92vh] shadow-2xl border border-outline-variant/20 flex flex-col overflow-hidden">
+                <div class="flex items-start justify-between gap-lg px-lg py-md border-b border-outline-variant bg-surface-container-low">
+                    <div>
+                        <div class="flex items-center gap-sm">
+                            <span id="admin-client-modal-icon" class="material-symbols-outlined text-primary">person_search</span>
+                            <h3 id="admin-client-modal-title" class="font-headline-sm text-headline-sm text-primary">Client Record</h3>
+                        </div>
+                        <p id="admin-client-modal-subtitle" class="text-body-sm text-on-surface-variant mt-xs">Loading client details...</p>
+                    </div>
+                    <button id="admin-client-modal-close" type="button" class="p-xs rounded-full hover:bg-surface-container-high transition-colors">
+                        <span class="material-symbols-outlined text-on-surface-variant">close</span>
+                    </button>
+                </div>
+                <div id="admin-client-modal-status" class="hidden mx-lg mt-md rounded-lg border px-md py-sm text-body-sm font-bold"></div>
+                <div class="overflow-y-auto flex-1 p-lg">
+                    <form id="admin-client-form" class="space-y-xl"></form>
+                </div>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-md px-lg py-md border-t border-outline-variant bg-surface-container-lowest">
+                    <div id="admin-client-modal-mode" class="text-body-sm text-on-surface-variant">Read-only</div>
+                    <div class="flex flex-wrap justify-end gap-sm">
+                        <div id="admin-client-status-actions" class="hidden flex flex-wrap justify-end gap-sm"></div>
+                        <button id="admin-client-modal-cancel" type="button" class="px-lg py-sm border border-outline-variant text-on-surface-variant rounded-lg hover:bg-surface-container-high font-bold">
+                            Close
+                        </button>
+                        <button id="admin-client-modal-save" type="button" class="hidden px-lg py-sm bg-primary text-on-primary rounded-lg hover:opacity-90 font-bold">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Modal Placeholder (Reject Action) -->
@@ -2226,6 +2272,318 @@
                     "'": "&#039;",
                 })[character]);
             }
+
+            const adminClientModal = document.getElementById("admin-client-modal");
+            const adminClientForm = document.getElementById("admin-client-form");
+            const adminClientModalTitle = document.getElementById("admin-client-modal-title");
+            const adminClientModalSubtitle = document.getElementById("admin-client-modal-subtitle");
+            const adminClientModalIcon = document.getElementById("admin-client-modal-icon");
+            const adminClientModalStatus = document.getElementById("admin-client-modal-status");
+            const adminClientModalMode = document.getElementById("admin-client-modal-mode");
+            const adminClientStatusActions = document.getElementById("admin-client-status-actions");
+            const adminClientModalSave = document.getElementById("admin-client-modal-save");
+            const adminClientModalClose = document.getElementById("admin-client-modal-close");
+            const adminClientModalCancel = document.getElementById("admin-client-modal-cancel");
+            let activeAdminClient = null;
+            let activeAdminClientMode = "view";
+
+            const adminClientSections = [
+                {
+                    title: "Client Status & Classification",
+                    icon: "category",
+                    fields: [
+                        ["statusOfClient", "Status of Client", "select", ["Level 0 - Would be or Potential Entrepreneurs", "New Registrant", "Renewal"]],
+                        ["specifyLevel", "Specify Level", "select", ["Potential", "Other Clients Assisted"]],
+                        ["categoryOfClient", "Category of Client", "text"],
+                        ["socialClassification", "Social Classification", "select", ["Abled", "Person with Disabilities"]],
+                        ["diffAbledType", "Differently-abled Type", "text"],
+                        ["isSenior", "Senior Citizen", "select", ["No", "Yes"]],
+                        ["isIndigeneous", "Indigenous People", "select", ["No", "Yes"]],
+                        ["msmeClassification", "MSME Classification", "select", ["Large - More than Php 100,000,000", "Medium - Php 15,000,001 to Php 100,000,000", "Micro - Up to Php 3,000,000", "Not Applicable - Would-be/Potential Entrepreneur", "Small - Php 3,000,001 to Php 15,000,000"]],
+                        ["clientDesignation", "Client Designation", "select", ["Owner", "Representative"]],
+                    ],
+                },
+                {
+                    title: "Digitalization",
+                    icon: "devices",
+                    fields: [
+                        ["levelOfDigitalization", "Level of Digitalization", "select", ["Level 0 - No use of digital tools", "Level 1 (Basic) - MSMEs that use basic digital tools for business", "Level 2 (Intermediate) - MSMEs that have an online presence", "Level 3 (Advanced) - Use of advanced digital tools"]],
+                        ["digitalTools", "Digital Tools", "text"],
+                    ],
+                },
+                {
+                    title: "Personal Information",
+                    icon: "person",
+                    fields: [
+                        ["firstName", "First Name", "text"],
+                        ["middleName", "Middle Name", "text"],
+                        ["lastName", "Last Name", "text"],
+                        ["suffix", "Suffix", "select", ["--N/A--", "SR", "JR", "I", "II", "III", "IV", "V"]],
+                        ["sex", "Sex", "select", ["Male", "Female"]],
+                        ["civilStatus", "Civil Status", "select", ["Legally Separated", "Married", "Single", "Widowed"]],
+                        ["birthdate", "Birthdate", "date"],
+                        ["citizenship", "Citizenship", "text"],
+                    ],
+                },
+                {
+                    title: "Identifiers",
+                    icon: "badge",
+                    fields: [
+                        ["philippineIdentificationSystem", "PhilSys ID", "text"],
+                    ],
+                },
+                {
+                    title: "Contact Details",
+                    icon: "call",
+                    fields: [
+                        ["mobileNumber", "Mobile Number", "text"],
+                        ["emailAddress", "Email Address", "email"],
+                        ["landlineNumber", "Landline Number", "text"],
+                        ["faxNumber", "Fax Number", "text"],
+                        ["socialMedia", "Social Media", "text"],
+                        ["website", "Website", "text"],
+                        ["eCommercePlatform", "E-Commerce Platform", "text"],
+                    ],
+                },
+                {
+                    title: "Location",
+                    icon: "location_on",
+                    fields: [
+                        ["regionCode", "Region", "text"],
+                        ["provinceCode", "Province", "text"],
+                        ["cityMunicipalityCode", "City / Municipality Code", "text"],
+                        ["barangayCode", "Barangay Code", "text"],
+                        ["district", "District", "text"],
+                        ["zipCode", "Zip Code", "text"],
+                        ["address", "Full Address", "textarea"],
+                        ["latitude", "Latitude", "text"],
+                        ["longitude", "Longitude", "text"],
+                    ],
+                },
+            ];
+
+            function adminClientInput(name, label, type, options, value, readonly) {
+                const disabled = readonly ? "disabled" : "";
+                const baseClass = readonly
+                    ? "p-md border border-outline-variant rounded-lg bg-surface-container text-body-sm text-on-surface-variant"
+                    : "p-md border border-outline rounded-lg bg-surface-bright text-body-sm focus:border-primary focus:ring-primary";
+
+                if (type === "textarea") {
+                    return `
+                        <div class="flex flex-col gap-xs md:col-span-2">
+                            <label class="text-label-md font-label-md text-on-surface-variant">${label}</label>
+                            <textarea data-admin-client-field="${name}" rows="2" ${disabled} class="${baseClass}">${escapeHtml(value)}</textarea>
+                        </div>
+                    `;
+                }
+
+                if (type === "select") {
+                    const values = Array.isArray(options) ? options : [];
+                    const selectedValue = String(value ?? "");
+                    const optionMarkup = ["", ...values]
+                        .filter((option, index, arr) => arr.indexOf(option) === index)
+                        .map((option) => `<option value="${escapeHtml(option)}" ${String(option) === selectedValue ? "selected" : ""}>${escapeHtml(option || "Select...")}</option>`)
+                        .join("");
+
+                    return `
+                        <div class="flex flex-col gap-xs">
+                            <label class="text-label-md font-label-md text-on-surface-variant">${label}</label>
+                            <select data-admin-client-field="${name}" ${disabled} class="${baseClass}">${optionMarkup}</select>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="flex flex-col gap-xs">
+                        <label class="text-label-md font-label-md text-on-surface-variant">${label}</label>
+                        <input data-admin-client-field="${name}" type="${type}" value="${escapeHtml(value)}" ${disabled} class="${baseClass}" />
+                    </div>
+                `;
+            }
+
+            function renderAdminClientForm(client, mode) {
+                const readonly = mode !== "edit";
+                const data = client.data || {};
+                adminClientForm.innerHTML = adminClientSections.map((section) => `
+                    <fieldset>
+                        <legend class="flex items-center gap-sm mb-md pb-xs border-b border-outline-variant w-full">
+                            <span class="material-symbols-outlined text-primary text-[18px]">${section.icon}</span>
+                            <span class="text-label-lg font-label-lg text-primary">${section.title}</span>
+                        </legend>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                            ${section.fields.map(([name, label, type, options]) => adminClientInput(name, label, type, options, data[name] ?? "", readonly)).join("")}
+                        </div>
+                    </fieldset>
+                `).join("");
+            }
+
+            function setAdminClientModalStatus(message, type = "info") {
+                adminClientModalStatus.textContent = message || "";
+                adminClientModalStatus.className = "hidden mx-lg mt-md rounded-lg border px-md py-sm text-body-sm font-bold";
+                if (!message) return;
+
+                adminClientModalStatus.classList.remove("hidden");
+                if (type === "error") {
+                    adminClientModalStatus.classList.add("border-red-300", "bg-red-50", "text-red-700");
+                } else if (type === "success") {
+                    adminClientModalStatus.classList.add("border-green-300", "bg-green-50", "text-green-700");
+                } else {
+                    adminClientModalStatus.classList.add("border-blue-300", "bg-blue-50", "text-blue-700");
+                }
+            }
+
+            function renderAdminClientStatusActions(client, mode) {
+                adminClientStatusActions.innerHTML = "";
+                adminClientStatusActions.classList.add("hidden");
+                if (mode === "edit") return;
+
+                const status = client.survey_status || "pending";
+                const actions = [];
+                if (status === "pending") {
+                    actions.push(["verified", "Verify", "verified", "bg-green-700"]);
+                    actions.push(["returned", "Return", "assignment_return", "bg-primary"]);
+                    actions.push(["rejected", "Reject", "cancel", "bg-red-700"]);
+                } else if (status === "returned") {
+                    actions.push(["pending", "Set Pending", "pending_actions", "bg-amber-700"]);
+                    actions.push(["rejected", "Reject", "cancel", "bg-red-700"]);
+                }
+
+                if (actions.length === 0) return;
+
+                adminClientStatusActions.classList.remove("hidden");
+                actions.forEach(([statusValue, label, icon, colorClass]) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = `inline-flex items-center gap-xs px-md py-sm ${colorClass} text-white rounded-lg font-bold hover:opacity-90`;
+                    button.innerHTML = `<span class="material-symbols-outlined text-[18px]">${icon}</span>${label}`;
+                    button.addEventListener("click", () => updateAdminClientStatus(client, statusValue));
+                    adminClientStatusActions.appendChild(button);
+                });
+            }
+
+            async function openAdminClientModal(url, mode = "view") {
+                activeAdminClient = null;
+                activeAdminClientMode = mode;
+                adminClientModal.classList.remove("hidden");
+                adminClientModal.classList.add("flex");
+                adminClientModalSave.classList.toggle("hidden", mode !== "edit");
+                adminClientModalMode.textContent = mode === "edit"
+                    ? "Editable from Dashboard"
+                    : "Read-only in Verification Queue";
+                adminClientModalTitle.textContent = "Client Record";
+                adminClientModalSubtitle.textContent = "Loading client details...";
+                adminClientModalIcon.textContent = mode === "edit" ? "edit_note" : "visibility";
+                adminClientForm.innerHTML = "";
+                renderAdminClientStatusActions({ survey_status: "loading" }, mode);
+                setAdminClientModalStatus("");
+
+                try {
+                    const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}ts=${Date.now()}`, {
+                        headers: { "Accept": "application/json" },
+                        cache: "no-store",
+                    });
+                    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+                    const payload = await response.json();
+                    activeAdminClient = payload.client;
+                    adminClientModalTitle.textContent = activeAdminClient.name;
+                    adminClientModalSubtitle.textContent = `Ref: ${activeAdminClient.client_id || "Auto-generated"} | Status: ${activeAdminClient.survey_status || "pending"}`;
+                    renderAdminClientForm(activeAdminClient, mode);
+                    renderAdminClientStatusActions(activeAdminClient, mode);
+                } catch (error) {
+                    console.error("Failed to load client:", error);
+                    setAdminClientModalStatus("Unable to load this client record.", "error");
+                }
+            }
+
+            function closeAdminClientModal() {
+                adminClientModal.classList.add("hidden");
+                adminClientModal.classList.remove("flex");
+                activeAdminClient = null;
+            }
+
+            function collectAdminClientFormData() {
+                const data = {};
+                adminClientForm.querySelectorAll("[data-admin-client-field]").forEach((field) => {
+                    data[field.dataset.adminClientField] = field.value;
+                });
+                return data;
+            }
+
+            async function saveAdminClient() {
+                if (!activeAdminClient || activeAdminClientMode !== "edit") return;
+
+                const originalText = adminClientModalSave.textContent;
+                adminClientModalSave.disabled = true;
+                adminClientModalSave.textContent = "Saving...";
+                setAdminClientModalStatus("");
+
+                try {
+                    const response = await fetch(activeAdminClient.urls.update, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
+                        },
+                        body: JSON.stringify(collectAdminClientFormData()),
+                    });
+                    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+                    const payload = await response.json();
+                    activeAdminClient = payload.client;
+                    adminClientModalTitle.textContent = activeAdminClient.name;
+                    adminClientModalSubtitle.textContent = `Ref: ${activeAdminClient.client_id || "Auto-generated"} | Status: ${activeAdminClient.survey_status || "pending"}`;
+                    setAdminClientModalStatus("Client record updated.", "success");
+                    fetchDashboardVerifiedLocations();
+                } catch (error) {
+                    console.error("Failed to update client:", error);
+                    setAdminClientModalStatus("Unable to save changes. Please try again.", "error");
+                } finally {
+                    adminClientModalSave.disabled = false;
+                    adminClientModalSave.textContent = originalText;
+                }
+            }
+
+            async function updateAdminClientStatus(client, statusValue) {
+                if (!client?.urls?.status) return;
+                if (!confirm(`Set this client to ${statusValue}?`)) return;
+
+                try {
+                    const response = await fetch(client.urls.status, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content"),
+                        },
+                        body: JSON.stringify({ survey_status: statusValue }),
+                    });
+                    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+                    window.location.href = "{{ route('admin') }}#verification";
+                    window.location.reload();
+                } catch (error) {
+                    console.error("Failed to update client status:", error);
+                    setAdminClientModalStatus("Unable to update verification status.", "error");
+                }
+            }
+
+            adminClientModalClose?.addEventListener("click", closeAdminClientModal);
+            adminClientModalCancel?.addEventListener("click", closeAdminClientModal);
+            adminClientModalSave?.addEventListener("click", saveAdminClient);
+            adminClientModal?.addEventListener("click", (event) => {
+                if (event.target === adminClientModal) closeAdminClientModal();
+            });
+
+            document.addEventListener("click", (event) => {
+                const row = event.target.closest("[data-admin-client-id]");
+                if (!row) return;
+                if (event.target.closest("button, a, input, select, textarea, label, form")) return;
+
+                const panel = row.closest("[data-admin-panel]");
+                const mode = row.dataset.adminClientMode === "edit" && panel?.dataset.adminPanel === "dashboard" ? "edit" : "view";
+                openAdminClientModal(row.dataset.adminClientUrl, mode);
+            });
 
             function formatSurveyorUpdatedAt(value) {
                 if (!value) return "Just submitted";
@@ -2562,6 +2920,10 @@
                                 <span>Status: ${escapeHtml(props.survey_status || "pending")}</span>
                             `)
                             .addTo(verificationClientMap);
+
+                        if (props.id) {
+                            openAdminClientModal(`/admin/clients/${props.id}`, "view");
+                        }
                     });
 
                     verificationClientMap.on("mouseenter", "verification-client-clusters", () => {
@@ -2785,6 +3147,10 @@
                                 <span>Status: verified</span>
                             `)
                             .addTo(dashboardVerifiedMap);
+
+                        if (props.id) {
+                            openAdminClientModal(`/admin/clients/${props.id}`, "edit");
+                        }
                     });
 
                     // Cursor styles
@@ -2865,19 +3231,6 @@
                 modal.classList.add("hidden");
                 modal.classList.remove("flex");
             }
-
-            // Add some micro-interactions
-            document.querySelectorAll("tr").forEach((row) => {
-                row.addEventListener("click", (e) => {
-                    if (
-                        e.target.type !== "checkbox" &&
-                        !e.target.closest("button")
-                    ) {
-                        // Logic to select row or show details
-                        console.log("Row clicked");
-                    }
-                });
-            });
 
             let adminAnalyticsChartsInitialized = false;
             function initializeAnalyticsCharts() {

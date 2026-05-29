@@ -433,6 +433,185 @@ class ClientController
         return mb_strtolower(preg_replace('/[\s-]+/', '', trim((string) ($value ?? ''))));
     }
 
+    public function adminShowClient(Client $client)
+    {
+        $this->abortUnlessAdmin();
+
+        return response()->json([
+            'success' => true,
+            'client' => $this->adminClientPayload($client),
+        ]);
+    }
+
+    public function adminUpdateClient(Request $request, Client $client)
+    {
+        $this->abortUnlessAdmin();
+
+        $validated = $this->validateEditableClientPayload($request);
+        $client->update($this->clientUpdateAttributes($validated));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Client record updated.',
+            'client' => $this->adminClientPayload($client->fresh()),
+        ]);
+    }
+
+    private function abortUnlessAdmin(): void
+    {
+        abort_unless(Auth::user()?->role === 'ROLE_ADMIN', 403);
+    }
+
+    private function validateEditableClientPayload(Request $request): array
+    {
+        return $request->validate([
+            "statusOfClient" => "nullable",
+            "specifyLevel" => "nullable",
+            "categoryOfClient" => "nullable",
+            "socialClassification" => "nullable",
+            "diffAbledType" => "nullable",
+            "isSenior" => "nullable",
+            "isIndigeneous" => "nullable",
+            "levelOfDigitalization" => "nullable",
+            "digitalTools" => "nullable",
+            "msmeClassification" => "nullable",
+            "clientDesignation" => "nullable",
+            "firstName" => "nullable",
+            "middleName" => "nullable",
+            "lastName" => "nullable",
+            "suffix" => "nullable",
+            "civilStatus" => "nullable",
+            "sex" => "nullable",
+            "birthdate" => "nullable",
+            "citizenship" => "nullable",
+            "philippineIdentificationSystem" => "nullable",
+            "regionCode" => "nullable",
+            "provinceCode" => "nullable",
+            "cityMunicipalityCode" => "nullable",
+            "barangayCode" => "nullable",
+            "district" => "nullable",
+            "zipCode" => "nullable",
+            "address" => "nullable",
+            "latitude" => "nullable",
+            "longitude" => "nullable",
+            "mobileNumber" => "nullable",
+            "emailAddress" => "nullable",
+            "landlineNumber" => "nullable",
+            "faxNumber" => "nullable",
+            "socialMedia" => "nullable",
+            "website" => "nullable",
+            "eCommercePlatform" => "nullable",
+        ]);
+    }
+
+    private function clientUpdateAttributes(array $validated): array
+    {
+        return [
+            'status_of_client' => $validated['statusOfClient'] ?? null,
+            'specify_level' => $validated['specifyLevel'] ?? null,
+            'category_of_client' => $validated['categoryOfClient'] ?? null,
+            'social_classification' => $validated['socialClassification'] ?? null,
+            'diff_abled_type' => $validated['diffAbledType'] ?? null,
+            'client_is_senior' => ($validated['isSenior'] ?? null) === 'Yes',
+            'client_is_indigeneous' => ($validated['isIndigeneous'] ?? null) === 'Yes',
+            'level_of_digitalization' => $validated['levelOfDigitalization'] ?? null,
+            'digital_tools' => $validated['digitalTools'] ?? null,
+            'msme_classification' => $validated['msmeClassification'] ?? null,
+            'client_designation' => $validated['clientDesignation'] ?? null,
+            'first_name' => $validated['firstName'] ?? null,
+            'middle_name' => $validated['middleName'] ?? null,
+            'last_name' => $validated['lastName'] ?? null,
+            'suffix' => $validated['suffix'] ?? null,
+            'civil_status' => $validated['civilStatus'] ?? null,
+            'sex' => $validated['sex'] ?? null,
+            'birthdate' => $validated['birthdate'] ?? null,
+            'citizenship' => $validated['citizenship'] ?? 'Filipino',
+            'philippine_identification_system' => $validated['philippineIdentificationSystem'] ?? null,
+            'region' => $validated['regionCode'] ?? null,
+            'province' => $validated['provinceCode'] ?? null,
+            'city_municipality' => $validated['cityMunicipalityCode'] ?? null,
+            'barangay' => $validated['barangayCode'] ?? null,
+            'district' => $validated['district'] ?? null,
+            'zip_code' => $validated['zipCode'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'mobile_number' => $validated['mobileNumber'] ?? null,
+            'email_address' => $validated['emailAddress'] ?? null,
+            'landline_number' => $validated['landlineNumber'] ?? null,
+            'fax_number' => $validated['faxNumber'] ?? null,
+            'social_media' => $validated['socialMedia'] ?? null,
+            'website' => $validated['website'] ?? null,
+            'e_commerce_platform' => $validated['eCommercePlatform'] ?? null,
+            'updated_at' => now(),
+        ];
+    }
+
+    private function adminClientPayload(Client $client): array
+    {
+        $data = [
+            'statusOfClient' => $client->status_of_client,
+            'specifyLevel' => $client->specify_level,
+            'categoryOfClient' => $client->category_of_client,
+            'socialClassification' => $client->social_classification,
+            'diffAbledType' => $client->diff_abled_type,
+            'isSenior' => $client->client_is_senior ? 'Yes' : 'No',
+            'isIndigeneous' => $client->client_is_indigeneous ? 'Yes' : 'No',
+            'levelOfDigitalization' => $client->level_of_digitalization,
+            'digitalTools' => $client->digital_tools,
+            'msmeClassification' => $client->msme_classification,
+            'clientDesignation' => $client->client_designation,
+            'firstName' => $client->first_name,
+            'middleName' => $client->middle_name,
+            'lastName' => $client->last_name,
+            'suffix' => $client->suffix,
+            'civilStatus' => $client->civil_status,
+            'sex' => $client->sex,
+            'birthdate' => $client->birthdate ? (string) $client->birthdate : null,
+            'citizenship' => $client->citizenship,
+            'philippineIdentificationSystem' => $client->philippine_identification_system,
+            'regionCode' => $client->region,
+            'provinceCode' => $client->province,
+            'cityMunicipalityCode' => $client->city_municipality,
+            'barangayCode' => $client->barangay,
+            'district' => $client->district,
+            'zipCode' => $client->zip_code,
+            'address' => $client->address,
+            'latitude' => $client->latitude,
+            'longitude' => $client->longitude,
+            'mobileNumber' => $client->mobile_number,
+            'emailAddress' => $client->email_address,
+            'landlineNumber' => $client->landline_number,
+            'faxNumber' => $client->fax_number,
+            'socialMedia' => $client->social_media,
+            'website' => $client->website,
+            'eCommercePlatform' => $client->e_commerce_platform,
+        ];
+
+        $name = trim(implode(' ', array_filter([
+            $client->first_name,
+            $client->middle_name,
+            $client->last_name,
+            $client->suffix && $client->suffix !== '--N/A--' ? $client->suffix : null,
+        ]))) ?: 'Unnamed Client';
+
+        return [
+            'id' => $client->id,
+            'client_id' => $client->client_id,
+            'name' => $name,
+            'survey_status' => $client->survey_status ?? 'pending',
+            'created_at' => optional($client->created_at)->toIso8601String(),
+            'updated_at' => optional($client->updated_at)->toIso8601String(),
+            'data' => $data,
+            'urls' => [
+                'show' => route('admin.clients.show', $client),
+                'update' => route('admin.clients.update', $client),
+                'status' => route('admin.clients.survey-status', $client),
+                'destroyRejected' => route('admin.clients.destroy-rejected', $client),
+            ],
+        ];
+    }
+
 
     //Updates the survey status of the client
     //then returns the admin to the #verification section of the page
