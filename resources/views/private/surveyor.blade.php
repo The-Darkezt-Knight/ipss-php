@@ -27,7 +27,7 @@
             rel="stylesheet"
         />
         <link
-            href="{{ asset('css/maplibre-map.css') }}"
+            href="{{ asset('css/maplibre-map.css') }}?v=20260529-2"
             rel="stylesheet"
         />
         @endif
@@ -609,6 +609,7 @@
             "
         ></div>
         <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+        <script src="{{ asset('js/map-style-control.js') }}?v=20260529-2"></script>
         <script>
             const surveyorClientMapPoints = @json($clientMapPoints ?? []);
 
@@ -637,6 +638,66 @@
                     }[character]));
                 }
 
+                const fallbackMapStyle = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+
+                function getInitialMapStyle() {
+                    return window.IpssMapStyles?.getStyle() || fallbackMapStyle;
+                }
+
+                function addMapStyleChooser(map, restoreLayers) {
+                    if (!window.IpssMapStyles) return;
+
+                    map.addControl(window.IpssMapStyles.createControl({
+                        initialStyle: window.IpssMapStyles.getPreference(),
+                        onChange: (styleKey, activeMap) => {
+                            restoreMapLayersAfterStyleChange(activeMap, restoreLayers);
+                            activeMap.setStyle(window.IpssMapStyles.getStyle(styleKey));
+                        },
+                    }), 'top-right');
+                }
+
+                function restoreMapLayersAfterStyleChange(map, restoreLayers) {
+                    if (typeof restoreLayers !== 'function') return;
+
+                    let restored = false;
+                    const restore = () => {
+                        if (restored) return;
+                        if (typeof map.isStyleLoaded === 'function' && !map.isStyleLoaded()) return;
+
+                        restored = true;
+                        requestAnimationFrame(() => restoreLayers());
+                    };
+
+                    map.once('style.load', restore);
+                    map.once('idle', restore);
+                    setTimeout(restore, 300);
+                    [900, 1800, 3000].forEach((delay) => {
+                        setTimeout(() => restoreLayers(), delay);
+                    });
+                }
+
+                function addMapSourceIfMissing(map, sourceId, source) {
+                    if (map.getSource(sourceId)) return true;
+
+                    try {
+                        map.addSource(sourceId, source);
+                        return true;
+                    } catch (error) {
+                        console.warn(`Unable to add map source: ${sourceId}`, error);
+                        return false;
+                    }
+                }
+
+                function addMapLayerIfMissing(map, layer) {
+                    if (map.getLayer(layer.id)) return;
+
+                    try {
+                        map.addLayer(layer);
+                    } catch (error) {
+                        console.warn(`Unable to add map layer: ${layer.id}`, error);
+                    }
+                }
+
                 function initializeDashboardMap() {
                     if (!dashboardMapEl || typeof maplibregl === 'undefined') return;
 
@@ -652,7 +713,7 @@
 
                     const map = new maplibregl.Map({
                         container: dashboardMapEl,
-                        style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+                        style: getInitialMapStyle(),
                         center: [122.9509, 10.6765],
                         zoom: 9,
                         minZoom: 8,
@@ -679,92 +740,109 @@
                             })),
                     };
 
-                    map.on('load', () => {
+                    const setupDashboardMapLayers = () => {
                         // ── Clustered GeoJSON source ──
-                        map.addSource('clients', {
+                        const sourceReady = addMapSourceIfMissing(map, 'clients', {
                             type: 'geojson',
                             data: geojson,
                             cluster: true,
                             clusterMaxZoom: 14,
                             clusterRadius: 50,
                         });
+                        if (!sourceReady) return;
 
                         // ── Cluster circles ──
-                        map.addLayer({
-                            id: 'clusters',
-                            type: 'circle',
-                            source: 'clients',
-                            filter: ['has', 'point_count'],
-                            paint: {
-                                'circle-color': [
-                                    'step', ['get', 'point_count'],
-                                    '#3a5f94',   // < 20
-                                    20, '#1f477b', // 20-99
-                                    100, '#001e40', // ≥ 100
-                                ],
-                                'circle-radius': [
-                                    'step', ['get', 'point_count'],
-                                    18,          // < 20
-                                    20, 24,      // 20-99
-                                    100, 32,     // ≥ 100
-                                ],
-                                'circle-stroke-width': 3,
-                                'circle-stroke-color': 'rgba(255,255,255,0.85)',
-                            },
-                        });
+                        if (!map.getLayer('clusters')) {
+                            addMapLayerIfMissing(map, {
+                                id: 'clusters',
+                                type: 'circle',
+                                source: 'clients',
+                                filter: ['has', 'point_count'],
+                                paint: {
+                                    'circle-color': [
+                                        'step', ['get', 'point_count'],
+                                        '#3a5f94',   // < 20
+                                        20, '#1f477b', // 20-99
+                                        100, '#001e40', // >= 100
+                                    ],
+                                    'circle-radius': [
+                                        'step', ['get', 'point_count'],
+                                        18,          // < 20
+                                        20, 24,      // 20-99
+                                        100, 32,     // >= 100
+                                    ],
+                                    'circle-stroke-width': 3,
+                                    'circle-stroke-color': 'rgba(255,255,255,0.85)',
+                                },
+                            });
+                        }
 
                         // ── Cluster count labels ──
-                        map.addLayer({
-                            id: 'cluster-count',
-                            type: 'symbol',
-                            source: 'clients',
-                            filter: ['has', 'point_count'],
-                            layout: {
-                                'text-field': '{point_count_abbreviated}',
-                                'text-size': 13,
-                                'text-font': ['Open Sans Bold'],
-                            },
-                            paint: {
-                                'text-color': '#ffffff',
-                            },
-                        });
+                        if (!map.getLayer('cluster-count')) {
+                            addMapLayerIfMissing(map, {
+                                id: 'cluster-count',
+                                type: 'symbol',
+                                source: 'clients',
+                                filter: ['has', 'point_count'],
+                                layout: {
+                                    'text-field': '{point_count_abbreviated}',
+                                    'text-size': 13,
+                                    'text-font': ['Open Sans Bold'],
+                                },
+                                paint: {
+                                    'text-color': '#ffffff',
+                                },
+                            });
+                        }
 
                         // ── Individual point halo ──
-                        map.addLayer({
-                            id: 'unclustered-point-halo',
-                            type: 'circle',
-                            source: 'clients',
-                            filter: ['!', ['has', 'point_count']],
-                            paint: {
-                                'circle-color': [
-                                    'case',
-                                    ['==', ['get', 'survey_status'], 'verified'], '#d9f99d',
-                                    ['==', ['get', 'survey_status'], 'returned'], '#bfdbfe',
-                                    '#FEF3C7',
-                                ],
-                                'circle-radius': 14,
-                                'circle-opacity': 0.5,
-                            },
-                        });
+                        if (!map.getLayer('unclustered-point-halo')) {
+                            addMapLayerIfMissing(map, {
+                                id: 'unclustered-point-halo',
+                                type: 'circle',
+                                source: 'clients',
+                                filter: ['!', ['has', 'point_count']],
+                                paint: {
+                                    'circle-color': [
+                                        'case',
+                                        ['==', ['get', 'survey_status'], 'verified'], '#d9f99d',
+                                        ['==', ['get', 'survey_status'], 'returned'], '#bfdbfe',
+                                        '#FEF3C7',
+                                    ],
+                                    'circle-radius': 14,
+                                    'circle-opacity': 0.5,
+                                },
+                            });
+                        }
 
                         // ── Individual point markers (status-coloured) ──
-                        map.addLayer({
-                            id: 'unclustered-point',
-                            type: 'circle',
-                            source: 'clients',
-                            filter: ['!', ['has', 'point_count']],
-                            paint: {
-                                'circle-color': [
-                                    'case',
-                                    ['==', ['get', 'survey_status'], 'verified'], '#84cc16',
-                                    ['==', ['get', 'survey_status'], 'returned'], '#001E40',
-                                    '#D97706',
-                                ],
-                                'circle-radius': 7,
-                                'circle-stroke-width': 2,
-                                'circle-stroke-color': '#ffffff',
-                            },
-                        });
+                        if (!map.getLayer('unclustered-point')) {
+                            addMapLayerIfMissing(map, {
+                                id: 'unclustered-point',
+                                type: 'circle',
+                                source: 'clients',
+                                filter: ['!', ['has', 'point_count']],
+                                paint: {
+                                    'circle-color': [
+                                        'case',
+                                        ['==', ['get', 'survey_status'], 'verified'], '#84cc16',
+                                        ['==', ['get', 'survey_status'], 'returned'], '#001E40',
+                                        '#D97706',
+                                    ],
+                                    'circle-radius': 7,
+                                    'circle-stroke-width': 2,
+                                    'circle-stroke-color': '#ffffff',
+                                },
+                            });
+                        }
+                    };
+
+                    addMapStyleChooser(map, setupDashboardMapLayers);
+
+                    let dashboardMapEventsBound = false;
+                    const bindDashboardMapEvents = () => {
+                        if (dashboardMapEventsBound) return;
+                        dashboardMapEventsBound = true;
 
                         // ── Click cluster → zoom in ──
                         map.on('click', 'clusters', async (e) => {
@@ -799,13 +877,22 @@
                         map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
                         map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
                         map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
+                    };
 
+                    const fitDashboardMapToData = () => {
                         // ── Fit bounds to data ──
                         if (geojson.features.length > 0) {
                             const bounds = new maplibregl.LngLatBounds();
                             geojson.features.forEach(f => bounds.extend(f.geometry.coordinates));
                             map.fitBounds(bounds, { padding: 48, maxZoom: 16 });
                         }
+                    };
+
+                    map.on('style.load', () => setupDashboardMapLayers());
+                    map.on('load', () => {
+                        setupDashboardMapLayers();
+                        bindDashboardMapEvents();
+                        fitDashboardMapToData();
                     });
                 }
 

@@ -21,7 +21,7 @@
             rel="stylesheet"
         />
         <link
-            href="{{ asset('css/maplibre-map.css') }}"
+            href="{{ asset('css/maplibre-map.css') }}?v=20260529-2"
             rel="stylesheet"
         />
         <link
@@ -2237,6 +2237,7 @@
             </button>
         </div>
         <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+        <script src="{{ asset('js/map-style-control.js') }}?v=20260529-2"></script>
         <script>
             let surveyorLocationPoints = @json($surveyorLocations ?? []);
             let adminSurveyorMap = null;
@@ -2271,6 +2272,66 @@
                     '"': "&quot;",
                     "'": "&#039;",
                 })[character]);
+            }
+
+            const fallbackMapStyle = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+
+            function getInitialMapStyle() {
+                return window.IpssMapStyles?.getStyle() || fallbackMapStyle;
+            }
+
+            function addMapStyleChooser(map, restoreLayers) {
+                if (!window.IpssMapStyles) return;
+
+                map.addControl(window.IpssMapStyles.createControl({
+                    initialStyle: window.IpssMapStyles.getPreference(),
+                    onChange: (styleKey, activeMap) => {
+                        restoreMapLayersAfterStyleChange(activeMap, restoreLayers);
+                        activeMap.setStyle(window.IpssMapStyles.getStyle(styleKey));
+                    },
+                }), "top-right");
+            }
+
+            function restoreMapLayersAfterStyleChange(map, restoreLayers) {
+                if (typeof restoreLayers !== "function") return;
+
+                let restored = false;
+                const restore = () => {
+                    if (restored) return;
+                    if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) return;
+
+                    restored = true;
+                    requestAnimationFrame(() => restoreLayers());
+                };
+
+                map.once("style.load", restore);
+                map.once("idle", restore);
+                setTimeout(restore, 300);
+                [900, 1800, 3000].forEach((delay) => {
+                    setTimeout(() => restoreLayers(), delay);
+                });
+            }
+
+            function addMapSourceIfMissing(map, sourceId, source) {
+                if (map.getSource(sourceId)) return true;
+
+                try {
+                    map.addSource(sourceId, source);
+                    return true;
+                } catch (error) {
+                    console.warn(`Unable to add map source: ${sourceId}`, error);
+                    return false;
+                }
+            }
+
+            function addMapLayerIfMissing(map, layer) {
+                if (map.getLayer(layer.id)) return;
+
+                try {
+                    map.addLayer(layer);
+                } catch (error) {
+                    console.warn(`Unable to add map layer: ${layer.id}`, error);
+                }
             }
 
             const adminClientModal = document.getElementById("admin-client-modal");
@@ -2694,7 +2755,7 @@
 
                 adminSurveyorMap = new maplibregl.Map({
                     container: surveyorMapEl,
-                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    style: getInitialMapStyle(),
                     center: [122.9509, 10.6765],
                     zoom: 9,
                     minZoom: 8,
@@ -2705,37 +2766,53 @@
 
                 adminSurveyorMap.addControl(new maplibregl.NavigationControl(), "top-right");
 
-                adminSurveyorMap.on("load", () => {
+                const setupSurveyorMapLayers = ({ fit = false } = {}) => {
                     adminSurveyorMapLoaded = true;
-                    adminSurveyorMap.addSource("surveyors", {
+
+                    const sourceReady = addMapSourceIfMissing(adminSurveyorMap, "surveyors", {
                         type: "geojson",
                         data: buildSurveyorLocationGeoJson(),
                     });
+                    if (!sourceReady) return;
 
-                    adminSurveyorMap.addLayer({
-                        id: "surveyor-presence-halo",
-                        type: "circle",
-                        source: "surveyors",
-                        paint: {
-                            "circle-color": "#a7c8ff",
-                            "circle-radius": 18,
-                            "circle-opacity": 0.35,
-                            "circle-stroke-width": 1,
-                            "circle-stroke-color": "#ffffff",
-                        },
-                    });
+                    if (!adminSurveyorMap.getLayer("surveyor-presence-halo")) {
+                        addMapLayerIfMissing(adminSurveyorMap, {
+                            id: "surveyor-presence-halo",
+                            type: "circle",
+                            source: "surveyors",
+                            paint: {
+                                "circle-color": "#a7c8ff",
+                                "circle-radius": 18,
+                                "circle-opacity": 0.35,
+                                "circle-stroke-width": 1,
+                                "circle-stroke-color": "#ffffff",
+                            },
+                        });
+                    }
 
-                    adminSurveyorMap.addLayer({
-                        id: "surveyor-presence-point",
-                        type: "circle",
-                        source: "surveyors",
-                        paint: {
-                            "circle-color": "#001e40",
-                            "circle-radius": 8,
-                            "circle-stroke-width": 3,
-                            "circle-stroke-color": "#ffffff",
-                        },
-                    });
+                    if (!adminSurveyorMap.getLayer("surveyor-presence-point")) {
+                        addMapLayerIfMissing(adminSurveyorMap, {
+                            id: "surveyor-presence-point",
+                            type: "circle",
+                            source: "surveyors",
+                            paint: {
+                                "circle-color": "#001e40",
+                                "circle-radius": 8,
+                                "circle-stroke-width": 3,
+                                "circle-stroke-color": "#ffffff",
+                            },
+                        });
+                    }
+
+                    refreshSurveyorMapSource({ fit });
+                };
+
+                addMapStyleChooser(adminSurveyorMap, setupSurveyorMapLayers);
+
+                let surveyorMapEventsBound = false;
+                const bindSurveyorMapEvents = () => {
+                    if (surveyorMapEventsBound) return;
+                    surveyorMapEventsBound = true;
 
                     adminSurveyorMap.on("click", "surveyor-presence-point", (event) => {
                         const coordinates = event.features[0].geometry.coordinates.slice();
@@ -2758,8 +2835,12 @@
                     adminSurveyorMap.on("mouseleave", "surveyor-presence-point", () => {
                         adminSurveyorMap.getCanvas().style.cursor = "";
                     });
+                };
 
-                    refreshSurveyorMapSource({ fit: true });
+                adminSurveyorMap.on("style.load", () => setupSurveyorMapLayers());
+                adminSurveyorMap.on("load", () => {
+                    setupSurveyorMapLayers({ fit: true });
+                    bindSurveyorMapEvents();
                 });
             }
 
@@ -2848,7 +2929,7 @@
 
                 verificationClientMap = new maplibregl.Map({
                     container: verificationClientMapEl,
-                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    style: getInitialMapStyle(),
                     center: [122.9509, 10.6765],
                     zoom: 9,
                     minZoom: 8,
@@ -2859,76 +2940,94 @@
 
                 verificationClientMap.addControl(new maplibregl.NavigationControl(), "top-right");
 
-                verificationClientMap.on("load", () => {
+                const setupVerificationClientMapLayers = ({ fit = false } = {}) => {
                     verificationClientMapLoaded = true;
-                    verificationClientMap.addSource("verification-clients", {
+
+                    const sourceReady = addMapSourceIfMissing(verificationClientMap, "verification-clients", {
                         type: "geojson",
                         data: buildVerificationClientMapGeoJson(),
                         cluster: true,
                         clusterMaxZoom: 14,
                         clusterRadius: 50,
                     });
+                    if (!sourceReady) return;
 
-                    verificationClientMap.addLayer({
-                        id: "verification-client-clusters",
-                        type: "circle",
-                        source: "verification-clients",
-                        filter: ["has", "point_count"],
-                        paint: {
-                            "circle-color": [
-                                "step", ["get", "point_count"],
-                                "#FEF3C7",
-                                20, "#FDE68A",
-                                100, "#FCD34D",
-                            ],
-                            "circle-radius": [
-                                "step", ["get", "point_count"],
-                                18,
-                                20, 24,
-                                100, 32,
-                            ],
-                            "circle-stroke-width": 3,
-                            "circle-stroke-color": "rgba(255,255,255,0.85)",
-                        },
-                    });
+                    if (!verificationClientMap.getLayer("verification-client-clusters")) {
+                        addMapLayerIfMissing(verificationClientMap, {
+                            id: "verification-client-clusters",
+                            type: "circle",
+                            source: "verification-clients",
+                            filter: ["has", "point_count"],
+                            paint: {
+                                "circle-color": [
+                                    "step", ["get", "point_count"],
+                                    "#FEF3C7",
+                                    20, "#FDE68A",
+                                    100, "#FCD34D",
+                                ],
+                                "circle-radius": [
+                                    "step", ["get", "point_count"],
+                                    18,
+                                    20, 24,
+                                    100, 32,
+                                ],
+                                "circle-stroke-width": 3,
+                                "circle-stroke-color": "rgba(255,255,255,0.85)",
+                            },
+                        });
+                    }
 
-                    verificationClientMap.addLayer({
-                        id: "verification-client-cluster-count",
-                        type: "symbol",
-                        source: "verification-clients",
-                        filter: ["has", "point_count"],
-                        layout: {
-                            "text-field": "{point_count_abbreviated}",
-                            "text-size": 13,
-                            "text-font": ["Open Sans Bold"],
-                        },
-                        paint: {
-                            "text-color": "#ffffff",
-                        },
-                    });
+                    if (!verificationClientMap.getLayer("verification-client-cluster-count")) {
+                        addMapLayerIfMissing(verificationClientMap, {
+                            id: "verification-client-cluster-count",
+                            type: "symbol",
+                            source: "verification-clients",
+                            filter: ["has", "point_count"],
+                            layout: {
+                                "text-field": "{point_count_abbreviated}",
+                                "text-size": 13,
+                                "text-font": ["Open Sans Bold"],
+                            },
+                            paint: {
+                                "text-color": "#ffffff",
+                            },
+                        });
+                    }
 
-                    verificationClientMap.addLayer({
-                        id: "verification-client-point",
-                        type: "circle",
-                        source: "verification-clients",
-                        filter: ["!", ["has", "point_count"]],
-                        paint: {
-                            "circle-color": [
-                                "case",
-                                ["==", ["get", "survey_status"], "returned"],
-                                "#001E40",
-                                "#FEF3C7",
-                            ],
-                            "circle-radius": 7,
-                            "circle-stroke-width": 2,
-                            "circle-stroke-color": [
-                                "case",
-                                ["==", ["get", "survey_status"], "returned"],
-                                "#ffffff",
-                                "#D97706",
-                            ],
-                        },
-                    });
+                    if (!verificationClientMap.getLayer("verification-client-point")) {
+                        addMapLayerIfMissing(verificationClientMap, {
+                            id: "verification-client-point",
+                            type: "circle",
+                            source: "verification-clients",
+                            filter: ["!", ["has", "point_count"]],
+                            paint: {
+                                "circle-color": [
+                                    "case",
+                                    ["==", ["get", "survey_status"], "returned"],
+                                    "#001E40",
+                                    "#FEF3C7",
+                                ],
+                                "circle-radius": 7,
+                                "circle-stroke-width": 2,
+                                "circle-stroke-color": [
+                                    "case",
+                                    ["==", ["get", "survey_status"], "returned"],
+                                    "#ffffff",
+                                    "#D97706",
+                                ],
+                            },
+                        });
+                    }
+
+                    refreshVerificationClientMapSource({ fit });
+                };
+
+                addMapStyleChooser(verificationClientMap, setupVerificationClientMapLayers);
+
+                let verificationClientMapEventsBound = false;
+                const bindVerificationClientMapEvents = () => {
+                    if (verificationClientMapEventsBound) return;
+                    verificationClientMapEventsBound = true;
 
                     verificationClientMap.on("click", "verification-client-clusters", async (event) => {
                         const features = verificationClientMap.queryRenderedFeatures(event.point, { layers: ["verification-client-clusters"] });
@@ -2968,8 +3067,12 @@
                     verificationClientMap.on("mouseleave", "verification-client-point", () => {
                         verificationClientMap.getCanvas().style.cursor = "";
                     });
+                };
 
-                    refreshVerificationClientMapSource({ fit: true });
+                verificationClientMap.on("style.load", () => setupVerificationClientMapLayers());
+                verificationClientMap.on("load", () => {
+                    setupVerificationClientMapLayers({ fit: true });
+                    bindVerificationClientMapEvents();
                 });
             }
 
@@ -3066,7 +3169,7 @@
 
                 dashboardVerifiedMap = new maplibregl.Map({
                     container: dashboardVerifiedMapEl,
-                    style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+                    style: getInitialMapStyle(),
                     center: [122.9509, 10.6765],
                     zoom: 9,
                     minZoom: 8,
@@ -3077,84 +3180,99 @@
 
                 dashboardVerifiedMap.addControl(new maplibregl.NavigationControl(), "top-right");
 
-                dashboardVerifiedMap.on("load", () => {
+                const setupDashboardVerifiedMapLayers = ({ fit = false } = {}) => {
                     dashboardVerifiedMapLoaded = true;
-                    dashboardVerifiedMap.addSource("dashboard-verified-clients", {
+
+                    const sourceReady = addMapSourceIfMissing(dashboardVerifiedMap, "dashboard-verified-clients", {
                         type: "geojson",
                         data: buildDashboardVerifiedMapGeoJson(),
                         cluster: true,
                         clusterMaxZoom: 14,
                         clusterRadius: 50,
                     });
+                    if (!sourceReady) return;
 
-                    // Cluster circles
-                    dashboardVerifiedMap.addLayer({
-                        id: "dashboard-verified-clusters",
-                        type: "circle",
-                        source: "dashboard-verified-clients",
-                        filter: ["has", "point_count"],
-                        paint: {
-                            "circle-color": [
-                                "step", ["get", "point_count"],
-                                "#d9f99d",
-                                10, "#bef264",
-                                50, "#a3e635",
-                            ],
-                            "circle-radius": [
-                                "step", ["get", "point_count"],
-                                18,
-                                10, 24,
-                                50, 32,
-                            ],
-                            "circle-stroke-width": 3,
-                            "circle-stroke-color": "rgba(255,255,255,0.85)",
-                        },
-                    });
+                    if (!dashboardVerifiedMap.getLayer("dashboard-verified-clusters")) {
+                        addMapLayerIfMissing(dashboardVerifiedMap, {
+                            id: "dashboard-verified-clusters",
+                            type: "circle",
+                            source: "dashboard-verified-clients",
+                            filter: ["has", "point_count"],
+                            paint: {
+                                "circle-color": [
+                                    "step", ["get", "point_count"],
+                                    "#d9f99d",
+                                    10, "#bef264",
+                                    50, "#a3e635",
+                                ],
+                                "circle-radius": [
+                                    "step", ["get", "point_count"],
+                                    18,
+                                    10, 24,
+                                    50, 32,
+                                ],
+                                "circle-stroke-width": 3,
+                                "circle-stroke-color": "rgba(255,255,255,0.85)",
+                            },
+                        });
+                    }
 
-                    // Cluster count labels
-                    dashboardVerifiedMap.addLayer({
-                        id: "dashboard-verified-cluster-count",
-                        type: "symbol",
-                        source: "dashboard-verified-clients",
-                        filter: ["has", "point_count"],
-                        layout: {
-                            "text-field": "{point_count_abbreviated}",
-                            "text-size": 13,
-                            "text-font": ["Open Sans Bold"],
-                        },
-                        paint: {
-                            "text-color": "#365314",
-                        },
-                    });
+                    if (!dashboardVerifiedMap.getLayer("dashboard-verified-cluster-count")) {
+                        addMapLayerIfMissing(dashboardVerifiedMap, {
+                            id: "dashboard-verified-cluster-count",
+                            type: "symbol",
+                            source: "dashboard-verified-clients",
+                            filter: ["has", "point_count"],
+                            layout: {
+                                "text-field": "{point_count_abbreviated}",
+                                "text-size": 13,
+                                "text-font": ["Open Sans Bold"],
+                            },
+                            paint: {
+                                "text-color": "#365314",
+                            },
+                        });
+                    }
 
-                    // Individual point halo
-                    dashboardVerifiedMap.addLayer({
-                        id: "dashboard-verified-point-halo",
-                        type: "circle",
-                        source: "dashboard-verified-clients",
-                        filter: ["!", ["has", "point_count"]],
-                        paint: {
-                            "circle-color": "#d9f99d",
-                            "circle-radius": 14,
-                            "circle-opacity": 0.55,
-                        },
-                    });
+                    if (!dashboardVerifiedMap.getLayer("dashboard-verified-point-halo")) {
+                        addMapLayerIfMissing(dashboardVerifiedMap, {
+                            id: "dashboard-verified-point-halo",
+                            type: "circle",
+                            source: "dashboard-verified-clients",
+                            filter: ["!", ["has", "point_count"]],
+                            paint: {
+                                "circle-color": "#d9f99d",
+                                "circle-radius": 14,
+                                "circle-opacity": 0.55,
+                            },
+                        });
+                    }
 
-                    // Individual points
-                    dashboardVerifiedMap.addLayer({
-                        id: "dashboard-verified-point",
-                        type: "circle",
-                        source: "dashboard-verified-clients",
-                        filter: ["!", ["has", "point_count"]],
-                        paint: {
-                            "circle-color": "#84cc16",
-                            "circle-radius": 7,
-                            "circle-stroke-width": 2,
-                            "circle-stroke-color": "#ffffff",
-                        },
-                    });
+                    if (!dashboardVerifiedMap.getLayer("dashboard-verified-point")) {
+                        addMapLayerIfMissing(dashboardVerifiedMap, {
+                            id: "dashboard-verified-point",
+                            type: "circle",
+                            source: "dashboard-verified-clients",
+                            filter: ["!", ["has", "point_count"]],
+                            paint: {
+                                "circle-color": "#84cc16",
+                                "circle-radius": 7,
+                                "circle-stroke-width": 2,
+                                "circle-stroke-color": "#ffffff",
+                            },
+                        });
+                    }
 
-                    // Click cluster to zoom in
+                    refreshDashboardVerifiedMapSource({ fit });
+                };
+
+                addMapStyleChooser(dashboardVerifiedMap, setupDashboardVerifiedMapLayers);
+
+                let dashboardVerifiedMapEventsBound = false;
+                const bindDashboardVerifiedMapEvents = () => {
+                    if (dashboardVerifiedMapEventsBound) return;
+                    dashboardVerifiedMapEventsBound = true;
+
                     dashboardVerifiedMap.on("click", "dashboard-verified-clusters", async (event) => {
                         const features = dashboardVerifiedMap.queryRenderedFeatures(event.point, { layers: ["dashboard-verified-clusters"] });
                         const clusterId = features[0].properties.cluster_id;
@@ -3162,7 +3280,6 @@
                         dashboardVerifiedMap.easeTo({ center: features[0].geometry.coordinates, zoom });
                     });
 
-                    // Click individual point to show popup
                     dashboardVerifiedMap.on("click", "dashboard-verified-point", (event) => {
                         const coordinates = event.features[0].geometry.coordinates.slice();
                         const props = event.features[0].properties;
@@ -3183,7 +3300,6 @@
                         }
                     });
 
-                    // Cursor styles
                     dashboardVerifiedMap.on("mouseenter", "dashboard-verified-clusters", () => {
                         dashboardVerifiedMap.getCanvas().style.cursor = "pointer";
                     });
@@ -3196,7 +3312,12 @@
                     dashboardVerifiedMap.on("mouseleave", "dashboard-verified-point", () => {
                         dashboardVerifiedMap.getCanvas().style.cursor = "";
                     });
+                };
 
+                dashboardVerifiedMap.on("style.load", () => setupDashboardVerifiedMapLayers());
+                dashboardVerifiedMap.on("load", () => {
+                    setupDashboardVerifiedMapLayers({ fit: true });
+                    bindDashboardVerifiedMapEvents();
                     fetchDashboardVerifiedLocations({ fit: true });
                 });
             }

@@ -14,7 +14,7 @@
             rel="stylesheet"
         />
         <link
-            href="{{ asset('css/maplibre-map.css') }}"
+            href="{{ asset('css/maplibre-map.css') }}?v=20260529-2"
             rel="stylesheet"
         />
         <script id="tailwind-config">
@@ -96,12 +96,29 @@
         </main>
 
         <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+        <script src="{{ asset('js/map-style-control.js') }}?v=20260529-2"></script>
         <script>
             const singleClientMapPoint = @json($clientMapPoint);
 
             document.addEventListener('DOMContentLoaded', function () {
                 const mapEl = document.getElementById('single-client-map');
                 if (!mapEl || !singleClientMapPoint || typeof maplibregl === 'undefined') return;
+                const fallbackMapStyle = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+
+                function getInitialMapStyle() {
+                    return window.IpssMapStyles?.getStyle() || fallbackMapStyle;
+                }
+
+                function addMapStyleChooser(map) {
+                    if (!window.IpssMapStyles) return;
+
+                    map.addControl(window.IpssMapStyles.createControl({
+                        initialStyle: window.IpssMapStyles.getPreference(),
+                        onChange: (styleKey, activeMap) => {
+                            activeMap.setStyle(window.IpssMapStyles.getStyle(styleKey));
+                        },
+                    }), 'top-right');
+                }
 
                 // Negros Island bounding box: [west, south, east, north]
                 const negrosBounds = [122.25, 9.0, 123.55, 11.1];
@@ -116,26 +133,7 @@
 
                 const map = new maplibregl.Map({
                     container: mapEl,
-                    style: {
-                        version: 8,
-                        sources: {
-                            'esri-satellite': {
-                                type: 'raster',
-                                tiles: [
-                                    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                                ],
-                                tileSize: 256,
-                                attribution: 'Tiles © Esri'
-                            }
-                        },
-                        layers: [
-                            {
-                                id: 'esri-satellite-layer',
-                                type: 'raster',
-                                source: 'esri-satellite'
-                            }
-                        ]
-                    },
+                    style: getInitialMapStyle(),
                     center: position,
                     zoom: 16,
                     minZoom: 8,
@@ -144,6 +142,7 @@
                     attributionControl: true,
                 });
                 map.addControl(new maplibregl.NavigationControl(), 'top-right');
+                addMapStyleChooser(map);
 
                 const popup = new maplibregl.Popup({ offset: 25 })
                     .setHTML(`

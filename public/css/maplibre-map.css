@@ -98,3 +98,70 @@
 .point-marker svg {
     filter: drop-shadow(0 2px 4px rgba(0, 30, 64, 0.3));
 }
+
+.ipss-map-style-control {
+    display: flex;
+    gap: 3px;
+    padding: 4px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(10px);
+}
+
+.ipss-map-style-control button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 42px;
+    height: 30px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-family: "Public Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color 0.16s ease,
+        box-shadow 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
+}
+
+.ipss-map-style-control button .material-symbols-outlined {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.ipss-map-style-control button:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: #001e40;
+}
+
+.ipss-map-style-control button.is-active {
+    background: #001e40;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(0, 30, 64, 0.25);
+}
+
+.ipss-map-style-control button:focus-visible {
+    outline: 2px solid #f97316;
+    outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+    .ipss-map-style-control button {
+        min-width: 32px;
+        padding: 0 7px;
+    }
+
+    .ipss-map-style-control button span:last-child {
+        display: none;
+    }
+}
