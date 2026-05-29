@@ -1461,10 +1461,17 @@
     <div id="edit-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col mx-4">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant bg-surface-container-low">
-                <div class="flex items-center gap-sm">
-                    <span class="material-symbols-outlined text-primary">edit_note</span>
-                    <h2 class="text-headline-sm font-headline-sm text-primary">Edit Client Record</h2>
+            <div class="flex items-start justify-between gap-md px-lg py-md border-b border-outline-variant bg-surface-container-low">
+                <div class="flex flex-col gap-xs">
+                    <div class="flex items-center gap-sm">
+                        <span class="material-symbols-outlined text-primary">edit_note</span>
+                        <h2 id="edit-modal-title" class="text-headline-sm font-headline-sm text-primary">Edit Client Record</h2>
+                    </div>
+                    <div id="edit-modal-issue"
+                        class="hidden items-start gap-sm rounded-lg border px-md py-sm text-body-sm font-bold">
+                        <span class="material-symbols-outlined text-[20px]">error</span>
+                        <span id="edit-modal-issue-text"></span>
+                    </div>
                 </div>
                 <button id="edit-modal-close" class="p-xs rounded-full hover:bg-surface-container-high transition-colors">
                     <span class="material-symbols-outlined text-on-surface-variant">close</span>

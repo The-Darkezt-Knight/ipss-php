@@ -82,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModalClose = document.getElementById('edit-modal-close');
     const editModalCancel = document.getElementById('edit-modal-cancel');
     const editModalSave = document.getElementById('edit-modal-save');
+    const editModalTitle = document.getElementById('edit-modal-title');
+    const editModalIssue = document.getElementById('edit-modal-issue');
+    const editModalIssueText = document.getElementById('edit-modal-issue-text');
     const selectClass = 'p-md border border-outline rounded-lg bg-surface-bright text-body-sm';
     let activeEditRecord = null;
 
@@ -329,6 +332,65 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'No';
     }
 
+    function duplicateDecisionHeadline(decision) {
+        if (!decision) return '';
+
+        if (decision.status === 'full_block') {
+            return 'Sync blocked: exact client already exists.';
+        }
+
+        if (decision.status === 'philsys_block') {
+            return 'Sync blocked: PhilSys already exists.';
+        }
+
+        if (decision.status === 'name_warning') {
+            return 'Warning: name already exists. Confirmation is required before sync.';
+        }
+
+        if (decision.status === 'unchecked') {
+            return 'Duplicate check was skipped for this record.';
+        }
+
+        return '';
+    }
+
+    function setEditModalDuplicateIssue(decision) {
+        if (!editModalTitle || !editModalIssue || !editModalIssueText) return;
+
+        editModalIssue.classList.add('hidden');
+        editModalIssue.classList.remove(
+            'flex',
+            'border-red-300',
+            'bg-red-50',
+            'text-red-700',
+            'border-amber-300',
+            'bg-amber-50',
+            'text-amber-800',
+            'border-blue-300',
+            'bg-blue-50',
+            'text-blue-800'
+        );
+        editModalTitle.classList.remove('text-red-700', 'text-amber-800');
+        editModalTitle.classList.add('text-primary');
+
+        const headline = duplicateDecisionHeadline(decision);
+        if (!headline || decision.status === 'clear') return;
+
+        const isWarning = decision.status === 'name_warning';
+        const isUnchecked = decision.status === 'unchecked';
+
+        editModalTitle.classList.remove('text-primary');
+        editModalTitle.classList.add(isWarning ? 'text-amber-800' : 'text-red-700');
+        editModalIssue.classList.remove('hidden');
+        editModalIssue.classList.add('flex');
+        editModalIssue.classList.add(
+            isUnchecked ? 'border-blue-300' : (isWarning ? 'border-amber-300' : 'border-red-300'),
+            isUnchecked ? 'bg-blue-50' : (isWarning ? 'bg-amber-50' : 'bg-red-50'),
+            isUnchecked ? 'text-blue-800' : (isWarning ? 'text-amber-800' : 'text-red-700')
+        );
+        editModalIssueText.textContent = `${headline} ${decision.message || ''}`.trim();
+    }
+
     async function populateEditLocationDropdowns(data) {
         const citySelect = document.getElementById('edit-cityMunicipalityCode');
         const barangaySelect = document.getElementById('edit-barangayCode');
@@ -397,6 +459,16 @@ document.addEventListener('DOMContentLoaded', () => {
         activeEditRecord = record;
         const d = record.data || {};
         editRecordId.value = record.id;
+        setEditModalDuplicateIssue(record.duplicateDecision);
+
+        if (record.source !== 'returned') {
+            try {
+                record.duplicateDecision = await checkSurveyDuplicate(record.data);
+                setEditModalDuplicateIssue(record.duplicateDecision);
+            } catch (err) {
+                console.warn('[Duplicate Check] Failed to evaluate edit modal issue:', err);
+            }
+        }
 
         await populateEditLocationDropdowns(d);
 
@@ -436,6 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeEditModal() {
         activeEditRecord = null;
+        setEditModalDuplicateIssue(null);
         editModal.classList.add('hidden');
         editModal.classList.remove('flex');
         document.body.style.overflow = '';
@@ -543,48 +616,83 @@ document.addEventListener('DOMContentLoaded', () => {
     function duplicateStatusMarkup(decision) {
         if (!decision || decision.status === 'clear') {
             return `
-                <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
-                    <span class="w-2 h-2 rounded-full bg-secondary"></span> Queued
-                </span>
+                <div class="flex flex-col gap-xs">
+                    <span class="flex items-center gap-xs text-secondary-fixed-dim font-bold">
+                        <span class="w-2 h-2 rounded-full bg-secondary"></span> Ready to sync
+                    </span>
+                    <span class="text-[11px] text-on-surface-variant">No duplicate match found.</span>
+                </div>
             `;
         }
 
         if (decision.status === 'full_block') {
             return `
-                <span class="flex items-center gap-xs text-error font-bold" title="${decision.message}">
-                    <span class="material-symbols-outlined text-[16px]">block</span> Duplicate
-                </span>
+                <div class="flex flex-col gap-xs" title="${decision.message}">
+                    <span class="flex items-center gap-xs text-red-700 font-bold">
+                        <span class="material-symbols-outlined text-[18px]">block</span> Sync blocked
+                    </span>
+                    <span class="text-[11px] leading-4 text-red-700 font-semibold">Exact PhilSys and name match already exists.</span>
+                </div>
             `;
         }
 
         if (decision.status === 'philsys_block') {
             return `
-                <span class="flex items-center gap-xs text-error font-bold" title="${decision.message}">
-                    <span class="material-symbols-outlined text-[16px]">badge</span> PhilSys exists
-                </span>
+                <div class="flex flex-col gap-xs" title="${decision.message}">
+                    <span class="flex items-center gap-xs text-red-700 font-bold">
+                        <span class="material-symbols-outlined text-[18px]">badge</span> Sync blocked
+                    </span>
+                    <span class="text-[11px] leading-4 text-red-700 font-semibold">PhilSys ID is already registered in this barangay.</span>
+                </div>
             `;
         }
 
         if (decision.status === 'name_warning') {
             return `
-                <span class="flex items-center gap-xs text-amber-700 font-bold" title="${decision.message}">
-                    <span class="material-symbols-outlined text-[16px]">warning</span> Name match
-                </span>
+                <div class="flex flex-col gap-xs" title="${decision.message}">
+                    <span class="flex items-center gap-xs text-amber-800 font-bold">
+                        <span class="material-symbols-outlined text-[18px]">warning</span> Needs confirmation
+                    </span>
+                    <span class="text-[11px] leading-4 text-amber-800 font-semibold">Client name matches an existing record.</span>
+                </div>
             `;
         }
 
         return `
-            <span class="flex items-center gap-xs text-blue-700 font-bold" title="${decision.message}">
-                <span class="material-symbols-outlined text-[16px]">info</span> Unchecked
-            </span>
+            <div class="flex flex-col gap-xs" title="${decision.message}">
+                <span class="flex items-center gap-xs text-blue-700 font-bold">
+                    <span class="material-symbols-outlined text-[18px]">info</span> Not checked
+                </span>
+                <span class="text-[11px] leading-4 text-blue-700 font-semibold">No barangay was available for duplicate lookup.</span>
+            </div>
         `;
     }
 
     function applyDuplicateDecision(row, decision) {
         if (!row || !decision) return;
 
+        const recordId = row.dataset.recordId;
+        if (recordId) {
+            row.dataset.duplicateMessage = decision.message || '';
+        }
+
         row.dataset.duplicateStatus = decision.status;
-        row.classList.remove('bg-red-50', 'bg-amber-50', 'bg-blue-50', 'border-l-4', 'border-red-600', 'border-amber-500', 'border-blue-500');
+        row.classList.remove(
+            'bg-red-50',
+            'bg-red-100',
+            'bg-amber-50',
+            'bg-blue-50',
+            'border-l-4',
+            'border-l-8',
+            'border-red-600',
+            'border-red-700',
+            'border-amber-500',
+            'border-blue-500',
+            'ring-1',
+            'ring-red-200',
+            'ring-amber-200'
+        );
+        row.title = '';
 
         const statusCell = row.querySelector('[data-sync-status]');
         if (statusCell) {
@@ -595,21 +703,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!syncButton) return;
 
         syncButton.disabled = false;
-        syncButton.classList.remove('opacity-50', 'cursor-not-allowed', 'text-amber-700');
+        syncButton.classList.remove('opacity-50', 'opacity-60', 'cursor-not-allowed', 'text-amber-700', 'text-red-700');
         syncButton.textContent = 'Sync Now';
         syncButton.title = '';
 
         if (decision.status === 'full_block' || decision.status === 'philsys_block') {
-            row.classList.add('bg-red-50', 'border-l-4', 'border-red-600');
+            row.classList.add('bg-red-100', 'border-l-8', 'border-red-700', 'ring-1', 'ring-red-200');
+            row.title = decision.message;
             syncButton.disabled = true;
             syncButton.textContent = 'Blocked';
             syncButton.title = decision.message;
-            syncButton.classList.add('opacity-50', 'cursor-not-allowed');
+            syncButton.classList.add('opacity-60', 'cursor-not-allowed', 'text-red-700');
             return;
         }
 
         if (decision.status === 'name_warning') {
-            row.classList.add('bg-amber-50', 'border-l-4', 'border-amber-500');
+            row.classList.add('bg-amber-50', 'border-l-8', 'border-amber-500', 'ring-1', 'ring-amber-200');
+            row.title = decision.message;
             syncButton.textContent = 'Review & Sync';
             syncButton.title = decision.message;
             syncButton.classList.add('text-amber-700');
@@ -691,13 +801,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusCell = row?.querySelector('[data-sync-status]');
             if (statusCell) {
                 statusCell.innerHTML = `
-                    <span class="flex items-center gap-xs text-error font-bold">
-                        <span class="material-symbols-outlined text-[16px]" data-icon="error_outline">error_outline</span> Failed
-                    </span>
+                    <div class="flex flex-col gap-xs">
+                        <span class="flex items-center gap-xs text-red-700 font-bold">
+                            <span class="material-symbols-outlined text-[18px]" data-icon="error_outline">error_outline</span> Sync not completed
+                        </span>
+                        <span class="text-[11px] leading-4 text-red-700 font-semibold">Server or network error. The record is still queued.</span>
+                    </div>
                 `;
             }
+            if (row) {
+                row.classList.add('bg-red-50', 'border-l-8', 'border-red-700', 'ring-1', 'ring-red-200');
+                row.title = 'Sync not completed. Server or network error. The record is still queued.';
+            }
 
-            showStatusToast('Sync failed. Please try again.', 'error');
+            showStatusToast('Sync not completed. The record is still queued.', 'error');
             return false;
         } finally {
             if (btn && document.body.contains(btn) && row?.dataset.duplicateStatus !== 'full_block' && row?.dataset.duplicateStatus !== 'philsys_block') {
@@ -735,6 +852,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Edit single record
         tr.querySelector('.edit-single-btn').addEventListener('click', (e) => {
             e.preventDefault();
+            const currentRowDecision = tr.dataset.duplicateStatus ? {
+                status: tr.dataset.duplicateStatus,
+                message: tr.dataset.duplicateMessage || '',
+                canSync: tr.dataset.duplicateStatus !== 'full_block' && tr.dataset.duplicateStatus !== 'philsys_block',
+            } : null;
+            if (currentRowDecision) {
+                record.duplicateDecision = currentRowDecision;
+            }
             openEditModal(record);
         });
 
